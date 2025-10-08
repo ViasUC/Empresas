@@ -1,0 +1,127 @@
+<div class="login-container">
+  <!-- Panel Izquierdo - Información VIASUC -->
+  <div class="left-panel">
+    <div class="branding">
+      <h1 class="logo">VIAS-UC</h1>
+      <p class="tagline">Conectando Academia, Industria y Sociedad</p>
+    </div>
+    
+    <div class="features">
+      <div class="feature-item">
+        <mat-icon>work</mat-icon>
+        <span>Oportunidades de Pasantías</span>
+      </div>
+      <div class="feature-item">
+        <mat-icon>business</mat-icon>
+        <span>Colaboración Empresarial</span>
+      </div>
+      <div class="feature-item">
+        <mat-icon>folder</mat-icon>
+        <span>Gestión de Portafolios</span>
+      </div>
+      <div class="feature-item">
+        <mat-icon>search</mat-icon>
+        <span>Búsqueda Inteligente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Derecho - Formulario de Login -->
+  <div class="right-panel">
+    <div class="login-form-container">
+      <div class="form-header">
+        <h2>Iniciar Sesión</h2>
+        <p>Descubre talento universitario</p>
+      </div>
+
+      <!-- Tabs de Roles -->
+      <mat-tab-group 
+        class="role-tabs" 
+        (selectedTabChange)="onRolChange($event)"
+        selectedIndex="1">
+        <mat-tab label="Estudiante">
+          <ng-template matTabContent>
+            <span>Estudiante</span>
+          </ng-template>
+        </mat-tab>
+        <mat-tab label="Empresas">
+          <ng-template matTabContent>
+            <span>Empresas</span>
+          </ng-template>
+        </mat-tab>
+        <mat-tab label="Docente">
+          <ng-template matTabContent>
+            <span>Docente</span>
+          </ng-template>
+        </mat-tab>
+        <mat-tab label="Admin">
+          <ng-template matTabContent>
+            <span>Admin</span>
+          </ng-template>
+        </mat-tab>
+      </mat-tab-group>
+
+      <!-- Formulario -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <!-- Campo Email -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Correo electrónico</mat-label>
+          <input 
+            matInput 
+            type="email" 
+            formControlName="email"
+            placeholder="ejemplo@empresa.com">
+          <mat-icon matSuffix>email</mat-icon>
+          <mat-error *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+            {{ getErrorMessage('email') }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Campo Contraseña -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <input 
+            matInput 
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+            placeholder="Ingresa tu contraseña">
+          <button 
+            mat-icon-button 
+            matSuffix 
+            type="button"
+            (click)="hidePassword = !hidePassword"
+            [attr.aria-label]="'Hide password'"
+            [attr.aria-pressed]="hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            {{ getErrorMessage('password') }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Recordar contraseña -->
+        <div class="remember-forgot">
+          <mat-checkbox formControlName="rememberMe" class="remember-checkbox">
+            ¿Recordar tu contraseña?
+          </mat-checkbox>
+        </div>
+
+        <!-- Botón Iniciar Sesión -->
+        <button 
+          mat-raised-button 
+          color="primary" 
+          type="submit"
+          class="login-button full-width"
+          [disabled]="loginForm.invalid">
+          Iniciar Sesión
+        </button>
+
+        <!-- Enlace Registro -->
+        <div class="register-link">
+          <span>¿No tienes cuenta? </span>
+          <a href="#" class="link">Regístrate aquí</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

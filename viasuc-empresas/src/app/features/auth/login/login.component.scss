@@ -1,0 +1,343 @@
+// Variables de colores basadas en el mockup
+$primary-navy: #1e3a8a;       // Azul marino principal  
+$secondary-navy: #1e40af;     // Azul marino secundario
+$dark-navy: #0f172a;          // Azul marino más oscuro
+$light-blue: #3b82f6;         // Azul claro para acentos
+$white: #ffffff;
+$light-gray: #f8fafc;
+$text-gray: #64748b;
+$success-green: #10b981;
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin transition-smooth {
+  transition: all 0.3s ease-in-out;
+}
+
+.login-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, $primary-navy 0%, $dark-navy 100%);
+  
+  // Panel Izquierdo - Información VIASUC
+  .left-panel {
+    flex: 1;
+    background: linear-gradient(135deg, $primary-navy 0%, $secondary-navy 100%);
+    color: $white;
+    padding: 3rem 2rem;
+    @include flex-center;
+    flex-direction: column;
+    position: relative;
+    
+    // Efecto overlay sutil
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba($dark-navy, 0.1);
+      z-index: 1;
+    }
+    
+    > * {
+      position: relative;
+      z-index: 2;
+    }
+    
+    .branding {
+      text-align: center;
+      margin-bottom: 3rem;
+      
+      .logo {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        letter-spacing: 2px;
+      }
+      
+      .tagline {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+      }
+    }
+    
+    .features {
+      width: 100%;
+      max-width: 350px;
+      
+      .feature-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+        @include transition-smooth;
+        
+        &:hover {
+          transform: translateX(5px);
+          opacity: 0.8;
+        }
+        
+        mat-icon {
+          margin-right: 1rem;
+          color: $light-blue;
+          font-size: 1.5rem;
+          width: 1.5rem;
+          height: 1.5rem;
+        }
+        
+        span {
+          font-weight: 400;
+          letter-spacing: 0.3px;
+        }
+      }
+    }
+  }
+  
+  // Panel Derecho - Formulario
+  .right-panel {
+    flex: 1;
+    background: $white;
+    @include flex-center;
+    padding: 2rem;
+    
+    .login-form-container {
+      width: 100%;
+      max-width: 450px;
+      
+      .form-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        
+        h2 {
+          font-size: 2rem;
+          color: $dark-navy;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+        }
+        
+        p {
+          color: $text-gray;
+          font-size: 1rem;
+          font-weight: 400;
+        }
+      }
+      
+      // Tabs de roles
+      .role-tabs {
+        margin-bottom: 2rem;
+        
+        ::ng-deep {
+          .mat-mdc-tab-group {
+            .mat-mdc-tab-header {
+              border-bottom: 2px solid #e2e8f0;
+              
+              .mat-mdc-tab-label {
+                color: $text-gray;
+                font-weight: 500;
+                min-width: 80px;
+                
+                &.mdc-tab--active {
+                  color: $primary-navy;
+                }
+              }
+              
+              .mat-mdc-tab-header-pagination {
+                display: none;
+              }
+              
+              .mdc-tab-indicator__content--underline {
+                background-color: $primary-navy;
+                height: 3px;
+                border-radius: 2px;
+              }
+            }
+          }
+        }
+      }
+      
+      // Formulario
+      .login-form {
+        .full-width {
+          width: 100%;
+          margin-bottom: 1rem;
+        }
+        
+        // Campos de formulario
+        ::ng-deep {
+          .mat-mdc-form-field {
+            .mat-mdc-text-field-wrapper {
+              .mat-mdc-form-field-flex {
+                .mat-mdc-form-field-outline {
+                  .mat-mdc-form-field-outline-start,
+                  .mat-mdc-form-field-outline-end {
+                    border-color: #d1d5db;
+                    @include transition-smooth;
+                  }
+                  
+                  .mat-mdc-form-field-outline-thick {
+                    .mat-mdc-form-field-outline-start,
+                    .mat-mdc-form-field-outline-end {
+                      border-color: $primary-navy;
+                      border-width: 2px;
+                    }
+                  }
+                }
+                
+                .mat-mdc-form-field-infix {
+                  padding: 1rem 0.75rem;
+                  
+                  input {
+                    color: $dark-navy;
+                    font-size: 1rem;
+                  }
+                }
+              }
+            }
+            
+            .mat-mdc-form-field-label {
+              color: $text-gray;
+              font-weight: 500;
+            }
+            
+            .mat-mdc-form-field-suffix {
+              mat-icon {
+                color: $text-gray;
+                @include transition-smooth;
+              }
+            }
+            
+            &.mat-focused {
+              .mat-mdc-form-field-suffix mat-icon {
+                color: $primary-navy;
+              }
+            }
+          }
+        }
+        
+        // Recordar contraseña
+        .remember-forgot {
+          margin: 1rem 0 1.5rem 0;
+          
+          .remember-checkbox {
+            ::ng-deep {
+              .mdc-checkbox {
+                .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+                  background-color: $primary-navy;
+                  border-color: $primary-navy;
+                }
+              }
+              
+              .mdc-form-field {
+                color: $text-gray;
+                font-size: 0.9rem;
+              }
+            }
+          }
+        }
+        
+        // Botón de iniciar sesión
+        .login-button {
+          background: linear-gradient(135deg, $primary-navy 0%, $secondary-navy 100%);
+          color: $white;
+          font-weight: 600;
+          font-size: 1rem;
+          padding: 0.75rem 2rem;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px rgba($primary-navy, 0.3);
+          @include transition-smooth;
+          
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba($primary-navy, 0.4);
+          }
+          
+          &:disabled {
+            background: #e2e8f0;
+            color: #94a3b8;
+            box-shadow: none;
+          }
+        }
+        
+        // Enlace de registro
+        .register-link {
+          text-align: center;
+          margin-top: 1.5rem;
+          color: $text-gray;
+          font-size: 0.9rem;
+          
+          .link {
+            color: $primary-navy;
+            text-decoration: none;
+            font-weight: 600;
+            @include transition-smooth;
+            
+            &:hover {
+              color: $secondary-navy;
+              text-decoration: underline;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+    
+    .left-panel {
+      min-height: 30vh;
+      padding: 2rem 1rem;
+      
+      .branding .logo {
+        font-size: 2.5rem;
+      }
+      
+      .features {
+        max-width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        
+        .feature-item {
+          margin-bottom: 0;
+          font-size: 0.9rem;
+        }
+      }
+    }
+    
+    .right-panel {
+      padding: 1.5rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    .left-panel {
+      .features {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .right-panel {
+      .login-form-container {
+        .form-header h2 {
+          font-size: 1.5rem;
+        }
+      }
+    }
+  }
+}
