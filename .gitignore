@@ -9,6 +9,7 @@
 
 # Node modules and dependency files
 /node_modules/
+viasuc-empresas/node_modules/
 /package-lock.json
 /yarn.lock
 
@@ -29,5 +30,21 @@ yarn-error.log*
 
 # Documentation files
 *.md
+
+# Editor and IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+.editorconfig
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 
