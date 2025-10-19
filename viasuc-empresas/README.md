@@ -2,12 +2,12 @@
 Este es nuestro proyecto para el curso de Ingeniería de Software. Es una aplicación web para empresas que quieren conectar con estudiantes de la UC.
 
 ## ¿Qué es esto?
-
 Es un proyecto hecho con Angular para crear un portal donde las empresas pueden:
 - Registrarse e iniciar sesión 
 - Buscar perfiles de estudiantes
 - Publicar ofertas de trabajo
 - Ver portafolios de candidatos
+
 
 ## Cómo ejecutar el proyecto
 Primero necesitas tener Node.js instalado. Después ejecuta estos comandos:
@@ -57,6 +57,7 @@ ng build --prod
 - A veces hay que reiniciar el servidor si Angular Material no carga bien
 - Los estilos se ven un poco raro en Internet Explorer.
 
-
+## Ejecutar Proyecto
+cd /root/proyectos/IngenieriaSoftware/Empresas/viasuc-empresas && npm start
 
 *Si tienes problemas ejecutando el proyecto, pregúntanos en el grupo de WhatsApp!*
