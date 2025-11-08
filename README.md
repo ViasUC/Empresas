@@ -1,2 +1,0 @@
-# Empresas
-Frontend para empresas

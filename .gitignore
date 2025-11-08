@@ -30,14 +30,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Documentation files (pueden contener emojis)
-CONEXION_BASE_DATOS.md
-DOCUMENTACION_EQUIPO_EMPRESARIOS.md
-LISTO_PARA_PROBAR.txt
-backend/README.md
-backend/DATABASE_SCHEMA.md
-backend/RESUMEN_BACKEND.md
-backend/INSTRUCCIONES.txt
+# Documentation folder (puede contener emojis y archivos temporales)
+docs/
 
 # Editor and IDE files
 .vscode/
