@@ -1,6 +1,15 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/api/v1',
+  apiUrl: 'http://localhost:4000/graphql', // URL del servidor GraphQL
+  wsUrl: 'ws://localhost:4000/graphql', // WebSocket para subscriptions
   appName: 'VIASUC - Empresas',
-  version: '1.0.0'
+  version: '1.0.0',
+  
+  // Configuración de base de datos (para referencia del backend)
+  database: {
+    host: '34.95.213.224',
+    port: 5432,
+    database: 'postgres',
+    // Credenciales se manejan en el backend
+  }
 };

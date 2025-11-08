@@ -1,0 +1,29 @@
+{
+  "name": "viasuc-backend",
+  "version": "1.0.0",
+  "description": "Backend GraphQL para VIASUC - Sistema de Gestión de Empleadores",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "graphql",
+    "apollo",
+    "postgresql",
+    "viasuc"
+  ],
+  "author": "Equipo VIASUC",
+  "license": "MIT",
+  "dependencies": {
+    "@apollo/server": "^4.12.2",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^5.1.0",
+    "graphql": "^16.8.1",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3"
+  }
+}
