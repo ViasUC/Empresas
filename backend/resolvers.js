@@ -119,6 +119,205 @@ export const resolvers = {
       console.log(`Empresa encontrada: ${empresa.nombreEmpresa} (ID: ${empresa.id})`);
       
       return empresa;
+    },
+
+    /**
+     * Buscar portafolios de candidatos con filtros
+     */
+    buscarPortafolios: async (_, { filtros }, context) => {
+      const user = getUserFromContext(context);
+      
+      if (!user) {
+        throw new GraphQLError('No autenticado', {
+          extensions: { code: 'UNAUTHENTICATED' }
+        });
+      }
+
+      if (user.tipo !== 'EMPLEADOR') {
+        throw new GraphQLError('Permisos insuficientes', {
+          extensions: { code: 'FORBIDDEN' }
+        });
+      }
+
+      console.log('Busqueda de portafolios con filtros:', filtros);
+
+      // Paginacion: valores por defecto
+      const pagina = filtros?.pagina || 1;
+      const limite = filtros?.limite || 20;
+      const offset = (pagina - 1) * limite;
+
+      // Construir query dinamicamente segun filtros
+      let whereConditions = ['p.visibilidad = TRUE']; // Solo portafolios publicos
+      let queryParams = [];
+      let paramIndex = 1;
+
+      // Filtro por carrera (JOIN con alumnos)
+      if (filtros?.carrera) {
+        whereConditions.push(`a.carrera ILIKE $${paramIndex}`);
+        queryParams.push(`%${filtros.carrera}%`);
+        paramIndex++;
+      }
+
+      // Filtro por habilidades (buscar en campo skills)
+      if (filtros?.habilidades && filtros.habilidades.length > 0) {
+        const skillsConditions = filtros.habilidades.map(skill => {
+          const condition = `p.skills ILIKE $${paramIndex}`;
+          queryParams.push(`%${skill}%`);
+          paramIndex++;
+          return condition;
+        });
+        whereConditions.push(`(${skillsConditions.join(' OR ')})`);
+      }
+
+      // Filtro por ubicacion
+      if (filtros?.ubicacion) {
+        whereConditions.push(`u.ubicacion ILIKE $${paramIndex}`);
+        queryParams.push(`%${filtros.ubicacion}%`);
+        paramIndex++;
+      }
+
+      const whereClause = whereConditions.length > 0 
+        ? `WHERE ${whereConditions.join(' AND ')}`
+        : '';
+
+      // Query principal con JOIN a usuarios y alumnos
+      const searchQuery = `
+        SELECT 
+          p.id_portafolio as id,
+          p.id_usuario as "usuarioId",
+          u.nombre,
+          u.apellido,
+          u.email,
+          u.telefono,
+          u.ubicacion,
+          a.carrera,
+          p.descripcion,
+          p.skills as habilidades,
+          p.visibilidad,
+          p.ultima_actualizacion as "fechaActualizacion"
+        FROM public.portafolio p
+        INNER JOIN public.usuarios u ON p.id_usuario = u.id_usuario
+        LEFT JOIN public.alumnos a ON p.id_usuario = a.id_usuario
+        ${whereClause}
+        ORDER BY p.ultima_actualizacion DESC
+        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+      `;
+
+      queryParams.push(limite, offset);
+
+      // Query para contar total
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM public.portafolio p
+        INNER JOIN public.usuarios u ON p.id_usuario = u.id_usuario
+        LEFT JOIN public.alumnos a ON p.id_usuario = a.id_usuario
+        ${whereClause}
+      `;
+
+      try {
+        // Ejecutar ambos queries
+        const [searchResult, countResult] = await Promise.all([
+          query(searchQuery, queryParams),
+          query(countQuery, queryParams.slice(0, -2)) // Sin limite y offset
+        ]);
+
+        const portafolios = searchResult.rows.map(row => ({
+          ...row,
+          habilidades: row.habilidades ? row.habilidades.split(',').map(s => s.trim()) : []
+        }));
+
+        const total = parseInt(countResult.rows[0].total);
+        const totalPaginas = Math.ceil(total / limite);
+
+        // Registrar auditoria de busqueda
+        await query(`
+          INSERT INTO public.auditoria (accion, detalle, fecha_evento, actor_id)
+          VALUES ($1, $2, NOW(), $3)
+        `, [
+          'BUSQUEDA_PORTAFOLIOS',
+          JSON.stringify({ filtros, resultados: total }),
+          user.id
+        ]);
+
+        console.log(`Busqueda completada: ${portafolios.length} resultados de ${total} total`);
+
+        return {
+          portafolios,
+          total,
+          pagina,
+          totalPaginas
+        };
+
+      } catch (error) {
+        console.error('Error en busqueda de portafolios:', error);
+        throw new GraphQLError('Error al buscar portafolios', {
+          extensions: { 
+            code: 'INTERNAL_SERVER_ERROR',
+            details: error.message 
+          }
+        });
+      }
+    },
+
+    /**
+     * Obtener catalogo de filtros disponibles
+     */
+    obtenerFiltros: async (_, __, context) => {
+      console.log('=== OBTENER FILTROS ===');
+      console.log('Context headers:', context.req?.headers?.authorization);
+      
+      const user = getUserFromContext(context);
+      console.log('Usuario autenticado:', user ? user.email : 'null');
+      
+      if (!user) {
+        console.error('Usuario no autenticado al obtener filtros');
+        throw new GraphQLError('No autenticado', {
+          extensions: { code: 'UNAUTHENTICATED' }
+        });
+      }
+
+      try {
+        console.log('Consultando carreras disponibles...');
+        // Obtener carreras unicas
+        const carrerasResult = await query(`
+          SELECT DISTINCT carrera 
+          FROM public.alumnos 
+          WHERE carrera IS NOT NULL
+          ORDER BY carrera
+        `);
+
+        console.log('Carreras encontradas:', carrerasResult.rows.length);
+        
+        console.log('Consultando ubicaciones disponibles...');
+        // Obtener ubicaciones unicas
+        const ubicacionesResult = await query(`
+          SELECT DISTINCT ubicacion 
+          FROM public.usuarios 
+          WHERE ubicacion IS NOT NULL AND rol_principal IN ('ESTUDIANTE', 'EGRESADO')
+          ORDER BY ubicacion
+        `);
+        console.log('Ubicaciones encontradas:', ubicacionesResult.rows.length);
+
+        const filtros = {
+          carreras: carrerasResult.rows.map(r => r.carrera),
+          niveles: ['ESTUDIANTE', 'EGRESADO'], // Hardcoded por ahora
+          ubicaciones: ubicacionesResult.rows.map(r => r.ubicacion),
+          disponibilidades: ['TIEMPO_COMPLETO', 'MEDIO_TIEMPO', 'PRACTICAS'] // Hardcoded
+        };
+        
+        console.log('Filtros construidos:', JSON.stringify(filtros));
+        return filtros;
+
+      } catch (error) {
+        console.error('Error al obtener filtros:', error);
+        console.error('Stack:', error.stack);
+        throw new GraphQLError('Error al obtener filtros', {
+          extensions: { 
+            code: 'INTERNAL_SERVER_ERROR',
+            details: error.message 
+          }
+        });
+      }
     }
   },
 

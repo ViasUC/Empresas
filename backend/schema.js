@@ -131,6 +131,68 @@ export const typeDefs = `#graphql
     empresa: Empresa
   }
 
+  # Portafolio de candidato
+  type Portafolio {
+    id: ID!
+    usuarioId: ID!
+    nombre: String!
+    apellido: String!
+    email: String
+    telefono: String
+    carrera: String
+    nivelEstudio: String
+    habilidades: [String!]
+    experiencia: String
+    ubicacion: String
+    disponibilidad: String
+    descripcion: String
+    visibilidad: String!
+    fechaActualizacion: String
+  }
+
+  # Filtros de búsqueda
+  input FiltrosBusqueda {
+    carrera: String
+    habilidades: [String!]
+    nivelEstudio: String
+    ubicacion: String
+    disponibilidad: String
+    experiencia: String
+    pagina: Int
+    limite: Int
+  }
+
+  # Resultado paginado de búsqueda
+  type ResultadoBusqueda {
+    portafolios: [Portafolio!]!
+    total: Int!
+    pagina: Int!
+    totalPaginas: Int!
+  }
+
+  # Catálogo de filtros disponibles
+  type FiltrosDisponibles {
+    carreras: [String!]!
+    niveles: [String!]!
+    ubicaciones: [String!]!
+    disponibilidades: [String!]!
+  }
+
+  # Queries disponibles
+  type Query {
+    # Verificar si el token es válido
+    verifyToken: TokenVerification!
+    
+    # Obtener datos de mi empresa
+    miEmpresa: Empresa
+    
+    # Buscar portafolios de candidatos
+    buscarPortafolios(filtros: FiltrosBusqueda): ResultadoBusqueda!
+    
+    # Obtener catálogo de filtros disponibles
+    obtenerFiltros: FiltrosDisponibles!
+  }
+
   # Mutations disponibles
   type Mutation {
     # Iniciar sesión

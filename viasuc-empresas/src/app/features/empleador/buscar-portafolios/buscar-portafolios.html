@@ -1,0 +1,149 @@
+<div class="busqueda-container">
+  <header class="busqueda-header">
+    <div class="header-content">
+      <button class="btn-back" (click)="volver()">
+        <span class="arrow">&larr;</span> Volver
+      </button>
+      <h1>Buscar Candidatos</h1>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesion</button>
+    </div>
+  </header>
+
+  <main class="busqueda-main">
+    <!-- Panel de filtros -->
+    <section class="filtros-section">
+      <h2>Filtros de Busqueda</h2>
+      <form [formGroup]="filtrosForm" class="filtros-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="carrera">Carrera</label>
+            <select id="carrera" formControlName="carrera">
+              <option value="">Todas las carreras</option>
+              <option *ngFor="let carrera of filtrosDisponibles?.carreras" [value]="carrera">
+                {{ carrera }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="ubicacion">Ubicacion</label>
+            <select id="ubicacion" formControlName="ubicacion">
+              <option value="">Todas las ubicaciones</option>
+              <option *ngFor="let ubicacion of filtrosDisponibles?.ubicaciones" [value]="ubicacion">
+                {{ ubicacion }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="habilidades">Habilidades (separadas por comas)</label>
+            <input 
+              type="text" 
+              id="habilidades" 
+              formControlName="habilidades"
+              placeholder="Ej: JavaScript, React, Node.js">
+          </div>
+        </div>
+
+        <div class="filtros-actions">
+          <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+            Limpiar Filtros
+          </button>
+          <button type="button" class="btn-primary" (click)="buscar(1)">
+            Buscar
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Indicador de carga -->
+    <div *ngIf="cargando" class="loading-overlay">
+      <div class="loading-spinner">Buscando candidatos...</div>
+    </div>
+
+    <!-- Resultados -->
+    <section class="resultados-section" *ngIf="!cargando">
+      <div class="resultados-header">
+        <h2>Resultados</h2>
+        <p class="resultados-info" *ngIf="busquedaRealizada">
+          Mostrando {{ resultados.length }} de {{ total }} candidatos encontrados
+        </p>
+      </div>
+
+      <!-- Sin resultados -->
+      <div *ngIf="busquedaRealizada && resultados.length === 0" class="sin-resultados">
+        <p>No se encontraron candidatos con los filtros aplicados.</p>
+        <p>Intenta ajustar los criterios de busqueda.</p>
+      </div>
+
+      <!-- Lista de resultados -->
+      <div class="resultados-grid" *ngIf="resultados.length > 0">
+        <div class="portafolio-card" *ngFor="let portafolio of resultados">
+          <div class="card-header">
+            <h3>{{ portafolio.nombre }} {{ portafolio.apellido }}</h3>
+            <span class="badge-carrera" *ngIf="portafolio.carrera">{{ portafolio.carrera }}</span>
+          </div>
+
+          <div class="card-body">
+            <p class="ubicacion" *ngIf="portafolio.ubicacion">
+              <span class="icon">📍</span> {{ portafolio.ubicacion }}
+            </p>
+
+            <p class="descripcion" *ngIf="portafolio.descripcion">
+              {{ portafolio.descripcion }}
+            </p>
+
+            <div class="habilidades" *ngIf="portafolio.habilidades && portafolio.habilidades.length > 0">
+              <span class="skill-tag" *ngFor="let skill of portafolio.habilidades.slice(0, 5)">
+                {{ skill }}
+              </span>
+              <span class="skill-tag-more" *ngIf="portafolio.habilidades.length > 5">
+                +{{ portafolio.habilidades.length - 5 }} mas
+              </span>
+            </div>
+
+            <p class="fecha-actualizacion" *ngIf="portafolio.fechaActualizacion">
+              Actualizado: {{ portafolio.fechaActualizacion | date:'dd/MM/yyyy' }}
+            </p>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn-action btn-primary-action" (click)="verPortafolio(portafolio)">
+              Ver Portafolio
+            </button>
+            <button class="btn-action btn-secondary-action" (click)="invitarPostular(portafolio)">
+              Invitar
+            </button>
+            <button class="btn-action btn-secondary-action" (click)="descargarPerfil(portafolio)">
+              Descargar
+            </button>
+            <button class="btn-action btn-secondary-action" (click)="enviarMensaje(portafolio)">
+              Mensaje
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paginacion -->
+      <div class="paginacion" *ngIf="totalPaginas > 1">
+        <button 
+          class="btn-pag" 
+          (click)="paginaAnterior()" 
+          [disabled]="paginaActual === 1">
+          Anterior
+        </button>
+        <span class="pag-info">
+          Pagina {{ paginaActual }} de {{ totalPaginas }}
+        </span>
+        <button 
+          class="btn-pag" 
+          (click)="paginaSiguiente()" 
+          [disabled]="paginaActual === totalPaginas">
+          Siguiente
+        </button>
+      </div>
+    </section>
+  </main>
+</div>

@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { GraphQLError } from 'graphql';
 
 dotenv.config();
 
@@ -75,7 +76,11 @@ export const getUserFromContext = (context) => {
     const decoded = verifyToken(token);
     return decoded;
   } catch (error) {
-    return null;
+    // Si el token es inválido o expirado, lanzar un GraphQLError con código UNAUTHENTICATED
+    // para que el frontend pueda detectarlo y cerrar sesión automáticamente
+    throw new GraphQLError('Token inválido o expirado', {
+      extensions: { code: 'UNAUTHENTICATED' }
+    });
   }
 };
 

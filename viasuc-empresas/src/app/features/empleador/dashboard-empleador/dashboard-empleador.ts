@@ -31,6 +31,10 @@ export class DashboardEmpleador implements OnInit {
     this.router.navigate(['/dashboard/empleador/perfil']);
   }
 
+  irABusqueda(): void {
+    this.router.navigate(['/dashboard/empleador/buscar-candidatos']);
+  }
+
   logout(): void {
     this.authService.logout().subscribe({
       next: () => {
