@@ -77,6 +77,9 @@ export const typeDefs = `#graphql
     
     # Obtener usuario actual (requiere autenticación)
     me: User
+    
+    # Obtener empresa del usuario logueado
+    miEmpresa: Empresa
   }
 
   # Respuesta de verificación de email
@@ -84,6 +87,48 @@ export const typeDefs = `#graphql
     success: Boolean!
     message: String!
     token: String
+  }
+
+  # Empresa
+  type Empresa {
+    id: ID!
+    nombreEmpresa: String!
+    ruc: String!
+    razonSocial: String!
+    contacto: String
+    ubicacion: String
+    email: String
+    sector: String
+    tamano: String
+    descripcion: String
+    sitioWeb: String
+    linkedIn: String
+    ciudad: String
+    direccion: String
+  }
+
+  # Input para actualizar empresa
+  input ActualizarEmpresaInput {
+    nombreEmpresa: String!
+    ruc: String!
+    razonSocial: String!
+    contacto: String
+    ubicacion: String
+    email: String
+    sector: String
+    tamano: String
+    descripcion: String
+    sitioWeb: String
+    linkedIn: String
+    ciudad: String
+    direccion: String
+  }
+
+  # Respuesta de actualización de empresa
+  type ActualizarEmpresaResponse {
+    success: Boolean!
+    message: String!
+    empresa: Empresa
   }
 
   # Mutations disponibles
@@ -102,6 +147,9 @@ export const typeDefs = `#graphql
     
     # Reenviar email de verificación
     resendVerificationEmail(email: String!): LogoutResponse!
+    
+    # Actualizar datos de empresa
+    actualizarEmpresa(input: ActualizarEmpresaInput!): ActualizarEmpresaResponse!
   }
 `;
 

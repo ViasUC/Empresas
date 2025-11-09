@@ -27,6 +27,10 @@ export class DashboardEmpleador implements OnInit {
     }
   }
 
+  irAPerfil(): void {
+    this.router.navigate(['/dashboard/empleador/perfil']);
+  }
+
   logout(): void {
     this.authService.logout().subscribe({
       next: () => {

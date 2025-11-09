@@ -78,6 +78,47 @@ export const resolvers = {
       }
 
       return result.rows[0];
+    },
+
+    /**
+     * Obtener empresa del usuario logueado
+     */
+    miEmpresa: async (_, __, context) => {
+      const user = getUserFromContext(context);
+      
+      if (!user) {
+        throw new GraphQLError('No autenticado', {
+          extensions: { code: 'UNAUTHENTICATED' }
+        });
+      }
+
+      console.log(`Obteniendo empresa para usuario ID: ${user.id}`);
+
+      // Buscar empresa vinculada al usuario
+      const empresaResult = await query(`
+        SELECT 
+          e.id_empresa as id,
+          e.nombre_empresa as "nombreEmpresa",
+          e.ruc,
+          e.razon_social as "razonSocial",
+          e.contacto,
+          e.ubicacion,
+          e.email
+        FROM empresas e
+        INNER JOIN empresa_usuario eu ON e.id_empresa = eu.id_empresa
+        WHERE eu.id_usuario = $1 AND eu.activo = TRUE
+        LIMIT 1
+      `, [user.id]);
+
+      if (empresaResult.rows.length === 0) {
+        console.log(`No se encontro empresa para usuario ${user.id}`);
+        return null;
+      }
+
+      const empresa = empresaResult.rows[0];
+      console.log(`Empresa encontrada: ${empresa.nombreEmpresa} (ID: ${empresa.id})`);
+      
+      return empresa;
     }
   },
 
@@ -91,7 +132,7 @@ export const resolvers = {
 
         // Buscar usuario por email en la tabla usuarios existente
         const result = await query(
-          'SELECT id_usuario as id, email, nombre, apellido, rol_principal as tipo, password, telefono, email_verificado FROM usuarios WHERE LOWER(email) = LOWER($1)',
+          'SELECT id_usuario as id, email, nombre, apellido, rol_principal as tipo, password, telefono, email_verificado FROM public.usuarios WHERE LOWER(email) = LOWER($1)',
           [email]
         );
 
@@ -472,6 +513,105 @@ export const resolvers = {
       } catch (error) {
         console.error('Error al reenviar email de verificación:', error);
         throw error;
+      }
+    },
+
+    /**
+     * Actualizar datos de empresa
+     */
+    actualizarEmpresa: async (_, { input }, context) => {
+      const user = getUserFromContext(context);
+      
+      if (!user) {
+        throw new GraphQLError('No autenticado', {
+          extensions: { code: 'UNAUTHENTICATED' }
+        });
+      }
+
+      const client = await getClient();
+
+      try {
+        console.log(`Actualizando empresa para usuario ID: ${user.id}`);
+        
+        await client.query('BEGIN');
+
+        // Buscar empresa del usuario
+        const empresaResult = await client.query(`
+          SELECT e.id_empresa
+          FROM empresas e
+          INNER JOIN empresa_usuario eu ON e.id_empresa = eu.id_empresa
+          WHERE eu.id_usuario = $1 AND eu.activo = TRUE
+          LIMIT 1
+        `, [user.id]);
+
+        if (empresaResult.rows.length === 0) {
+          throw new GraphQLError('No se encontro empresa asociada al usuario', {
+            extensions: { code: 'EMPRESA_NOT_FOUND' }
+          });
+        }
+
+        const idEmpresa = empresaResult.rows[0].id_empresa;
+
+        // Crear registro en auditoria
+        const auditoriaResult = await client.query(
+          'INSERT INTO auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
+          [user.id, 'ACTUALIZAR_EMPRESA', `Actualizacion de datos de empresa ID: ${idEmpresa}`]
+        );
+        const idAuditoria = auditoriaResult.rows[0].id_auditoria;
+
+        // Actualizar empresa
+        await client.query(`
+          UPDATE empresas 
+          SET 
+            nombre_empresa = $1,
+            ruc = $2,
+            razon_social = $3,
+            contacto = $4,
+            ubicacion = $5,
+            email = $6,
+            id_auditoria = $7
+          WHERE id_empresa = $8
+        `, [
+          input.nombreEmpresa,
+          input.ruc,
+          input.razonSocial,
+          input.contacto || null,
+          input.ubicacion || null,
+          input.email || null,
+          idAuditoria,
+          idEmpresa
+        ]);
+
+        await client.query('COMMIT');
+        
+        console.log(`Empresa ${idEmpresa} actualizada exitosamente. Auditoria ID: ${idAuditoria}`);
+
+        // Obtener empresa actualizada
+        const empresaActualizadaResult = await query(`
+          SELECT 
+            id_empresa as id,
+            nombre_empresa as "nombreEmpresa",
+            ruc,
+            razon_social as "razonSocial",
+            contacto,
+            ubicacion,
+            email
+          FROM empresas
+          WHERE id_empresa = $1
+        `, [idEmpresa]);
+
+        return {
+          success: true,
+          message: 'Empresa actualizada exitosamente',
+          empresa: empresaActualizadaResult.rows[0]
+        };
+
+      } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error al actualizar empresa:', error);
+        throw error;
+      } finally {
+        client.release();
       }
     }
   }

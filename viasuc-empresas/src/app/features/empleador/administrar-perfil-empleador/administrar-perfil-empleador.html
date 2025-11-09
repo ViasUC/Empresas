@@ -1,0 +1,234 @@
+<div class="perfil-container">
+  <header class="perfil-header">
+    <div class="header-content">
+      <button class="btn-back" (click)="volver()">
+        <span class="arrow">←</span> Volver
+      </button>
+      <h1>Administrar perfil</h1>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesion</button>
+    </div>
+  </header>
+
+  <main class="perfil-main">
+    <div *ngIf="cargando" class="loading-overlay">
+      <div class="loading-spinner">Cargando datos...</div>
+    </div>
+    
+    <form [formGroup]="perfilForm" (ngSubmit)="guardarPerfil()" class="perfil-form" *ngIf="!cargando">
+      
+      <!-- Seccion: Identidad de la empresa -->
+      <section class="form-section">
+        <h2 class="section-title">Identidad de la empresa</h2>
+        
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="nombreEmpresa">Nombre de empresa *</label>
+            <input 
+              type="text" 
+              id="nombreEmpresa"
+              formControlName="nombreEmpresa"
+              placeholder="Nombre de tu empresa"
+              [class.error]="perfilForm.get('nombreEmpresa')?.invalid && perfilForm.get('nombreEmpresa')?.touched">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ruc">RUC (o DNI) *</label>
+            <input 
+              type="text" 
+              id="ruc"
+              formControlName="ruc"
+              placeholder="80012345-6"
+              [class.error]="perfilForm.get('ruc')?.invalid && perfilForm.get('ruc')?.touched">
+          </div>
+          <div class="form-group">
+            <label for="razonSocial">Razon social *</label>
+            <input 
+              type="text" 
+              id="razonSocial"
+              formControlName="razonSocial"
+              placeholder="Nombre legal de la empresa"
+              [class.error]="perfilForm.get('razonSocial')?.invalid && perfilForm.get('razonSocial')?.touched">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sector">Sector *</label>
+            <select 
+              id="sector"
+              formControlName="sector"
+              [class.error]="perfilForm.get('sector')?.invalid && perfilForm.get('sector')?.touched">
+              <option value="">Seleccionar</option>
+              <option *ngFor="let sector of sectoresEmpresa" [value]="sector">{{ sector }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="tamano">Tamano de empresa *</label>
+            <select 
+              id="tamano"
+              formControlName="tamano"
+              [class.error]="perfilForm.get('tamano')?.invalid && perfilForm.get('tamano')?.touched">
+              <option value="">Seleccionar</option>
+              <option *ngFor="let tamano of tamanosEmpresa" [value]="tamano">{{ tamano }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="descripcion">Descripcion *</label>
+            <textarea 
+              id="descripcion"
+              formControlName="descripcion"
+              rows="4"
+              placeholder="Describe tu empresa, su mision y tecnologias usadas (Max 500 caracteres)"
+              [class.error]="perfilForm.get('descripcion')?.invalid && perfilForm.get('descripcion')?.touched"></textarea>
+            <small class="char-count">{{ perfilForm.get('descripcion')?.value?.length || 0 }}/500</small>
+          </div>
+        </div>
+
+        <div class="upload-section">
+          <div class="upload-box">
+            <div class="upload-icon">Logo</div>
+            <button type="button" class="btn-upload">Subir imagen</button>
+          </div>
+          <small class="upload-hint">Solo JPG/PNG/GIF. 575x375 (Opcional, aconsejable)</small>
+        </div>
+
+        <div class="required-hint">
+          <strong>Requisitos minimos</strong>
+          <ul>
+            <li>Nombre de empresa</li>
+            <li>Email y telefono</li>
+            <li>Industria y tamano</li>
+            <li>Pais y ciudad</li>
+            <li>Descripcion (+ 50)</li>
+          </ul>
+        </div>
+
+        <div class="verification-section">
+          <h3>Documentos para verificacion</h3>
+          <div class="upload-box">
+            <p class="upload-label">Seleccionar archivo</p>
+            <span class="file-types">sin archivos seleccionados</span>
+          </div>
+          <small class="upload-hint">Opcional, aconsejable verificacion</small>
+        </div>
+      </section>
+
+      <!-- Seccion: Contacto y ubicacion -->
+      <section class="form-section">
+        <h2 class="section-title">Contacto y ubicacion</h2>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="emailContacto">Email de contacto *</label>
+            <input 
+              type="email" 
+              id="emailContacto"
+              formControlName="emailContacto"
+              placeholder="contacto@empresa.com"
+              [class.error]="perfilForm.get('emailContacto')?.invalid && perfilForm.get('emailContacto')?.touched">
+          </div>
+          <div class="form-group">
+            <label for="telefono">Telefono *</label>
+            <input 
+              type="tel" 
+              id="telefono"
+              formControlName="telefono"
+              placeholder="+595 21 123 4567"
+              [class.error]="perfilForm.get('telefono')?.invalid && perfilForm.get('telefono')?.touched">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sitioWeb">Sitio web</label>
+            <input 
+              type="url" 
+              id="sitioWeb"
+              formControlName="sitioWeb"
+              placeholder="https://www.tuempresa.com">
+          </div>
+          <div class="form-group">
+            <label for="linkedIn">LinkedIn</label>
+            <input 
+              type="url" 
+              id="linkedIn"
+              formControlName="linkedIn"
+              placeholder="https://www.linkedin.com/company/tuempresa">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ciudad">Ciudad *</label>
+            <input 
+              type="text" 
+              id="ciudad"
+              formControlName="ciudad"
+              placeholder="Asuncion"
+              [class.error]="perfilForm.get('ciudad')?.invalid && perfilForm.get('ciudad')?.touched">
+          </div>
+          <div class="form-group">
+            <label for="direccion">Direccion *</label>
+            <input 
+              type="text" 
+              id="direccion"
+              formControlName="direccion"
+              placeholder="Av. España 1234"
+              [class.error]="perfilForm.get('direccion')?.invalid && perfilForm.get('direccion')?.touched">
+          </div>
+        </div>
+      </section>
+
+      <!-- Seccion: Preferencias y privacidad -->
+      <section class="form-section">
+        <h2 class="section-title">Preferencias y privacidad</h2>
+        
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="perfilPublico">
+            <span>Perfil publico</span>
+          </label>
+          <small class="checkbox-hint">Hace que tu perfil de VIASUC</small>
+        </div>
+
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="oportunidadesPublicas">
+            <span>Oportunidades publicas</span>
+          </label>
+          <small class="checkbox-hint">Mueve formatos</small>
+        </div>
+
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="recibirPostulaciones">
+            <span>Recibir notificaciones por email</span>
+          </label>
+        </div>
+
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="permitirCandidatosEspontaneos">
+            <span>Permitir que candidatos envien mensajes totales</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Botones de accion -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="volver()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="guardando">
+          <span *ngIf="!guardando">Guardar cambios</span>
+          <span *ngIf="guardando">Guardando...</span>
+        </button>
+      </div>
+    </form>
+  </main>
+</div>
