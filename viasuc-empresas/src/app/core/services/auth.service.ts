@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
 
 export interface LoginCredentials {
   email: string;
@@ -125,6 +125,12 @@ export class AuthService {
     }
   `;
 
+  private VERIFICAR_EMAIL_QUERY = gql`
+    query VerificarEmailDisponible($email: String!) {
+      verificarEmailDisponible(email: $email)
+    }
+  `;
+
   constructor(private apollo: Apollo) {
     this.loadStoredUser();
   }
@@ -201,6 +207,24 @@ export class AuthService {
         this.storeAuthData(user, registerData.token, registerData.refreshToken);
       }),
       map(registerData => registerData.user)
+    );
+  }
+
+  /**
+   * Verifica si un email está disponible para registro
+   */
+  verificarEmailDisponible(email: string): Observable<boolean> {
+    return this.apollo.query<{ verificarEmailDisponible: boolean }>({
+      query: this.VERIFICAR_EMAIL_QUERY,
+      variables: { email },
+      fetchPolicy: 'network-only'
+    }).pipe(
+      map(result => result.data.verificarEmailDisponible),
+      catchError((error) => {
+        console.error('Error al verificar email:', error);
+        // En caso de error, permitir que continúe
+        return of(true);
+      })
     );
   }
 

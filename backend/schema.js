@@ -183,6 +183,9 @@ export const typeDefs = `#graphql
     # Verificar si el token es válido
     verifyToken: TokenVerification!
     
+    # Verificar si un email está disponible
+    verificarEmailDisponible(email: String!): Boolean!
+    
     # Obtener datos de mi empresa
     miEmpresa: Empresa
     

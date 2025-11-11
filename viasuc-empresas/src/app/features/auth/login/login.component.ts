@@ -251,26 +251,42 @@ export class LoginComponent {
       error: (error) => {
         this.isLoading = false;
         
-        let errorMessage = 'Error al crear la cuenta';
+        let errorMessage = 'No se pudo crear la cuenta. Por favor, contacte con el administrador del sistema.';
+        let duracion = 7000;
         
         // Detectar errores específicos
         if (error.graphQLErrors && error.graphQLErrors.length > 0) {
           const gqlError = error.graphQLErrors[0];
+          
           if (gqlError.extensions?.code === 'EMAIL_ALREADY_EXISTS') {
-            errorMessage = 'Este correo electrónico ya está registrado. ¿Desea iniciar sesión?';
+            errorMessage = gqlError.message || 'Este correo electrónico ya está registrado. Por favor, utilice otro correo o inicie sesión si ya tiene una cuenta.';
+            duracion = 8000; // Más tiempo para leer el mensaje
+          } else if (gqlError.extensions?.code === 'DATABASE_ERROR') {
+            errorMessage = 'No se pudo crear la cuenta debido a un error en el sistema. Por favor, contacte con el administrador.';
           } else if (gqlError.message) {
+            // Usar el mensaje del backend tal cual viene
             errorMessage = gqlError.message;
           }
+        } else if (error.networkError) {
+          errorMessage = 'Error de conexión con el servidor. Por favor, verifique su conexión a internet e intente nuevamente.';
         } else if (error.message) {
           errorMessage = error.message;
         }
         
         this.snackBar.open(errorMessage, 'Cerrar', { 
-          duration: 5000,
+          duration: duracion,
           panelClass: ['error-snackbar']
         });
         
         console.error('Error en registro:', error);
+        
+        // Log detallado para debugging
+        if (error.graphQLErrors) {
+          console.error('GraphQL Errors:', error.graphQLErrors);
+        }
+        if (error.networkError) {
+          console.error('Network Error:', error.networkError);
+        }
       }
     });
   }

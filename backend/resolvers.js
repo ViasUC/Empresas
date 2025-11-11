@@ -10,6 +10,43 @@ import {
 import { GraphQLError } from 'graphql';
 
 /**
+ * Mapeo de tipos entre GraphQL y Base de Datos
+ */
+const TIPO_GRAPHQL_TO_BD = {
+  'EMPLEADOR': 'empresa',
+  'ESTUDIANTE': 'alumno',
+  'EGRESADO': 'egresado',
+  'ADMIN': 'administrador'
+};
+
+const TIPO_BD_TO_GRAPHQL = {
+  'empresa': 'EMPLEADOR',
+  'alumno': 'ESTUDIANTE',
+  'egresado': 'EGRESADO',
+  'administrador': 'ADMIN'
+};
+
+/**
+ * Convierte tipo de GraphQL a BD
+ */
+const tipoGraphQLToBD = (tipoGraphQL) => {
+  const tipoBD = TIPO_GRAPHQL_TO_BD[tipoGraphQL];
+  if (!tipoBD) {
+    throw new GraphQLError(`Tipo de usuario no válido: ${tipoGraphQL}`, {
+      extensions: { code: 'INVALID_USER_TYPE' }
+    });
+  }
+  return tipoBD;
+};
+
+/**
+ * Convierte tipo de BD a GraphQL
+ */
+const tipoBDToGraphQL = (tipoBD) => {
+  return TIPO_BD_TO_GRAPHQL[tipoBD] || tipoBD;
+};
+
+/**
  * Resolvers de GraphQL para VIASUC
  */
 export const resolvers = {
@@ -30,7 +67,7 @@ export const resolvers = {
 
         // Buscar usuario en la base de datos para asegurar que aún existe
         const result = await query(
-          'SELECT id_usuario as id, email, nombre, apellido, rol_principal as tipo, telefono FROM usuarios WHERE id_usuario = $1',
+          'SELECT id_usuario as id, email, nombre, apellido, rol_principal as tipo, telefono FROM public.usuarios WHERE id_usuario = $1',
           [user.id]
         );
 
@@ -67,7 +104,7 @@ export const resolvers = {
       }
 
       const result = await query(
-        'SELECT id_usuario as id, email, nombre, apellido, rol_principal as tipo, telefono FROM usuarios WHERE id_usuario = $1',
+        'SELECT id_usuario as id, email, nombre, apellido, rol_principal as tipo, telefono FROM public.usuarios WHERE id_usuario = $1',
         [user.id]
       );
 
@@ -133,8 +170,9 @@ export const resolvers = {
         });
       }
 
-      if (user.tipo !== 'EMPLEADOR') {
-        throw new GraphQLError('Permisos insuficientes', {
+      // user.tipo viene del token que se generó con el tipo GraphQL
+      if (user.tipo !== 'EMPLEADOR' && user.tipo !== 'empresa') {
+        throw new GraphQLError('Permisos insuficientes - Solo empleadores pueden buscar portafolios', {
           extensions: { code: 'FORBIDDEN' }
         });
       }
@@ -260,6 +298,25 @@ export const resolvers = {
     },
 
     /**
+     * Verificar si un email está disponible (no está registrado)
+     */
+    verificarEmailDisponible: async (_, { email }) => {
+      try {
+        const result = await query(
+          'SELECT id_usuario FROM public.usuarios WHERE LOWER(email) = LOWER($1)',
+          [email]
+        );
+        
+        // Retorna true si el email está disponible (NO existe)
+        return result.rows.length === 0;
+      } catch (error) {
+        console.error('Error al verificar email:', error);
+        // En caso de error, permitir que continúe (no bloquear el registro)
+        return true;
+      }
+    },
+
+    /**
      * Obtener catalogo de filtros disponibles
      */
     obtenerFiltros: async (_, __, context) => {
@@ -289,11 +346,11 @@ export const resolvers = {
         console.log('Carreras encontradas:', carrerasResult.rows.length);
         
         console.log('Consultando ubicaciones disponibles...');
-        // Obtener ubicaciones unicas
+        // Obtener ubicaciones unicas (usando valores del enum de BD)
         const ubicacionesResult = await query(`
           SELECT DISTINCT ubicacion 
           FROM public.usuarios 
-          WHERE ubicacion IS NOT NULL AND rol_principal IN ('ESTUDIANTE', 'EGRESADO')
+          WHERE ubicacion IS NOT NULL AND rol_principal IN ('alumno', 'egresado')
           ORDER BY ubicacion
         `);
         console.log('Ubicaciones encontradas:', ubicacionesResult.rows.length);
@@ -347,6 +404,7 @@ export const resolvers = {
         }
 
         const user = result.rows[0];
+        const tipoGraphQL = tipoBDToGraphQL(user.tipo);
 
         // Verificar si el email está verificado
         if (!user.email_verificado) {
@@ -359,17 +417,20 @@ export const resolvers = {
           });
         }
 
-        // Verificar que el tipo de usuario coincida
-        if (user.tipo !== tipoUsuario) {
-          console.log(`Tipo de usuario incorrecto: esperado ${tipoUsuario}, encontrado ${user.tipo}`);
+        // Verificar que el tipo de usuario coincida (comparar con tipo GraphQL)
+        if (tipoGraphQL !== tipoUsuario) {
+          console.log(`Tipo de usuario incorrecto: esperado ${tipoUsuario}, encontrado ${tipoGraphQL} (BD: ${user.tipo})`);
           throw new GraphQLError(`Este usuario no esta registrado como ${tipoUsuario}`, {
             extensions: { 
               code: 'INVALID_USER_TYPE',
               expectedType: tipoUsuario,
-              actualType: user.tipo
+              actualType: tipoGraphQL
             }
           });
         }
+        
+        // Actualizar tipo para respuesta
+        user.tipo = tipoGraphQL;
 
         // Verificar contraseña (usando el campo 'password' que ya contiene el hash)
         const passwordMatch = await bcrypt.compare(password, user.password);
@@ -383,14 +444,14 @@ export const resolvers = {
 
         // Crear registro en auditoría PRIMERO
         const auditoriaResult = await query(
-          'INSERT INTO auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
+          'INSERT INTO public.auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
           [user.id, 'LOGIN', `Login exitoso como ${user.tipo}`]
         );
         const idAuditoria = auditoriaResult.rows[0].id_auditoria;
 
         // Registrar sesión en la tabla sesion CON id_auditoria
         await query(
-          'INSERT INTO sesion (id_usuario, fecha_ini, id_auditoria) VALUES ($1, NOW(), $2)',
+          'INSERT INTO public.sesion (id_usuario, fecha_ini, id_auditoria) VALUES ($1, NOW(), $2)',
           [user.id, idAuditoria]
         );
 
@@ -418,28 +479,31 @@ export const resolvers = {
      * Registro de nuevo usuario
      */
     register: async (_, { input }) => {
+      const rolBD = tipoGraphQLToBD(input.tipoUsuario);
+      
+      console.log(`Intento de registro: ${input.email} como ${input.tipoUsuario} (BD: ${rolBD})`);
+
+      // IMPORTANTE: Verificar email ANTES de iniciar la transacción
+      const existingUserCheck = await query(
+        'SELECT id_usuario FROM public.usuarios WHERE LOWER(email) = LOWER($1)',
+        [input.email]
+      );
+
+      if (existingUserCheck.rows.length > 0) {
+        console.log(`Email ya registrado: ${input.email}`);
+        throw new GraphQLError('Este correo electrónico ya está registrado. Por favor, utilice otro correo o inicie sesión si ya tiene una cuenta.', {
+          extensions: { 
+            code: 'EMAIL_ALREADY_EXISTS',
+            http: { status: 409 }
+          }
+        });
+      }
+
       const client = await getClient();
       
       try {
         // Iniciar transacción
         await client.query('BEGIN');
-        console.log(`Intento de registro: ${input.email} como ${input.tipoUsuario}`);
-
-        // Verificar si el email ya existe
-        const existingUser = await client.query(
-          'SELECT id_usuario FROM usuarios WHERE LOWER(email) = LOWER($1)',
-          [input.email]
-        );
-
-        if (existingUser.rows.length > 0) {
-          console.log(`Email ya registrado: ${input.email}`);
-          throw new GraphQLError('Este correo electronico ya esta registrado', {
-            extensions: { 
-              code: 'EMAIL_ALREADY_EXISTS',
-              http: { status: 409 }
-            }
-          });
-        }
 
         // Generar hash de la contraseña
         const passwordHash = await bcrypt.hash(input.password, 10);
@@ -450,34 +514,38 @@ export const resolvers = {
 
         // Crear registro en auditoría primero
         const auditoriaResult = await client.query(
-          'INSERT INTO auditoria (accion, detalle, fecha_evento) VALUES ($1, $2, NOW()) RETURNING id_auditoria',
+          'INSERT INTO public.auditoria (accion, detalle, fecha_evento) VALUES ($1, $2, NOW()) RETURNING id_auditoria',
           ['REGISTRO_USUARIO', `Registro de nuevo usuario: ${input.email}`]
         );
         const idAuditoria = auditoriaResult.rows[0].id_auditoria;
 
         // Insertar usuario en la base de datos con email_verificado = FALSE
+        // IMPORTANTE: Usar rolBD (enum de BD) en lugar de input.tipoUsuario (GraphQL)
+        // CRÍTICO: Usar public.usuarios explícitamente para evitar ambigüedad con postgres.usuarios
         const userResult = await client.query(
-          `INSERT INTO usuarios (email, password, nombre, apellido, rol_principal, telefono, completitud, email_verificado, token_verificacion, token_verificacion_expira, id_auditoria)
+          `INSERT INTO public.usuarios (email, password, nombre, apellido, rol_principal, telefono, completitud, email_verificado, token_verificacion, token_verificacion_expira, id_auditoria)
            VALUES ($1, $2, $3, $4, $5, $6, 30, FALSE, $7, $8, $9)
            RETURNING id_usuario as id, email, nombre, apellido, rol_principal as tipo, telefono, email_verificado`,
-          [input.email, passwordHash, input.nombre, input.apellido, input.tipoUsuario, input.telefono, verificationToken, tokenExpiry, idAuditoria]
+          [input.email, passwordHash, input.nombre, input.apellido, rolBD, input.telefono, verificationToken, tokenExpiry, idAuditoria]
         );
 
         const user = userResult.rows[0];
-        console.log(`Usuario creado con ID: ${user.id}`);
+        user.tipo = tipoBDToGraphQL(user.tipo);
+        
+        console.log(`Usuario creado con ID: ${user.id}, tipo BD: ${rolBD}, tipo GraphQL: ${user.tipo}`);
 
         // Si es EMPLEADOR, insertar datos de la empresa Y relación empresa_usuario
         if (input.tipoUsuario === 'EMPLEADOR' && input.nombreEmpresa) {
           // Crear auditoría para empresa
           const auditoriaEmpresaResult = await client.query(
-            'INSERT INTO auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
+            'INSERT INTO public.auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
             [user.id, 'REGISTRO_EMPRESA', `Registro de empresa: ${input.nombreEmpresa}`]
           );
           const idAuditoriaEmpresa = auditoriaEmpresaResult.rows[0].id_auditoria;
 
-          // Insertar empresa con todos los campos requeridos
+          // Insertar empresa con todos los campos requeridos (public.empresas)
           const empresaResult = await client.query(
-            `INSERT INTO empresas (nombre_empresa, ruc, razon_social, contacto, ubicacion, email, id_auditoria)
+            `INSERT INTO public.empresas (nombre_empresa, ruc, razon_social, contacto, ubicacion, email, id_auditoria)
              VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING id_empresa`,
             [
@@ -495,14 +563,14 @@ export const resolvers = {
 
           // Crear auditoría para relación empresa_usuario
           const auditoriaRelacionResult = await client.query(
-            'INSERT INTO auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
+            'INSERT INTO public.auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
             [user.id, 'VINCULACION_EMPRESA_USUARIO', `Usuario ${user.id} vinculado a empresa ${idEmpresa}`]
           );
           const idAuditoriaRelacion = auditoriaRelacionResult.rows[0].id_auditoria;
 
-          // Insertar relación en empresa_usuario
+          // Insertar relación en empresa_usuario (CRÍTICO: public.empresa_usuario)
           await client.query(
-            `INSERT INTO empresa_usuario (id_empresa, id_usuario, rol_en_empresa, activo, fecha_alta, id_auditoria)
+            `INSERT INTO public.empresa_usuario (id_empresa, id_usuario, rol_en_empresa, activo, fecha_alta, id_auditoria)
              VALUES ($1, $2, $3, TRUE, NOW(), $4)`,
             [
               idEmpresa,
@@ -518,13 +586,13 @@ export const resolvers = {
         if (input.tipoUsuario === 'ESTUDIANTE') {
           // Crear auditoría para alumno
           const auditoriaAlumnoResult = await client.query(
-            'INSERT INTO auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
+            'INSERT INTO public.auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
             [user.id, 'REGISTRO_ALUMNO', `Registro como alumno`]
           );
           const idAuditoriaAlumno = auditoriaAlumnoResult.rows[0].id_auditoria;
 
           await client.query(
-            'INSERT INTO alumnos (id_usuario, id_auditoria) VALUES ($1, $2)',
+            'INSERT INTO public.alumnos (id_usuario, id_auditoria) VALUES ($1, $2)',
             [user.id, idAuditoriaAlumno]
           );
           console.log(`Alumno registrado con ID usuario: ${user.id}`);
@@ -534,13 +602,13 @@ export const resolvers = {
         if (input.tipoUsuario === 'EGRESADO') {
           // Crear auditoría para egresado
           const auditoriaEgresadoResult = await client.query(
-            'INSERT INTO auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
+            'INSERT INTO public.auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
             [user.id, 'REGISTRO_EGRESADO', `Registro como egresado`]
           );
           const idAuditoriaEgresado = auditoriaEgresadoResult.rows[0].id_auditoria;
 
           await client.query(
-            'INSERT INTO egresados (id_usuario, id_auditoria) VALUES ($1, $2)',
+            'INSERT INTO public.egresados (id_usuario, id_auditoria) VALUES ($1, $2)',
             [user.id, idAuditoriaEgresado]
           );
           console.log(`Egresado registrado con ID usuario: ${user.id}`);
@@ -570,7 +638,52 @@ export const resolvers = {
         // Rollback en caso de error
         await client.query('ROLLBACK');
         console.error('Error en registro (ROLLBACK ejecutado):', error);
-        throw error;
+        
+        // Manejar errores específicos con mensajes amigables
+        if (error.extensions?.code === 'EMAIL_ALREADY_EXISTS') {
+          // Ya se lanzó el error correcto, solo re-lanzarlo
+          throw error;
+        }
+        
+        // Error de violación de foreign key
+        if (error.code === '23503') {
+          console.error('Error de integridad referencial:', error.detail);
+          throw new GraphQLError('No se pudo crear la cuenta. Por favor, contacte con el administrador del sistema.', {
+            extensions: { 
+              code: 'DATABASE_ERROR',
+              details: 'Error de integridad referencial en la base de datos'
+            }
+          });
+        }
+        
+        // Error de violación de constraint único (email duplicado no detectado)
+        if (error.code === '23505') {
+          throw new GraphQLError('Este correo electrónico ya está registrado. Por favor, utilice otro correo.', {
+            extensions: { 
+              code: 'EMAIL_ALREADY_EXISTS',
+              http: { status: 409 }
+            }
+          });
+        }
+        
+        // Cualquier otro error de base de datos
+        if (error.code) {
+          console.error('Error de base de datos:', error.code, error.message);
+          throw new GraphQLError('No se pudo crear la cuenta. Por favor, contacte con el administrador del sistema.', {
+            extensions: { 
+              code: 'DATABASE_ERROR',
+              details: error.message
+            }
+          });
+        }
+        
+        // Error genérico
+        throw new GraphQLError('Ocurrió un error inesperado. Por favor, contacte con el administrador del sistema.', {
+          extensions: { 
+            code: 'INTERNAL_SERVER_ERROR',
+            details: error.message
+          }
+        });
       } finally {
         // Liberar el cliente
         client.release();
@@ -616,7 +729,7 @@ export const resolvers = {
 
         // Actualizar usuario: marcar email como verificado y limpiar token
         await query(
-          `UPDATE usuarios 
+          `UPDATE public.usuarios 
            SET email_verificado = TRUE, 
                token_verificacion = NULL, 
                token_verificacion_expira = NULL 
@@ -626,7 +739,7 @@ export const resolvers = {
 
         // Crear sesión
         await query(
-          'INSERT INTO sesion (id_usuario, fecha_ini) VALUES ($1, NOW())',
+          'INSERT INTO public.sesion (id_usuario, fecha_ini) VALUES ($1, NOW())',
           [user.id_usuario]
         );
 
@@ -664,7 +777,7 @@ export const resolvers = {
 
         // Buscar usuario
         const result = await query(
-          'SELECT id_usuario, email, nombre, email_verificado, token_verificacion FROM usuarios WHERE LOWER(email) = LOWER($1)',
+          'SELECT id_usuario, email, nombre, email_verificado, token_verificacion FROM public.usuarios WHERE LOWER(email) = LOWER($1)',
           [email]
         );
 
@@ -690,7 +803,7 @@ export const resolvers = {
 
         // Actualizar token
         await query(
-          `UPDATE usuarios 
+          `UPDATE public.usuarios 
            SET token_verificacion = $1, 
                token_verificacion_expira = $2 
            WHERE id_usuario = $3`,
@@ -753,14 +866,14 @@ export const resolvers = {
 
         // Crear registro en auditoria
         const auditoriaResult = await client.query(
-          'INSERT INTO auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
+          'INSERT INTO public.auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
           [user.id, 'ACTUALIZAR_EMPRESA', `Actualizacion de datos de empresa ID: ${idEmpresa}`]
         );
         const idAuditoria = auditoriaResult.rows[0].id_auditoria;
 
         // Actualizar empresa
         await client.query(`
-          UPDATE empresas 
+          UPDATE public.empresas 
           SET 
             nombre_empresa = $1,
             ruc = $2,

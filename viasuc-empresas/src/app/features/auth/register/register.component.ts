@@ -1,7 +1,10 @@
 import { Component, EventEmitter, Output, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors, AsyncValidatorFn } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../core/services/auth.service';
+import { map, debounceTime, switchMap, take } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -80,6 +83,7 @@ export class RegisterComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
+    private authService: AuthService,
     @Inject(MAT_DIALOG_DATA) public data: { email?: string }
   ) {
     this.datosPersonalesForm = this.createDatosPersonalesForm();
@@ -99,7 +103,10 @@ export class RegisterComponent implements OnInit {
       tipoUsuario: ['EMPLEADOR', Validators.required],
       nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
       apellido: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', 
+        [Validators.required, Validators.email],
+        [this.emailDisponibleValidator()]  // Validador asíncrono
+      ],
       telefono: ['', [Validators.required, Validators.pattern(/^[0-9]{8,15}$/)]]
     });
   }
@@ -126,6 +133,30 @@ export class RegisterComponent implements OnInit {
       confirmPassword: ['', Validators.required],
       aceptaTerminos: [false, Validators.requiredTrue]
     }, { validators: this.passwordMatchValidator });
+  }
+
+  /**
+   * Validador asíncrono para verificar si el email está disponible
+   */
+  private emailDisponibleValidator(): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+      if (!control.value) {
+        return of(null);
+      }
+
+      // Debounce para evitar muchas peticiones
+      return of(control.value).pipe(
+        debounceTime(500),
+        switchMap(email => 
+          this.authService.verificarEmailDisponible(email).pipe(
+            map(disponible => {
+              return disponible ? null : { emailNoDisponible: true };
+            })
+          )
+        ),
+        take(1)
+      );
+    };
   }
 
   /**
@@ -286,6 +317,9 @@ export class RegisterComponent implements OnInit {
     }
     if (control.hasError('email')) {
       return 'Email inválido';
+    }
+    if (control.hasError('emailNoDisponible')) {
+      return 'Este correo electrónico ya está registrado';
     }
     if (control.hasError('minlength')) {
       const minLength = control.errors['minlength'].requiredLength;
