@@ -184,60 +184,160 @@ export const resolvers = {
       const limite = filtros?.limite || 20;
       const offset = (pagina - 1) * limite;
 
-      // Construir query dinamicamente segun filtros
-      let whereConditions = ['p.visibilidad = TRUE']; // Solo portafolios publicos
+      // Determinar qué tipos buscar (si no hay filtro, buscar en todos)
+      const tiposPerfil = filtros?.tipoPerfil && filtros.tipoPerfil.length > 0 
+        ? filtros.tipoPerfil 
+        : ['PORTAFOLIO', 'ESTUDIANTE', 'EGRESADO'];
+
+      console.log('Buscando en tipos:', tiposPerfil);
+
+      // Construir queries UNION ALL según tipos seleccionados
+      const unionQueries = [];
       let queryParams = [];
       let paramIndex = 1;
 
-      // Filtro por carrera (JOIN con alumnos)
-      if (filtros?.carrera) {
-        whereConditions.push(`a.carrera ILIKE $${paramIndex}`);
-        queryParams.push(`%${filtros.carrera}%`);
-        paramIndex++;
-      }
-
-      // Filtro por habilidades (buscar en campo skills)
-      if (filtros?.habilidades && filtros.habilidades.length > 0) {
-        const skillsConditions = filtros.habilidades.map(skill => {
-          const condition = `p.skills ILIKE $${paramIndex}`;
-          queryParams.push(`%${skill}%`);
+      // === QUERY PARA PORTAFOLIOS ===
+      if (tiposPerfil.includes('PORTAFOLIO')) {
+        let whereConditions = ['p.visibilidad = TRUE'];
+        
+        // Filtro por carrera
+        if (filtros?.carrera) {
+          whereConditions.push(`a.carrera ILIKE $${paramIndex}`);
+          queryParams.push(`%${filtros.carrera}%`);
           paramIndex++;
-          return condition;
-        });
-        whereConditions.push(`(${skillsConditions.join(' OR ')})`);
+        }
+
+        // Filtro por habilidades
+        if (filtros?.habilidades && filtros.habilidades.length > 0) {
+          const skillsConditions = filtros.habilidades.map(skill => {
+            const condition = `p.skills ILIKE $${paramIndex}`;
+            queryParams.push(`%${skill}%`);
+            paramIndex++;
+            return condition;
+          });
+          whereConditions.push(`(${skillsConditions.join(' OR ')})`);
+        }
+
+        // Filtro por ubicacion
+        if (filtros?.ubicacion) {
+          whereConditions.push(`u.ubicacion ILIKE $${paramIndex}`);
+          queryParams.push(`%${filtros.ubicacion}%`);
+          paramIndex++;
+        }
+
+        const whereClause = whereConditions.length > 0 
+          ? `WHERE ${whereConditions.join(' AND ')}`
+          : '';
+
+        unionQueries.push(`
+          SELECT 
+            'PORTAFOLIO' as tipo,
+            p.id_portafolio::text as id,
+            p.id_usuario as "usuarioId",
+            u.nombre,
+            u.apellido,
+            u.email,
+            u.telefono,
+            u.ubicacion,
+            a.carrera,
+            p.descripcion,
+            p.skills as habilidades,
+            p.ultima_actualizacion as "fechaActualizacion",
+            p.visibilidad
+          FROM public.portafolio p
+          INNER JOIN public.usuarios u ON p.id_usuario = u.id_usuario
+          LEFT JOIN public.alumnos a ON p.id_usuario = a.id_usuario
+          ${whereClause}
+        `);
       }
 
-      // Filtro por ubicacion
-      if (filtros?.ubicacion) {
-        whereConditions.push(`u.ubicacion ILIKE $${paramIndex}`);
-        queryParams.push(`%${filtros.ubicacion}%`);
-        paramIndex++;
+      // === QUERY PARA ESTUDIANTES (sin portafolio) ===
+      if (tiposPerfil.includes('ESTUDIANTE')) {
+        let whereConditions = ["u.rol_principal = 'alumno'"];
+        whereConditions.push('NOT EXISTS (SELECT 1 FROM public.portafolio p2 WHERE p2.id_usuario = u.id_usuario)');
+        
+        // Filtro por carrera
+        if (filtros?.carrera) {
+          whereConditions.push(`a.carrera ILIKE $${paramIndex}`);
+          queryParams.push(`%${filtros.carrera}%`);
+          paramIndex++;
+        }
+
+        // Filtro por ubicacion
+        if (filtros?.ubicacion) {
+          whereConditions.push(`u.ubicacion ILIKE $${paramIndex}`);
+          queryParams.push(`%${filtros.ubicacion}%`);
+          paramIndex++;
+        }
+
+        const whereClause = whereConditions.length > 0 
+          ? `WHERE ${whereConditions.join(' AND ')}`
+          : '';
+
+        unionQueries.push(`
+          SELECT 
+            'ESTUDIANTE' as tipo,
+            u.id_usuario::text as id,
+            u.id_usuario as "usuarioId",
+            u.nombre,
+            u.apellido,
+            u.email,
+            u.telefono,
+            u.ubicacion,
+            a.carrera,
+            NULL as descripcion,
+            NULL as habilidades,
+            CURRENT_TIMESTAMP as "fechaActualizacion",
+            TRUE as visibilidad
+          FROM public.usuarios u
+          LEFT JOIN public.alumnos a ON u.id_usuario = a.id_usuario
+          ${whereClause}
+        `);
       }
 
-      const whereClause = whereConditions.length > 0 
-        ? `WHERE ${whereConditions.join(' AND ')}`
-        : '';
+      // === QUERY PARA EGRESADOS (sin portafolio) ===
+      if (tiposPerfil.includes('EGRESADO')) {
+        let whereConditions = ["u.rol_principal = 'egresado'"];
+        whereConditions.push('NOT EXISTS (SELECT 1 FROM public.portafolio p2 WHERE p2.id_usuario = u.id_usuario)');
+        
+        // Filtro por ubicacion
+        if (filtros?.ubicacion) {
+          whereConditions.push(`u.ubicacion ILIKE $${paramIndex}`);
+          queryParams.push(`%${filtros.ubicacion}%`);
+          paramIndex++;
+        }
 
-      // Query principal con JOIN a usuarios y alumnos
+        // NOTA: Egresados no tienen campo carrera, se omite ese filtro
+
+        const whereClause = whereConditions.length > 0 
+          ? `WHERE ${whereConditions.join(' AND ')}`
+          : '';
+
+        unionQueries.push(`
+          SELECT 
+            'EGRESADO' as tipo,
+            u.id_usuario::text as id,
+            u.id_usuario as "usuarioId",
+            u.nombre,
+            u.apellido,
+            u.email,
+            u.telefono,
+            u.ubicacion,
+            NULL as carrera,
+            NULL as descripcion,
+            NULL as habilidades,
+            CURRENT_TIMESTAMP as "fechaActualizacion",
+            TRUE as visibilidad
+          FROM public.usuarios u
+          INNER JOIN public.egresados eg ON u.id_usuario = eg.id_usuario
+          ${whereClause}
+        `);
+      }
+
+      // Combinar queries con UNION ALL
       const searchQuery = `
-        SELECT 
-          p.id_portafolio as id,
-          p.id_usuario as "usuarioId",
-          u.nombre,
-          u.apellido,
-          u.email,
-          u.telefono,
-          u.ubicacion,
-          a.carrera,
-          p.descripcion,
-          p.skills as habilidades,
-          p.visibilidad,
-          p.ultima_actualizacion as "fechaActualizacion"
-        FROM public.portafolio p
-        INNER JOIN public.usuarios u ON p.id_usuario = u.id_usuario
-        LEFT JOIN public.alumnos a ON p.id_usuario = a.id_usuario
-        ${whereClause}
-        ORDER BY p.ultima_actualizacion DESC
+        ${unionQueries.join(' UNION ALL ')}
+        ORDER BY "fechaActualizacion" DESC
         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
       `;
 
@@ -245,14 +345,15 @@ export const resolvers = {
 
       // Query para contar total
       const countQuery = `
-        SELECT COUNT(*) as total
-        FROM public.portafolio p
-        INNER JOIN public.usuarios u ON p.id_usuario = u.id_usuario
-        LEFT JOIN public.alumnos a ON p.id_usuario = a.id_usuario
-        ${whereClause}
+        SELECT COUNT(*) as total FROM (
+          ${unionQueries.join(' UNION ALL ')}
+        ) as combined
       `;
 
       try {
+        console.log('Query de búsqueda:', searchQuery);
+        console.log('Parámetros:', queryParams);
+
         // Ejecutar ambos queries
         const [searchResult, countResult] = await Promise.all([
           query(searchQuery, queryParams),

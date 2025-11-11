@@ -16,6 +16,14 @@ export interface Portafolio {
   ubicacion?: string;
   visibilidad: string;
   fechaActualizacion?: string;
+  // Campos adicionales para búsqueda avanzada
+  tipo?: string; // 'PORTAFOLIO' | 'ESTUDIANTE' | 'EGRESADO'
+  modalidad?: string; // 'presencial' | 'remoto' | 'hibrido'
+  promedio?: number;
+  rating?: number;
+  experiencia?: string;
+  idiomas?: string[];
+  anioEstudio?: number;
 }
 
 export interface FiltrosBusqueda {
@@ -53,6 +61,7 @@ export class BusquedaService {
       buscarPortafolios(filtros: $filtros) {
         portafolios {
           id
+          tipo
           usuarioId
           nombre
           apellido

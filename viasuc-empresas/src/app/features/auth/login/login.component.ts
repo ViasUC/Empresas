@@ -91,8 +91,12 @@ export class LoginComponent {
             this.errorMessage = 'Usuario no encontrado';
           } else {
             this.errorMessage = this.getLoginErrorMessage(error);
+            
+            // Duración más larga para mensajes importantes como EMAIL_NOT_VERIFIED
+            const duracion = error.graphQLErrors?.[0]?.extensions?.code === 'EMAIL_NOT_VERIFIED' ? 10000 : 7000;
+            
             this.snackBar.open(this.errorMessage, 'Cerrar', { 
-              duration: 5000,
+              duration: duracion,
               panelClass: ['error-snackbar']
             });
           }
@@ -154,27 +158,43 @@ export class LoginComponent {
 
   /**
    * Obtiene mensaje de error amigable para el login
+   * PRIORIDAD: Siempre usar el mensaje del backend si está disponible
    */
   private getLoginErrorMessage(error: any): string {
+    // PRIMERO: Intentar obtener el mensaje de GraphQL
     if (error.graphQLErrors && error.graphQLErrors.length > 0) {
       const graphQLError = error.graphQLErrors[0];
-      switch (graphQLError.extensions?.code) {
+      
+      // Si el backend envió un mensaje, USARLO directamente
+      if (graphQLError.message) {
+        return graphQLError.message;
+      }
+      
+      // Solo si NO hay mensaje, usar fallbacks por código
+      const code = graphQLError.extensions?.code;
+      switch (code) {
         case 'INVALID_CREDENTIALS':
           return 'Correo o contraseña incorrectos';
         case 'USER_NOT_FOUND':
           return 'Usuario no encontrado';
+        case 'EMAIL_NOT_VERIFIED':
+          return 'Debe verificar su correo electrónico antes de iniciar sesión';
+        case 'INVALID_USER_TYPE':
+          return 'Este usuario no tiene permisos para acceder como el tipo seleccionado';
         case 'ACCOUNT_DISABLED':
           return 'La cuenta está deshabilitada';
-        case 'ACCOUNT_NOT_VERIFIED':
-          return 'Debe verificar su cuenta antes de iniciar sesión';
         default:
-          return graphQLError.message || 'Error al iniciar sesión';
+          return 'Error al iniciar sesión. Por favor intente nuevamente';
       }
     }
+    
+    // Error de red
     if (error.networkError) {
-      return 'Error de conexión. Verifique su conexión a internet';
+      return 'Error de conexión con el servidor. Por favor, verifique su conexión a internet';
     }
-    return 'Error al iniciar sesión. Por favor intente nuevamente';
+    
+    // Error genérico
+    return error.message || 'Error al iniciar sesión. Por favor intente nuevamente';
   }
 
   /**

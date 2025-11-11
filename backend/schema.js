@@ -134,6 +134,7 @@ export const typeDefs = `#graphql
   # Portafolio de candidato
   type Portafolio {
     id: ID!
+    tipo: String!
     usuarioId: ID!
     nombre: String!
     apellido: String!
@@ -152,6 +153,7 @@ export const typeDefs = `#graphql
 
   # Filtros de búsqueda
   input FiltrosBusqueda {
+    tipoPerfil: [String!]
     carrera: String
     habilidades: [String!]
     nivelEstudio: String

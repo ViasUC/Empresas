@@ -177,22 +177,124 @@ SELECT setval('public.usuarios_id_usuario_seq', (SELECT MAX(id_usuario) FROM pub
 
 ---
 
-## 📋 Estado actual (10 Nov 2025 20:53):
+---
 
-- ✅ Backend reiniciado con mejoras en manejo de errores
-- ✅ Frontend con mensajes amigables y específicos
+## 7. ✅ Problema de schemas duplicados (postgres vs public)
+
+### Problema crítico identificado:
+La base de datos tiene **DOS tablas `usuarios`**:
+- `postgres.usuarios` (tabla antigua/incorrecta)
+- `public.usuarios` (tabla correcta)
+
+Cuando el código hacía INSERTs sin especificar schema, PostgreSQL usaba el schema por defecto (a veces `postgres`), pero los foreign keys apuntaban a `public.usuarios`, causando errores de violación de constraints.
+
+### Solución implementada:
+✅ **TODOS los queries ahora usan `public.` explícitamente**:
+- `INSERT INTO public.usuarios ...`
+- `INSERT INTO public.empresas ...`
+- `INSERT INTO public.empresa_usuario ...`
+- `INSERT INTO public.auditoria ...`
+- `INSERT INTO public.sesion ...`
+- `INSERT INTO public.alumnos ...`
+- `INSERT INTO public.egresados ...`
+- `SELECT ... FROM public.usuarios ...`
+- `UPDATE public.usuarios ...`
+- `UPDATE public.empresas ...`
+
+### Archivos modificados:
+- `backend/resolvers.js`: Todos los queries de registro, login, verificación de email, actualización de empresa, etc.
+
+---
+
+## 8. ✅ Validación en tiempo real de email duplicado
+
+### Implementación:
+Se agregó validación **asíncrona** que verifica el email mientras el usuario escribe.
+
+#### Backend:
+- ✅ Nuevo query GraphQL: `verificarEmailDisponible(email: String!): Boolean!`
+- ✅ Resolver que retorna `true` si el email está disponible, `false` si ya existe
+- ✅ Manejo de errores que permite continuar si falla la verificación
+
+#### Frontend:
+- ✅ Nuevo método en `AuthService`: `verificarEmailDisponible(email: string)`
+- ✅ Validador asíncrono en `RegisterComponent`: `emailDisponibleValidator()`
+- ✅ Debounce de 500ms para evitar muchas peticiones
+- ✅ Mensaje de error: "Este correo electrónico ya está registrado"
+- ✅ El formulario se marca como inválido y **no permite avanzar**
+
+### Beneficio:
+El usuario **ve el error INMEDIATAMENTE** al escribir el email, no al final del formulario.
+
+---
+
+## 9. ✅ Mejora global de mensajes de error de GraphQL
+
+### Problema:
+Los mensajes de error del backend no se mostraban correctamente en el frontend. Solo aparecían mensajes genéricos.
+
+### Solución implementada:
+
+#### Estrategia de prioridad:
+1. **SIEMPRE usar el mensaje del backend** si está disponible (`graphQLError.message`)
+2. Solo usar mensajes hardcoded si no hay mensaje del backend
+3. Incluir códigos de error específicos para casos especiales
+
+#### Login Component (`login.component.ts`):
+```typescript
+private getLoginErrorMessage(error: any): string {
+  // PRIMERO: Intentar obtener el mensaje de GraphQL
+  if (error.graphQLErrors && error.graphQLErrors.length > 0) {
+    const graphQLError = error.graphQLErrors[0];
+    
+    // Si el backend envió un mensaje, USARLO directamente
+    if (graphQLError.message) {
+      return graphQLError.message;
+    }
+    // ...
+  }
+}
+```
+
+#### Mensajes mejorados:
+| Código de Error | Mensaje al Usuario |
+|----------------|-------------------|
+| `EMAIL_NOT_VERIFIED` | "Debe verificar su correo electronico antes de iniciar sesion. Revise su bandeja de entrada." |
+| `INVALID_CREDENTIALS` | "Correo o contraseña incorrectos" |
+| `USER_NOT_FOUND` | "Usuario no encontrado" |
+| `INVALID_USER_TYPE` | "Este usuario no tiene permisos para acceder como el tipo seleccionado" |
+| `EMAIL_ALREADY_EXISTS` | Mensaje del backend directamente |
+| `DATABASE_ERROR` | Mensaje del backend directamente |
+| `networkError` | "Error de conexión con el servidor. Por favor, verifique su conexión a internet" |
+
+#### Duración de snackbar:
+- ✅ `EMAIL_NOT_VERIFIED`: **10 segundos** (mensaje importante)
+- ✅ `EMAIL_ALREADY_EXISTS`: **8 segundos**
+- ✅ Otros errores: **7 segundos**
+- ✅ Mensajes de éxito: **3-5 segundos**
+
+---
+
+## 📋 Estado actual (10 Nov 2025 21:40):
+
+- ✅ Backend reiniciado con schemas corregidos (`public.` en TODOS los queries)
+- ✅ Frontend con mensajes de error completos desde el backend
+- ✅ Validación en tiempo real de email duplicado
+- ✅ Duración de snackbar ajustada según importancia del mensaje
 - ✅ Secuencia de BD corregida
-- ✅ Validación de email duplicado funcional
 - ✅ Logs documentados en `/tmp/backend.log` y `/tmp/frontend.log`
 - ✅ Mapeo de tipos GraphQL ↔ BD implementado
 - ✅ Usuario `alfre_costas@hotmail.com` corregido
 
 ## 🧪 Próximos pasos:
 
-1. ✅ Secuencia corregida - Ya hecho
-2. Probar registro de nueva empresa con `alfredinho008@gmail.com`
-3. Verificar que los mensajes de error sean amigables
-4. Verificar el link de verificación de email en `/tmp/backend.log`
-5. Activar el email manualmente en la BD si es necesario
-6. Probar login y búsqueda de portafolios
-7. Hacer commit y push de los cambios
+1. ✅ Schemas corregidos - Ya hecho
+2. ✅ Validación en tiempo real - Ya hecho
+3. ✅ Mensajes de error mejorados - Ya hecho
+4. Probar registro de nueva empresa con `alfredinho008@gmail.com`
+5. Verificar mensaje de email duplicado en tiempo real
+6. Verificar mensaje de EMAIL_NOT_VERIFIED al intentar login
+7. Verificar el link de verificación de email en `/tmp/backend.log`
+8. Activar el email manualmente en la BD si es necesario
+9. Probar login exitoso y búsqueda de portafolios
+10. Hacer commit y push de los cambios
