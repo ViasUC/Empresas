@@ -16,6 +16,7 @@ const TIPO_GRAPHQL_TO_BD = {
   'EMPLEADOR': 'empresa',
   'ESTUDIANTE': 'alumno',
   'EGRESADO': 'egresado',
+  'DOCENTE': 'profesor',
   'ADMIN': 'administrador'
 };
 
@@ -23,6 +24,7 @@ const TIPO_BD_TO_GRAPHQL = {
   'empresa': 'EMPLEADOR',
   'alumno': 'ESTUDIANTE',
   'egresado': 'EGRESADO',
+  'profesor': 'DOCENTE',
   'administrador': 'ADMIN'
 };
 
@@ -487,16 +489,22 @@ export const resolvers = {
       try {
         console.log(`Intento de login: ${email} como ${tipoUsuario}`);
 
-        // Buscar usuario por email en la tabla usuarios existente
+        // Convertir el tipo de usuario de GraphQL al rol de la base de datos
+        const rolBD = tipoGraphQLToBD(tipoUsuario);
+        console.log(`Buscando usuario con rol: ${rolBD}`);
+
+        // Buscar usuario por email Y por rol_principal
         const result = await query(
-          'SELECT id_usuario as id, email, nombre, apellido, rol_principal as tipo, password, telefono, email_verificado FROM public.usuarios WHERE LOWER(email) = LOWER($1)',
-          [email]
+          `SELECT id_usuario as id, email, nombre, apellido, rol_principal as tipo, password, telefono, email_verificado 
+           FROM public.usuarios 
+           WHERE LOWER(email) = LOWER($1) AND rol_principal = $2`,
+          [email, rolBD]
         );
 
-        // Verificar si el usuario existe
+        // Verificar si el usuario existe CON ESE ROL
         if (result.rows.length === 0) {
-          console.log(`Usuario no encontrado: ${email}`);
-          throw new GraphQLError('Usuario no encontrado', {
+          console.log(`Usuario no encontrado con email ${email} y rol ${rolBD}`);
+          throw new GraphQLError(`No existe una cuenta de ${tipoUsuario} con ese correo electrónico`, {
             extensions: { 
               code: 'USER_NOT_FOUND',
               http: { status: 404 }
@@ -518,61 +526,77 @@ export const resolvers = {
           });
         }
 
-        // Verificar que el tipo de usuario coincida (comparar con tipo GraphQL)
-        if (tipoGraphQL !== tipoUsuario) {
-          console.log(`Tipo de usuario incorrecto: esperado ${tipoUsuario}, encontrado ${tipoGraphQL} (BD: ${user.tipo})`);
-          throw new GraphQLError(`Este usuario no esta registrado como ${tipoUsuario}`, {
-            extensions: { 
-              code: 'INVALID_USER_TYPE',
-              expectedType: tipoUsuario,
-              actualType: tipoGraphQL
-            }
-          });
-        }
+        // Ya no necesitamos verificar el tipo porque lo filtramos en la query
+        console.log(`Usuario encontrado: ${user.email} (${tipoGraphQL})`);
         
         // Actualizar tipo para respuesta
         user.tipo = tipoGraphQL;
 
-        // Verificar contraseña (usando el campo 'password' que ya contiene el hash)
+        // Verificar contraseña
         const passwordMatch = await bcrypt.compare(password, user.password);
         
         if (!passwordMatch) {
-          console.log(`Contrasena incorrecta para: ${email}`);
-          throw new GraphQLError('Contrasena incorrecta', {
-            extensions: { code: 'INVALID_CREDENTIALS' }
+          console.log(`Contraseña incorrecta para: ${email}`);
+          throw new GraphQLError('Credenciales inválidas', {
+            extensions: { 
+              code: 'INVALID_CREDENTIALS',
+              http: { status: 401 }
+            }
           });
         }
 
-        // Crear registro en auditoría PRIMERO
+        // Crear registro en auditoría
         const auditoriaResult = await query(
           'INSERT INTO public.auditoria (actor_id, accion, detalle, fecha_evento) VALUES ($1, $2, $3, NOW()) RETURNING id_auditoria',
           [user.id, 'LOGIN', `Login exitoso como ${user.tipo}`]
         );
-        const idAuditoria = auditoriaResult.rows[0].id_auditoria;
 
-        // Registrar sesión en la tabla sesion CON id_auditoria
-        await query(
-          'INSERT INTO public.sesion (id_usuario, fecha_ini, id_auditoria) VALUES ($1, NOW(), $2)',
-          [user.id, idAuditoria]
-        );
+        console.log(`Auditoría registrada: ${auditoriaResult.rows[0].id_auditoria}`);
 
-        // Generar tokens
-        const token = generateToken(user);
-        const refreshToken = generateRefreshToken(user);
+        // Generar token JWT
+        const token = generateToken({
+          id: user.id, 
+          email: user.email, 
+          tipo: user.tipo 
+        });
 
-        // Remover password del objeto de respuesta
-        delete user.password;
+        // Generar refresh token
+        const refreshToken = generateRefreshToken({
+          id: user.id, 
+          email: user.email, 
+          tipo: user.tipo 
+        });
 
-        console.log(`Login exitoso: ${email} (${user.tipo})`);
+        console.log(`Login exitoso para ${user.email}`);
 
         return {
-          user,
           token,
-          refreshToken
+          refreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            nombre: user.nombre,
+            apellido: user.apellido,
+            tipo: user.tipo,
+            telefono: user.telefono
+          }
         };
+
       } catch (error) {
         console.error('Error en login:', error);
-        throw error;
+        
+        // Si es un GraphQLError, re-lanzarlo
+        if (error instanceof GraphQLError) {
+          throw error;
+        }
+        
+        // Para otros errores, lanzar error genérico
+        throw new GraphQLError('Error al procesar el inicio de sesión. Usuario no existe.', {
+          extensions: { 
+            code: 'INTERNAL_SERVER_ERROR',
+            details: error.message 
+          }
+        });
       }
     },
 

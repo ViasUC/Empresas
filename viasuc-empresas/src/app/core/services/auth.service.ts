@@ -6,7 +6,7 @@ import { map, tap, catchError } from 'rxjs/operators';
 export interface LoginCredentials {
   email: string;
   password: string;
-  tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'ADMIN';
+  tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'DOCENTE' | 'ADMIN';
 }
 
 export interface User {
@@ -27,7 +27,7 @@ export interface LoginResponse {
 }
 
 export interface RegistroData {
-  tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO';
+  tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'DOCENTE';
   nombre: string;
   apellido: string;
   email: string;

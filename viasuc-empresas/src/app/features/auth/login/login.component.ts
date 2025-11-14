@@ -124,11 +124,12 @@ export class LoginComponent {
   /**
    * Mapea el rol seleccionado a tipo de usuario
    */
-  private mapRolToTipo(rol: string): 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'ADMIN' {
-    const roleMap: { [key: string]: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'ADMIN' } = {
+  private mapRolToTipo(rol: string): 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'DOCENTE' | 'ADMIN' {
+    const roleMap: { [key: string]: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'DOCENTE' | 'ADMIN' } = {
       'empresas': 'EMPLEADOR',
-      'estudiantes': 'ESTUDIANTE',
-      'egresados': 'EGRESADO',
+      'estudiante': 'ESTUDIANTE',
+      'egresado': 'EGRESADO',
+      'docente': 'DOCENTE',
       'admin': 'ADMIN'
     };
     return roleMap[rol] || 'EMPLEADOR';
@@ -147,6 +148,9 @@ export class LoginComponent {
         break;
       case 'EGRESADO':
         this.router.navigate(['/dashboard/egresado']);
+        break;
+      case 'DOCENTE':
+        this.router.navigate(['/dashboard/docente']);
         break;
       case 'ADMIN':
         this.router.navigate(['/dashboard/admin']);

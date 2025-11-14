@@ -9,6 +9,7 @@ export const typeDefs = `#graphql
     EMPLEADOR
     ESTUDIANTE
     EGRESADO
+    DOCENTE
     ADMIN
   }
 
