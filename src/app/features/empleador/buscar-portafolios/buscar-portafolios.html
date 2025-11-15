@@ -1,0 +1,254 @@
+<div class="busqueda-container">
+  <!-- ========== HEADER ========== -->
+  <header class="busqueda-header">
+    <div class="header-top">
+      <button class="btn-back" (click)="volver()">
+        ← Volver
+      </button>
+      <h1>Buscar Candidatos</h1>
+      <button class="btn-logout" (click)="logout()">
+        Cerrar Sesión
+      </button>
+    </div>
+    
+    <!-- Barra de búsqueda -->
+    <div class="search-bar-container">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text"
+          placeholder="Buscar por nombre, apellido o habilidad..."
+          [(ngModel)]="searchText"
+          (ngModelChange)="onSearchTextChange($event)"
+          (keyup.enter)="buscarInmediato()">
+        <button 
+          *ngIf="searchText" 
+          class="btn-clear-search" 
+          (click)="clearSearch()">
+          ✕
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== CONTENIDO PRINCIPAL ========== -->
+  <div class="busqueda-main">
+    <div class="busqueda-content">
+      
+      <!-- PANEL DE FILTROS (IZQUIERDA) -->
+      <aside class="filters-panel" [class.collapsed]="filtersPanelCollapsed">
+        <div class="filters-header">
+          <h2>Filtros</h2>
+          <button class="btn-toggle-filters" (click)="toggleFiltersPanel()">
+            {{ filtersPanelCollapsed ? '☰' : '✕' }}
+          </button>
+        </div>
+
+        <form [formGroup]="filtrosForm" *ngIf="!filtersPanelCollapsed">
+          <!-- Carrera -->
+          <div class="filter-group">
+            <h3>Carrera</h3>
+            <select formControlName="carrera">
+              <option value="">Todas las carreras</option>
+              <option *ngFor="let carrera of filtrosDisponibles?.carreras" [value]="carrera">
+                {{ carrera }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Ubicación -->
+          <div class="filter-group">
+            <h3>Ubicación</h3>
+            <select formControlName="ubicacion">
+              <option value="">Todas las ubicaciones</option>
+              <option *ngFor="let ubicacion of filtrosDisponibles?.ubicaciones" [value]="ubicacion">
+                {{ ubicacion }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Habilidades -->
+          <div class="filter-group">
+            <h3>Habilidades</h3>
+            <input 
+              type="text"
+              formControlName="habilidades"
+              placeholder="Ej: JavaScript, React">
+          </div>
+
+          <!-- Botones -->
+          <div class="filtros-actions">
+            <button type="button" class="btn-primary" (click)="aplicarFiltros()">
+              Aplicar
+            </button>
+            <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+              Limpiar
+            </button>
+          </div>
+        </form>
+      </aside>
+
+      <!-- ÁREA DE RESULTADOS (DERECHA) -->
+      <main class="results-area">
+        
+        <!-- Chips de filtros activos -->
+        <div class="active-filters" *ngIf="filtrosActivos.length > 0">
+          <span 
+            *ngFor="let filtro of filtrosActivos" 
+            class="filter-chip">
+            {{ filtro.label }}
+            <button class="remove-filter" (click)="removerFiltro(filtro)">✕</button>
+          </span>
+        </div>
+
+        <!-- Header con ordenamiento -->
+        <div class="resultados-header" *ngIf="busquedaRealizada && resultados.length > 0">
+          <div class="resultados-count">
+            <h2>Resultados</h2>
+            <p>{{ resultados.length }} de {{ total }} candidatos</p>
+          </div>
+          <div class="sorting-controls">
+            <label>Ordenar:</label>
+            <select [(ngModel)]="ordenActual" (ngModelChange)="cambiarOrden()">
+              <option value="relevancia">Relevancia</option>
+              <option value="recientes">Más recientes</option>
+              <option value="rating">Mejor rating</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- LOADING -->
+        <div class="loading-overlay" *ngIf="cargando">
+          <div class="loading-spinner">⏳</div>
+          <p>Buscando candidatos...</p>
+        </div>
+
+        <!-- SIN RESULTADOS -->
+        <div class="sin-resultados" *ngIf="!cargando && busquedaRealizada && resultados.length === 0">
+          <div class="icon">🔍</div>
+          <h3>No se encontraron resultados</h3>
+          <p>Intenta ajustar los filtros o buscar algo diferente</p>
+        </div>
+
+        <!-- GRILLA DE RESULTADOS -->
+        <div class="resultados-grid" *ngIf="!cargando && resultados.length > 0">
+          <div *ngFor="let portafolio of resultados" class="portafolio-card">
+            
+            <!-- Header -->
+            <div class="card-header">
+              <div class="header-top">
+                <h3>{{ portafolio.nombre }} {{ portafolio.apellido }}</h3>
+                <span class="tipo-badge" [ngClass]="getTipoBadgeClass(portafolio.tipo || 'PORTAFOLIO')">
+                  {{ getTipoBadge(portafolio.tipo || 'PORTAFOLIO') }}
+                </span>
+              </div>
+              <div class="header-meta">
+                <div class="meta-item" *ngIf="portafolio.carrera">
+                  <span class="icon">🎓</span>
+                  <span>{{ portafolio.carrera }}</span>
+                </div>
+                <div class="meta-item" *ngIf="portafolio.ubicacion">
+                  <span class="icon">📍</span>
+                  <span>{{ portafolio.ubicacion }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Body -->
+            <div class="card-body">
+              <p class="descripcion" *ngIf="portafolio.descripcion">
+                {{ portafolio.descripcion }}
+              </p>
+              
+              <!-- Habilidades -->
+              <div class="habilidades" *ngIf="portafolio.habilidades && portafolio.habilidades.length > 0">
+                <span 
+                  *ngFor="let skill of portafolio.habilidades.slice(0, 5)" 
+                  class="skill-tag">
+                  {{ skill }}
+                </span>
+                <span *ngIf="portafolio.habilidades.length > 5" class="skill-tag-more">
+                  +{{ portafolio.habilidades.length - 5 }}
+                </span>
+              </div>
+
+              <!-- Contacto -->
+              <div class="contact-info" *ngIf="portafolio.mostrarContacto">
+                <p *ngIf="portafolio.email">
+                  <span class="icon">📧</span>
+                  <a [href]="'mailto:' + portafolio.email">{{ portafolio.email }}</a>
+                </p>
+                <p *ngIf="portafolio.telefono" class="telefono-row">
+                  <span class="icon">📱</span>
+                  <span>{{ portafolio.telefono }}</span>
+                  <a 
+                    [href]="getWhatsAppLink(portafolio.telefono)" 
+                    target="_blank"
+                    class="btn-whatsapp"
+                    title="Contactar por WhatsApp">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#25D366">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-3.825 3.113-6.937 6.937-6.937 1.856.001 3.598.723 4.907 2.034 1.31 1.311 2.031 3.054 2.03 4.908-.001 3.825-3.113 6.938-6.937 6.938z"/>
+                    </svg>
+                  </a>
+                </p>
+              </div>
+
+              <button 
+                class="btn-toggle-contact"
+                (click)="toggleContacto(portafolio)">
+                {{ portafolio.mostrarContacto ? '▲ Ocultar' : '▼ Ver contacto' }}
+              </button>
+            </div>
+
+            <!-- Actions -->
+            <div class="card-actions">
+              <button class="btn-ver" (click)="verPortafolio(portafolio)">
+                <span class="icon">👁️</span>
+                <span>Ver</span>
+              </button>
+              
+              <button 
+                class="btn-guardar"
+                [class.saved]="portafolio.guardado"
+                (click)="guardarPortafolio(portafolio)">
+                <span class="icon">{{ portafolio.guardado ? '❤️' : '🤍' }}</span>
+                <span>{{ portafolio.guardado ? 'Guardado' : 'Guardar' }}</span>
+              </button>
+              
+              <button class="btn-invitar" (click)="invitarPostular(portafolio)">
+                <span class="icon">✉️</span>
+                <span>Invitar</span>
+              </button>
+              
+              <button class="btn-descargar" (click)="descargarPerfil(portafolio, $event)">
+                <span class="icon">📥</span>
+                <span>Descargar</span>
+              </button>
+              
+              <button class="btn-mensaje" (click)="enviarMensaje(portafolio)">
+                <span class="icon">💬</span>
+                <span>Mensaje</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAGINACIÓN -->
+        <div class="paginacion" *ngIf="!cargando && totalPaginas > 1">
+          <button [disabled]="paginaActual === 1" (click)="paginaAnterior()">
+            ← Anterior
+          </button>
+          
+          <span class="pag-info">
+            Página {{ paginaActual }} de {{ totalPaginas }}
+          </span>
+          
+          <button [disabled]="paginaActual === totalPaginas" (click)="paginaSiguiente()">
+            Siguiente →
+          </button>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</div>
