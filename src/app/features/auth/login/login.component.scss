@@ -33,6 +33,18 @@ $success-green: #10b981;
     @include flex-center;
     flex-direction: column;
     position: relative;
+    overflow: hidden;
+    
+    // Canvas 3D en el fondo
+    .three-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      opacity: 0.4;
+    }
     
     // Efecto overlay sutil
     &::before {
@@ -42,11 +54,12 @@ $success-green: #10b981;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba($dark-navy, 0.1);
+      background: rgba($dark-navy, 0.2);
       z-index: 1;
+      pointer-events: none;
     }
     
-    > * {
+    > *:not(.three-canvas) {
       position: relative;
       z-index: 2;
     }
@@ -59,6 +72,7 @@ $success-green: #10b981;
         font-size: 3.5rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
+        margin-top: -0.8rem; // Solo un pequeño ajuste hacia arriba
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         letter-spacing: 2px;
       }

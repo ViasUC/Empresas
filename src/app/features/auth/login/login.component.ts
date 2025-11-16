@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -13,6 +13,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { AuthService, LoginCredentials } from '../../../core/services/auth.service';
 import { RegisterComponent, RegistroData } from '../register/register.component';
+import * as THREE from 'three';
 
 @Component({
   selector: 'app-login',
@@ -33,7 +34,9 @@ import { RegisterComponent, RegistroData } from '../register/register.component'
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('threeCanvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
+  
   loginForm: FormGroup;
   hidePassword = true;
   selectedRol = 'empresas'; // Default a empresas según mockup
@@ -41,6 +44,13 @@ export class LoginComponent {
   errorMessage = '';
   showUserNotFoundMessage = false;
   userNotFoundEmail = '';
+
+  // Three.js properties
+  private scene!: THREE.Scene;
+  private camera!: THREE.PerspectiveCamera;
+  private renderer!: THREE.WebGLRenderer;
+  private particles!: THREE.Points;
+  private animationId: number = 0;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -54,6 +64,510 @@ export class LoginComponent {
       password: ['', [Validators.required, Validators.minLength(6)]],
       rememberMe: [false]
     });
+  }
+
+  ngOnInit(): void {
+    // Component initialization
+  }
+
+  ngAfterViewInit(): void {
+    // Initialize Three.js scene after view is ready
+    this.initThreeJS();
+    this.animate();
+  }
+
+  ngOnDestroy(): void {
+    // Clean up Three.js resources
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+    }
+    if (this.renderer) {
+      this.renderer.dispose();
+    }
+  }
+
+  private initThreeJS(): void {
+    if (!this.canvasRef) return;
+
+    const canvas = this.canvasRef.nativeElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+    // Scene
+    this.scene = new THREE.Scene();
+
+    // Camera
+    this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    this.camera.position.z = 50;
+
+    // Renderer
+    this.renderer = new THREE.WebGLRenderer({ 
+      canvas: canvas,
+      alpha: true,
+      antialias: true 
+    });
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+
+    // Create particles
+    this.createParticles();
+
+    // Add lighting - ambiente científico mejorado
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    this.scene.add(ambientLight);
+
+    // Luz direccional principal
+    const directionalLight = new THREE.DirectionalLight(0x3b82f6, 1);
+    directionalLight.position.set(10, 10, 5);
+    this.scene.add(directionalLight);
+
+    // Luz puntual cyan (científica) - más intensa
+    const pointLight1 = new THREE.PointLight(0x00ffff, 1.5, 120);
+    pointLight1.position.set(-30, 25, 15);
+    this.scene.add(pointLight1);
+
+    // Luz puntual magenta (científica) - más intensa
+    const pointLight2 = new THREE.PointLight(0xff00ff, 1.5, 120);
+    pointLight2.position.set(30, -25, 15);
+    this.scene.add(pointLight2);
+
+    // Luz puntual verde (tecnológica)
+    const pointLight3 = new THREE.PointLight(0x00ff88, 1.2, 100);
+    pointLight3.position.set(0, 0, 35);
+    this.scene.add(pointLight3);
+
+    // Luz puntual amarilla (energía)
+    const pointLight4 = new THREE.PointLight(0xffaa00, 1, 90);
+    pointLight4.position.set(-25, -20, 20);
+    this.scene.add(pointLight4);
+
+    // Luz puntual azul brillante (tecnología)
+    const pointLight5 = new THREE.PointLight(0x0088ff, 1.3, 100);
+    pointLight5.position.set(25, 20, 20);
+    this.scene.add(pointLight5);
+
+    // Handle window resize
+    window.addEventListener('resize', () => this.onWindowResize());
+  }
+
+  private createParticles(): void {
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particlesCount = 3000; // Más partículas
+    const posArray = new Float32Array(particlesCount * 3);
+    const colorsArray = new Float32Array(particlesCount * 3);
+    const sizesArray = new Float32Array(particlesCount);
+
+    for (let i = 0; i < particlesCount * 3; i += 3) {
+      // Position - distribución más amplia
+      posArray[i] = (Math.random() - 0.5) * 200;
+      posArray[i + 1] = (Math.random() - 0.5) * 200;
+      posArray[i + 2] = (Math.random() - 0.5) * 200;
+      
+      // Colors - gradiente científico variado (azul, cyan, púrpura, verde)
+      const color = new THREE.Color();
+      const hue = Math.random();
+      if (hue < 0.3) {
+        color.setHSL(0.55 + Math.random() * 0.1, 1, 0.6); // Cyan-Azul
+      } else if (hue < 0.6) {
+        color.setHSL(0.8 + Math.random() * 0.1, 1, 0.6); // Púrpura-Magenta
+      } else {
+        color.setHSL(0.3 + Math.random() * 0.1, 1, 0.6); // Verde-Amarillo
+      }
+      colorsArray[i] = color.r;
+      colorsArray[i + 1] = color.g;
+      colorsArray[i + 2] = color.b;
+      
+      // Tamaños variados
+      sizesArray[i / 3] = Math.random() * 0.8 + 0.2;
+    }
+
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
+    particlesGeometry.setAttribute('size', new THREE.BufferAttribute(sizesArray, 1));
+
+    // Create material with gradient colors
+    const particlesMaterial = new THREE.PointsMaterial({
+      size: 0.5,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true,
+      depthWrite: false
+    });
+
+    this.particles = new THREE.Points(particlesGeometry, particlesMaterial);
+    this.scene.add(this.particles);
+
+    // Add scientific shapes
+    this.addScientificShapes();
+  }
+
+  private addScientificShapes(): void {
+    const shapes: THREE.Mesh[] = [];
+
+    // 1. Átomo / Molécula - Órbitas electrónicas (más brillante)
+    const atomCore = new THREE.SphereGeometry(2.5, 32, 32);
+    const atomMaterial = new THREE.MeshPhongMaterial({
+      color: 0x00ffff,
+      emissive: 0x00ccff,
+      transparent: true,
+      opacity: 0.9,
+      shininess: 100
+    });
+    const atom = new THREE.Mesh(atomCore, atomMaterial);
+    atom.position.set(-25, 15, -10);
+    this.scene.add(atom);
+    shapes.push(atom);
+
+    // Órbitas del átomo
+    for (let i = 0; i < 3; i++) {
+      const orbitGeometry = new THREE.TorusGeometry(5 + i * 3, 0.2, 16, 100);
+      const orbitMaterial = new THREE.MeshPhongMaterial({
+        color: 0x3b82f6,
+        transparent: true,
+        opacity: 0.4,
+        wireframe: true
+      });
+      const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+      orbit.position.copy(atom.position);
+      orbit.rotation.x = Math.random() * Math.PI;
+      orbit.rotation.y = Math.random() * Math.PI;
+      this.scene.add(orbit);
+      shapes.push(orbit);
+    }
+
+    // 2. DNA Helix - Doble hélice
+    const helixPoints: THREE.Vector3[] = [];
+    for (let i = 0; i < 50; i++) {
+      const angle = (i / 50) * Math.PI * 4;
+      const x = Math.cos(angle) * 3;
+      const y = i * 0.5 - 12;
+      const z = Math.sin(angle) * 3;
+      helixPoints.push(new THREE.Vector3(x, y, z));
+    }
+    const helixGeometry = new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3(helixPoints),
+      50,
+      0.3,
+      8,
+      false
+    );
+    const helixMaterial = new THREE.MeshPhongMaterial({
+      color: 0xff00ff,
+      transparent: true,
+      opacity: 0.6
+    });
+    const helix = new THREE.Mesh(helixGeometry, helixMaterial);
+    helix.position.set(25, 0, -15);
+    this.scene.add(helix);
+    shapes.push(helix);
+
+    // 3. Red Neuronal - Nodos conectados
+    const nodeGroup = new THREE.Group();
+    const nodePositions: THREE.Vector3[] = [];
+    
+    for (let i = 0; i < 8; i++) {
+      const nodeSphere = new THREE.SphereGeometry(0.8, 16, 16);
+      const nodeMaterial = new THREE.MeshPhongMaterial({
+        color: 0x00ff88,
+        emissive: 0x00aa44,
+        transparent: true,
+        opacity: 0.8
+      });
+      const node = new THREE.Mesh(nodeSphere, nodeMaterial);
+      const angle = (i / 8) * Math.PI * 2;
+      const radius = 8;
+      node.position.set(
+        Math.cos(angle) * radius,
+        Math.sin(angle) * radius * 0.5,
+        (Math.random() - 0.5) * 5
+      );
+      nodePositions.push(node.position.clone());
+      nodeGroup.add(node);
+    }
+
+    // Conexiones entre nodos
+    for (let i = 0; i < nodePositions.length; i++) {
+      for (let j = i + 1; j < nodePositions.length; j++) {
+        if (Math.random() > 0.6) {
+          const points = [nodePositions[i], nodePositions[j]];
+          const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+          const lineMaterial = new THREE.LineBasicMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.3
+          });
+          const line = new THREE.Line(lineGeometry, lineMaterial);
+          nodeGroup.add(line);
+        }
+      }
+    }
+    
+    nodeGroup.position.set(0, 20, -20);
+    this.scene.add(nodeGroup);
+    shapes.push(nodeGroup as any);
+
+    // 4. Dodecahedro - Geometría sagrada
+    const dodecaGeometry = new THREE.DodecahedronGeometry(6, 0);
+    const dodecaMaterial = new THREE.MeshPhongMaterial({
+      color: 0xff6b6b,
+      transparent: true,
+      opacity: 0.4,
+      wireframe: true
+    });
+    const dodeca = new THREE.Mesh(dodecaGeometry, dodecaMaterial);
+    dodeca.position.set(-15, -10, -5);
+    this.scene.add(dodeca);
+    shapes.push(dodeca);
+
+    // 5. Esfera geodésica - Tecnología
+    const geoSphere = new THREE.IcosahedronGeometry(7, 1);
+    const geoMaterial = new THREE.MeshPhongMaterial({
+      color: 0xffaa00,
+      transparent: true,
+      opacity: 0.35,
+      wireframe: true
+    });
+    const geodesic = new THREE.Mesh(geoSphere, geoMaterial);
+    geodesic.position.set(20, -8, -10);
+    this.scene.add(geodesic);
+    shapes.push(geodesic);
+
+    // 6. Toroide - Física cuántica
+    const torusKnotGeometry = new THREE.TorusKnotGeometry(5, 1.5, 100, 16);
+    const torusKnotMaterial = new THREE.MeshPhongMaterial({
+      color: 0x00ddff,
+      emissive: 0x0088cc,
+      transparent: true,
+      opacity: 0.6,
+      wireframe: true
+    });
+    const torusKnot = new THREE.Mesh(torusKnotGeometry, torusKnotMaterial);
+    torusKnot.position.set(-30, -15, -20);
+    this.scene.add(torusKnot);
+    shapes.push(torusKnot);
+
+    // 7. Octaedro - Cristalografía
+    const octaGeometry = new THREE.OctahedronGeometry(6, 0);
+    const octaMaterial = new THREE.MeshPhongMaterial({
+      color: 0xffcc00,
+      emissive: 0xff8800,
+      transparent: true,
+      opacity: 0.7,
+      wireframe: false,
+      shininess: 100
+    });
+    const octahedron = new THREE.Mesh(octaGeometry, octaMaterial);
+    octahedron.position.set(15, 20, -15);
+    this.scene.add(octahedron);
+    shapes.push(octahedron);
+
+    // 8. Tetraedro - Geometría molecular
+    const tetraGeometry = new THREE.TetrahedronGeometry(5, 0);
+    const tetraMaterial = new THREE.MeshPhongMaterial({
+      color: 0xff0088,
+      emissive: 0xcc0066,
+      transparent: true,
+      opacity: 0.6,
+      wireframe: true
+    });
+    const tetrahedron = new THREE.Mesh(tetraGeometry, tetraMaterial);
+    tetrahedron.position.set(-10, -18, -8);
+    this.scene.add(tetrahedron);
+    shapes.push(tetrahedron);
+
+    // 9. Esfera con anillos - Planeta/Átomo
+    const sphereRings = new THREE.Group();
+    const centerSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(3, 32, 32),
+      new THREE.MeshPhongMaterial({
+        color: 0x8800ff,
+        emissive: 0x5500aa,
+        transparent: true,
+        opacity: 0.8,
+        shininess: 100
+      })
+    );
+    sphereRings.add(centerSphere);
+
+    // Anillos alrededor
+    for (let i = 0; i < 2; i++) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(5 + i * 2, 0.3, 16, 100),
+        new THREE.MeshPhongMaterial({
+          color: 0x00ffaa,
+          emissive: 0x00aa77,
+          transparent: true,
+          opacity: 0.5,
+          wireframe: true
+        })
+      );
+      ring.rotation.x = Math.PI / 2 + (i * Math.PI / 6);
+      sphereRings.add(ring);
+    }
+    sphereRings.position.set(30, 5, -25);
+    this.scene.add(sphereRings);
+    shapes.push(sphereRings as any);
+
+    // 10. Cilindro rotatorio - Nanotubos
+    const cylinderGeometry = new THREE.CylinderGeometry(1.5, 1.5, 15, 32);
+    const cylinderMaterial = new THREE.MeshPhongMaterial({
+      color: 0x00ff00,
+      emissive: 0x00aa00,
+      transparent: true,
+      opacity: 0.6,
+      wireframe: true
+    });
+    const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+    cylinder.position.set(-20, 5, -25);
+    cylinder.rotation.z = Math.PI / 4;
+    this.scene.add(cylinder);
+    shapes.push(cylinder);
+
+    // 11. Pirámide - Arquitectura
+    const pyramidGeometry = new THREE.ConeGeometry(5, 10, 4);
+    const pyramidMaterial = new THREE.MeshPhongMaterial({
+      color: 0xffaa00,
+      emissive: 0xdd8800,
+      transparent: true,
+      opacity: 0.7,
+      wireframe: false,
+      flatShading: true
+    });
+    const pyramid = new THREE.Mesh(pyramidGeometry, pyramidMaterial);
+    pyramid.position.set(10, -15, -12);
+    this.scene.add(pyramid);
+    shapes.push(pyramid);
+
+    // 12. Torus doble - Física de partículas
+    const doubleTorus = new THREE.Group();
+    for (let i = 0; i < 2; i++) {
+      const torus = new THREE.Mesh(
+        new THREE.TorusGeometry(6, 1.5, 16, 100),
+        new THREE.MeshPhongMaterial({
+          color: i === 0 ? 0xff00ff : 0x00ffff,
+          emissive: i === 0 ? 0xaa00aa : 0x00aaaa,
+          transparent: true,
+          opacity: 0.5,
+          wireframe: true
+        })
+      );
+      torus.rotation.x = i * Math.PI / 3;
+      torus.rotation.y = i * Math.PI / 4;
+      doubleTorus.add(torus);
+    }
+    doubleTorus.position.set(0, -5, -30);
+    this.scene.add(doubleTorus);
+    shapes.push(doubleTorus as any);
+
+    // 13. Cubos interconectados - Red de datos
+    const cubeGroup = new THREE.Group();
+    for (let i = 0; i < 5; i++) {
+      const cube = new THREE.Mesh(
+        new THREE.BoxGeometry(2, 2, 2),
+        new THREE.MeshPhongMaterial({
+          color: new THREE.Color().setHSL(i / 5, 1, 0.6),
+          emissive: new THREE.Color().setHSL(i / 5, 1, 0.3),
+          transparent: true,
+          opacity: 0.6,
+          wireframe: true
+        })
+      );
+      const angle = (i / 5) * Math.PI * 2;
+      cube.position.set(Math.cos(angle) * 10, Math.sin(angle) * 10, 0);
+      cubeGroup.add(cube);
+    }
+    cubeGroup.position.set(-35, 0, -15);
+    this.scene.add(cubeGroup);
+    shapes.push(cubeGroup as any);
+
+    // 14. Espiral - DNA/Fibonacci
+    const spiralPoints: THREE.Vector3[] = [];
+    for (let i = 0; i < 80; i++) {
+      const angle = (i / 80) * Math.PI * 6;
+      const radius = 2 + i * 0.08;
+      const x = Math.cos(angle) * radius;
+      const y = i * 0.3 - 12;
+      const z = Math.sin(angle) * radius;
+      spiralPoints.push(new THREE.Vector3(x, y, z));
+    }
+    const spiralGeometry = new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3(spiralPoints),
+      80,
+      0.3,
+      8,
+      false
+    );
+    const spiralMaterial = new THREE.MeshPhongMaterial({
+      color: 0xff3366,
+      emissive: 0xcc1144,
+      transparent: true,
+      opacity: 0.8,
+      shininess: 100
+    });
+    const spiral = new THREE.Mesh(spiralGeometry, spiralMaterial);
+    spiral.position.set(35, 0, -10);
+    this.scene.add(spiral);
+    shapes.push(spiral);
+
+    // Store for animation
+    (this.scene as any).scientificShapes = shapes;
+  }
+
+  private animate(): void {
+    this.animationId = requestAnimationFrame(() => this.animate());
+
+    const time = Date.now() * 0.001;
+
+    // Rotate particles con movimiento fluido
+    if (this.particles) {
+      this.particles.rotation.x += 0.0003;
+      this.particles.rotation.y += 0.0007;
+      
+      // Movimiento ondulatorio en las partículas
+      const positions = this.particles.geometry.attributes['position'].array as Float32Array;
+      for (let i = 0; i < positions.length; i += 3) {
+        const x = positions[i];
+        const z = positions[i + 2];
+        positions[i + 1] += Math.sin(time + x * 0.05) * 0.02;
+      }
+      this.particles.geometry.attributes['position'].needsUpdate = true;
+    }
+
+    // Animar formas científicas
+    const shapes = (this.scene as any).scientificShapes;
+    
+    if (shapes && Array.isArray(shapes)) {
+      shapes.forEach((shape: THREE.Object3D, index: number) => {
+        // Rotaciones diferentes para cada forma
+        shape.rotation.x += 0.003 * (index % 2 === 0 ? 1 : -1);
+        shape.rotation.y += 0.005 * (index % 3 === 0 ? 1 : -1);
+        shape.rotation.z += 0.002 * (index % 2 === 0 ? -1 : 1);
+        
+        // Movimiento flotante sutil
+        shape.position.y += Math.sin(time * 0.5 + index) * 0.01;
+      });
+    }
+
+    // Rotar la cámara lentamente alrededor de la escena
+    this.camera.position.x = Math.sin(time * 0.1) * 5;
+    this.camera.position.y = Math.cos(time * 0.15) * 5;
+    this.camera.lookAt(0, 0, 0);
+
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  private onWindowResize(): void {
+    if (!this.canvasRef) return;
+
+    const canvas = this.canvasRef.nativeElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height);
   }
 
   onSubmit() {
@@ -208,11 +722,31 @@ export class LoginComponent {
     // Verificar por código de error GraphQL
     if (error.graphQLErrors && error.graphQLErrors.length > 0) {
       const graphQLError = error.graphQLErrors[0];
-      return graphQLError.extensions?.code === 'USER_NOT_FOUND';
+      
+      // Verificar código
+      if (graphQLError.extensions?.code === 'USER_NOT_FOUND') {
+        return true;
+      }
+      
+      // Verificar mensaje
+      const message = graphQLError.message?.toLowerCase() || '';
+      if (message.includes('usuario no encontrado') || 
+          message.includes('user not found') ||
+          message.includes('no encontrado') ||
+          message.includes('not found')) {
+        return true;
+      }
     }
     
     // Verificar por código HTTP 404
     if (error.networkError && error.networkError.status === 404) {
+      return true;
+    }
+    
+    // Verificar mensaje de error general
+    const errorMessage = error.message?.toLowerCase() || '';
+    if (errorMessage.includes('usuario no encontrado') || 
+        errorMessage.includes('user not found')) {
       return true;
     }
     
