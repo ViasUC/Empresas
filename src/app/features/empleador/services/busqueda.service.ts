@@ -44,9 +44,7 @@ export interface ResultadoBusqueda {
 
 export interface FiltrosDisponibles {
   carreras: string[];
-  niveles: string[];
   ubicaciones: string[];
-  disponibilidades: string[];
 }
 
 /**
@@ -61,19 +59,16 @@ export class BusquedaService {
     query BuscarPortafolios($filtros: FiltrosBusqueda) {
       buscarPortafolios(filtros: $filtros) {
         portafolios {
-          id
-          tipo
+          idPortafolio
           usuarioId
           nombre
           apellido
           email
           telefono
           carrera
-          habilidades
-          descripcion
           ubicacion
-          visibilidad
-          fechaActualizacion
+          descripcion
+          skills
         }
         total
         pagina
@@ -86,9 +81,7 @@ export class BusquedaService {
     query ObtenerFiltros {
       obtenerFiltros {
         carreras
-        niveles
         ubicaciones
-        disponibilidades
       }
     }
   `;
