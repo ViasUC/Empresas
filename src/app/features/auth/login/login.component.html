@@ -32,19 +32,59 @@
       
       <!-- Mensaje de Usuario No Encontrado -->
       <div class="user-not-found-message" *ngIf="showUserNotFoundMessage">
-        <mat-icon class="error-icon">person_off</mat-icon>
-        <h3>UUsuario No Encontrado</h3>
-        <p>El correo <strong>{{userNotFoundEmail}}</strong> no está registrado en el sistema.</p>
+        <div class="not-found-illustration">
+          <div class="illustration-circle">
+            <mat-icon class="main-icon">person_search</mat-icon>
+          </div>
+        </div>
         
-        <div class="action-buttons">
-          <button mat-raised-button color="primary" (click)="openRegisterDialog()">
-            <mat-icon>person_add</mat-icon>
-            Crear Cuenta Nueva
-          </button>
-          <button mat-button (click)="backToLogin()">
-            <mat-icon>arrow_back</mat-icon>
-            Volver al Login
-          </button>
+        <div class="not-found-content">
+          <h2>¡Ups! No encontramos tu cuenta</h2>
+          <p class="email-message">
+            El correo <strong class="highlight-email">{{userNotFoundEmail}}</strong> 
+            no está registrado en VIAS-UC
+          </p>
+          
+          <div class="info-box">
+            <mat-icon class="info-icon">info</mat-icon>
+            <p>¿Primera vez aquí? Únete a nuestra comunidad y descubre oportunidades increíbles</p>
+          </div>
+          
+          <div class="action-buttons">
+            <button 
+              mat-raised-button 
+              color="primary" 
+              class="create-account-btn"
+              (click)="openRegisterDialog()">
+              <mat-icon>person_add</mat-icon>
+              Crear Mi Cuenta
+            </button>
+            <button 
+              mat-stroked-button 
+              class="back-btn"
+              (click)="backToLogin()">
+              <mat-icon>arrow_back</mat-icon>
+              Volver
+            </button>
+          </div>
+          
+          <div class="benefits-preview">
+            <p class="benefits-title">Con VIAS-UC podrás:</p>
+            <div class="benefits-list">
+              <div class="benefit-item">
+                <mat-icon>check_circle</mat-icon>
+                <span>Acceder a oportunidades exclusivas</span>
+              </div>
+              <div class="benefit-item">
+                <mat-icon>check_circle</mat-icon>
+                <span>Conectar con empresas líderes</span>
+              </div>
+              <div class="benefit-item">
+                <mat-icon>check_circle</mat-icon>
+                <span>Gestionar tu portafolio profesional</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

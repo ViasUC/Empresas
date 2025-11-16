@@ -342,51 +342,237 @@ $success-green: #10b981;
   }
 }
 
-// Estilos para mensaje de usuario no encontrado
+// Estilos para mensaje de usuario no encontrado - Diseño moderno y atractivo
 .user-not-found-message {
   text-align: center;
-  padding: 3rem 2rem;
+  padding: 2rem;
+  animation: fadeIn 0.4s ease-in-out;
   
-  .error-icon {
-    font-size: 80px;
-    width: 80px;
-    height: 80px;
-    color: #f44336;
-    margin-bottom: 1.5rem;
-  }
-  
-  h3 {
-    color: $dark-navy;
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-    font-weight: 600;
-  }
-  
-  p {
-    color: $text-gray;
-    font-size: 1.1rem;
+  .not-found-illustration {
     margin-bottom: 2rem;
-    line-height: 1.6;
     
-    strong {
-      color: $primary-navy;
-      font-weight: 600;
+    .illustration-circle {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border-radius: 50%;
+      @include flex-center;
+      box-shadow: 0 10px 40px rgba(245, 87, 108, 0.3);
+      animation: pulse 2s ease-in-out infinite;
+      
+      .main-icon {
+        font-size: 64px;
+        width: 64px;
+        height: 64px;
+        color: $white;
+      }
     }
   }
   
-  .action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    align-items: center;
+  .not-found-content {
+    h2 {
+      color: $dark-navy;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, $primary-navy 0%, #f5576c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
     
-    button {
-      min-width: 250px;
-      height: 48px;
-      font-size: 1rem;
+    .email-message {
+      color: $text-gray;
+      font-size: 1.05rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
       
-      mat-icon {
-        margin-right: 8px;
+      .highlight-email {
+        color: $primary-navy;
+        font-weight: 600;
+        background: rgba($primary-navy, 0.08);
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+    }
+    
+    .info-box {
+      background: linear-gradient(135deg, rgba($light-blue, 0.08) 0%, rgba(245, 87, 108, 0.08) 100%);
+      border-left: 4px solid $light-blue;
+      padding: 1rem 1.2rem;
+      border-radius: 8px;
+      margin: 1.5rem 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      text-align: left;
+      
+      .info-icon {
+        color: $light-blue;
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      
+      p {
+        margin: 0;
+        color: #334155;
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin: 2rem 0 1.5rem;
+      flex-wrap: wrap;
+      
+      .create-account-btn {
+        min-width: 200px;
+        height: 48px;
+        font-size: 1rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, $primary-navy 0%, $secondary-navy 100%);
+        box-shadow: 0 4px 15px rgba($primary-navy, 0.3);
+        @include transition-smooth;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba($primary-navy, 0.4);
+        }
+        
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+      
+      .back-btn {
+        min-width: 120px;
+        height: 48px;
+        font-size: 1rem;
+        border: 2px solid $primary-navy;
+        color: $primary-navy;
+        @include transition-smooth;
+        
+        &:hover {
+          background: rgba($primary-navy, 0.05);
+          transform: translateY(-2px);
+        }
+        
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+    
+    .benefits-preview {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba($primary-navy, 0.1);
+      
+      .benefits-title {
+        font-size: 0.9rem;
+        color: $text-gray;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .benefits-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        
+        .benefit-item {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          padding: 0.5rem 1rem;
+          background: rgba($success-green, 0.05);
+          border-radius: 8px;
+          text-align: left;
+          @include transition-smooth;
+          
+          &:hover {
+            background: rgba($success-green, 0.1);
+            transform: translateX(5px);
+          }
+          
+          mat-icon {
+            color: $success-green;
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+            margin-right: 0.8rem;
+            flex-shrink: 0;
+          }
+          
+          span {
+            color: #475569;
+            font-size: 0.9rem;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Animaciones
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+// Responsive para mensaje de usuario no encontrado
+@media (max-width: 768px) {
+  .user-not-found-message {
+    padding: 1.5rem 1rem;
+    
+    .not-found-illustration .illustration-circle {
+      width: 100px;
+      height: 100px;
+      
+      .main-icon {
+        font-size: 52px;
+        width: 52px;
+        height: 52px;
+      }
+    }
+    
+    .not-found-content {
+      h2 {
+        font-size: 1.5rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+        
+        button {
+          width: 100%;
+          min-width: auto;
+        }
       }
     }
   }
