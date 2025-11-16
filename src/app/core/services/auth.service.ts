@@ -48,9 +48,16 @@ export interface RegistroData {
 
 export interface RegisterResponse {
   register: {
-    user: User;
     token: string;
-    refreshToken: string;
+    usuario: {
+      idUsuario: string;
+      nombre: string;
+      apellido: string;
+      email: string;
+      rol: string;
+    };
+    success: boolean;
+    message: string;
   };
 }
 
@@ -84,15 +91,16 @@ export class AuthService {
   private REGISTER_MUTATION = gql`
     mutation Register($input: RegisterInput!) {
       register(input: $input) {
-        user {
-          id
-          email
+        token
+        usuario {
+          idUsuario
           nombre
           apellido
-          tipo
+          email
+          rol
         }
-        token
-        refreshToken
+        success
+        message
       }
     }
   `;
@@ -237,17 +245,39 @@ export class AuthService {
       }
     }).pipe(
       map(result => {
+        console.log('Register result from backend:', result);
         if (!result.data) {
           throw new Error('No se recibió respuesta del servidor');
         }
         return result.data.register;
       }),
       tap(registerData => {
-        const user = { ...registerData.user, token: registerData.token };
+        console.log('Register data received:', registerData);
+        // Mapear la respuesta del backend al formato User del frontend
+        const tipoMapeado = this.mapRolPrincipalToTipo(registerData.usuario.rol);
+        const user: User = {
+          id: parseInt(registerData.usuario.idUsuario),
+          email: registerData.usuario.email,
+          nombre: registerData.usuario.nombre,
+          apellido: registerData.usuario.apellido,
+          tipo: tipoMapeado,
+          token: registerData.token
+        };
         this.setCurrentUser(user, registerData.token);
-        this.storeAuthData(user, registerData.token, registerData.refreshToken);
+        this.storeAuthData(user, registerData.token, ''); // Sin refreshToken por ahora
       }),
-      map(registerData => registerData.user)
+      map(registerData => {
+        // Retornar el user construido
+        const tipoMapeado = this.mapRolPrincipalToTipo(registerData.usuario.rol);
+        return {
+          id: parseInt(registerData.usuario.idUsuario),
+          email: registerData.usuario.email,
+          nombre: registerData.usuario.nombre,
+          apellido: registerData.usuario.apellido,
+          tipo: tipoMapeado,
+          token: registerData.token
+        };
+      })
     );
   }
 
