@@ -5,8 +5,8 @@ import { map } from 'rxjs/operators';
 
 // Query para obtener empresa
 const GET_MI_EMPRESA = gql`
-  query MiEmpresa {
-    miEmpresa {
+  query MiEmpresa($idUsuario: ID!) {
+    miEmpresa(idUsuario: $idUsuario) {
       id
       nombreEmpresa
       ruc
@@ -21,8 +21,8 @@ const GET_MI_EMPRESA = gql`
 
 // Mutation para actualizar empresa
 const ACTUALIZAR_EMPRESA = gql`
-  mutation ActualizarEmpresa($input: ActualizarEmpresaInput!) {
-    actualizarEmpresa(input: $input) {
+  mutation ActualizarEmpresa($input: ActualizarEmpresaInput!, $idUsuario: ID!) {
+    actualizarEmpresa(input: $input, idUsuario: $idUsuario) {
       success
       message
       empresa {
@@ -68,12 +68,29 @@ export class EmpleadorService {
   constructor(private apollo: Apollo) {}
 
   /**
+   * Obtener el idUsuario del usuario del localStorage
+   */
+  private getUserId(): number | null {
+    const userStr = localStorage.getItem('viasuc_user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      return user.idUsuario || user.id || null;
+    }
+    return null;
+  }
+
+  /**
    * Obtener datos de la empresa del usuario logueado
    */
   obtenerMiEmpresa(): Observable<Empresa | null> {
+    const idUsuario = this.getUserId();
+    console.log('>>> Frontend: Llamando miEmpresa con idUsuario:', idUsuario);
     return this.apollo
       .query<{ miEmpresa: Empresa }>({
         query: GET_MI_EMPRESA,
+        variables: {
+          idUsuario: idUsuario
+        },
         fetchPolicy: 'network-only' // Siempre obtener datos frescos
       })
       .pipe(
@@ -85,10 +102,15 @@ export class EmpleadorService {
    * Actualizar datos de la empresa
    */
   actualizarEmpresa(input: ActualizarEmpresaInput): Observable<any> {
+    const idUsuario = this.getUserId();
+    console.log('>>> Frontend: Llamando actualizarEmpresa con idUsuario:', idUsuario);
     return this.apollo
       .mutate({
         mutation: ACTUALIZAR_EMPRESA,
-        variables: { input }
+        variables: { 
+          input: input,
+          idUsuario: idUsuario
+        }
       })
       .pipe(
         map(result => result.data)

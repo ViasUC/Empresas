@@ -20,9 +20,10 @@ export interface User {
 
 export interface LoginResponse {
   login: {
-    user: User;
-    token: string;
-    refreshToken: string;
+    idUsuario: string;
+    nombre: string;
+    apellido: string;
+    rolPrincipal: string;
   };
 }
 
@@ -70,17 +71,12 @@ export class AuthService {
 
   // GraphQL Mutations
   private LOGIN_MUTATION = gql`
-    mutation Login($email: String!, $password: String!, $tipoUsuario: TipoUsuario!) {
-      login(email: $email, password: $password, tipoUsuario: $tipoUsuario) {
-        user {
-          id
-          email
-          nombre
-          apellido
-          tipo
-        }
-        token
-        refreshToken
+    mutation Login($input: LoginInput!) {
+      login(input: $input) {
+        idUsuario
+        nombre
+        apellido
+        rolPrincipal
       }
     }
   `;
@@ -136,15 +132,35 @@ export class AuthService {
   }
 
   /**
+   * Mapea los roles del backend original a los tipos del frontend
+   */
+  private mapRolPrincipalToTipo(rolPrincipal: string): string {
+    const roleMap: { [key: string]: string } = {
+      'empresa': 'EMPLEADOR',
+      'empleador': 'EMPLEADOR',
+      'alumno': 'ESTUDIANTE',
+      'estudiante': 'ESTUDIANTE',
+      'egresado': 'EGRESADO',
+      'profesor': 'DOCENTE',
+      'investigador': 'DOCENTE',
+      'docente': 'DOCENTE',
+      'administrador': 'ADMIN',
+      'admin': 'ADMIN'
+    };
+    return roleMap[rolPrincipal?.toLowerCase()] || rolPrincipal || 'EMPLEADOR';
+  }
+
+  /**
    * Inicia sesión con credenciales
    */
   login(credentials: LoginCredentials): Observable<User> {
     return this.apollo.mutate<LoginResponse>({
       mutation: this.LOGIN_MUTATION,
       variables: {
-        email: credentials.email,
-        password: credentials.password,
-        tipoUsuario: credentials.tipoUsuario
+        input: {
+          email: credentials.email,
+          password: credentials.password
+        }
       }
     }).pipe(
       map(result => {
@@ -156,14 +172,39 @@ export class AuthService {
           }
           throw new Error('No se recibió respuesta del servidor');
         }
+        if (!result.data.login) {
+          console.error('Login data is null. Full result:', result);
+          throw new Error('Credenciales inválidas o usuario no encontrado');
+        }
         return result.data.login;
       }),
       tap(loginData => {
-        const user = { ...loginData.user, token: loginData.token };
-        this.setCurrentUser(user, loginData.token);
-        this.storeAuthData(user, loginData.token, loginData.refreshToken);
+        console.log('Login data received:', loginData);
+        // Backend original no devuelve token, adaptamos la respuesta
+        // Mapear rolPrincipal del backend original a tipo del frontend
+        const tipoMapeado = this.mapRolPrincipalToTipo(loginData.rolPrincipal);
+        const user: User = { 
+          id: parseInt(loginData.idUsuario),
+          email: credentials.email,
+          nombre: loginData.nombre || '',
+          apellido: loginData.apellido || '',
+          tipo: tipoMapeado
+        };
+        this.setCurrentUser(user, ''); // Sin token en backend original
+        this.storeAuthData(user, '', '');
       }),
-      map(loginData => loginData.user)
+      map(loginData => {
+        // Retornamos el user construido
+        const tipoMapeado = this.mapRolPrincipalToTipo(loginData.rolPrincipal);
+        const user: User = { 
+          id: parseInt(loginData.idUsuario),
+          email: credentials.email,
+          nombre: loginData.nombre || '',
+          apellido: loginData.apellido || '',
+          tipo: tipoMapeado
+        };
+        return user;
+      })
     );
   }
 
