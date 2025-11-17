@@ -4,7 +4,7 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { RegistroData, DatosEmpresaRegistro } from '../../../core/models/auth.models';
-import { map, debounceTime, switchMap, take } from 'rxjs/operators';
+import { map, debounceTime, switchMap, take, catchError } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -134,8 +134,7 @@ export class RegisterComponent implements OnInit {
       razonSocial: ['', [Validators.required, Validators.minLength(3)]],
       contacto: ['', [Validators.required, Validators.pattern(/^[0-9]{8,15}$/)]],
       ubicacion: ['Asunción', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
-      rolEnEmpresa: ['Administrador', [Validators.required]]
+      email: ['', [Validators.required, Validators.email]]
     });
   }
 
@@ -160,17 +159,9 @@ export class RegisterComponent implements OnInit {
         return of(null);
       }
 
-      // Debounce para evitar muchas peticiones
-      return of(control.value).pipe(
-        debounceTime(500),
-        switchMap(email => 
-          this.authService.verificarEmailDisponible(email).pipe(
-            map(disponible => {
-              return disponible ? null : { emailNoDisponible: true };
-            })
-          )
-        ),
-        take(1)
+      return this.authService.verificarEmailDisponible(control.value).pipe(
+        map(disponible => disponible ? null : { emailNoDisponible: true }),
+        catchError(() => of(null)) // En caso de error, no bloquear el formulario
       );
     };
   }

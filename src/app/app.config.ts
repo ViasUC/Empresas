@@ -27,16 +27,13 @@ export const appConfig: ApplicationConfig = {
       // Link de autenticación para Apollo
       const auth = setContext(() => {
         const token = localStorage.getItem('viasuc_token');
-        console.log('[Apollo Auth] Token encontrado en localStorage:', token ? 'SÍ (longitud: ' + token.length + ')' : 'NO');
         if (token) {
-          console.log('[Apollo Auth] Agregando header Authorization');
           return {
             headers: {
               Authorization: `Bearer ${token}`
             }
           };
         }
-        console.warn('[Apollo Auth] No se encontró token, enviando sin autenticación');
         return {};
       });
 
