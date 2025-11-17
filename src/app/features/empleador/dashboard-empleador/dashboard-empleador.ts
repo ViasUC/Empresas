@@ -35,6 +35,24 @@ export class DashboardEmpleador implements OnInit {
     this.router.navigate(['/dashboard/empleador/buscar-candidatos']);
   }
 
+  irAGestionUsuarios(): void {
+    this.router.navigate(['/dashboard/empleador/gestion-usuarios']);
+  }
+
+  esAdministrador(): boolean {
+    // Puedes mejorar esto según cómo guardes el rol en el dashboard
+    const empresaStr = localStorage.getItem('empresa');
+    if (empresaStr) {
+      try {
+        const empresa = JSON.parse(empresaStr);
+        return empresa.rol_en_empresa === 'ADMINISTRADOR' || empresa.rolEnEmpresa === 'ADMINISTRADOR';
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  }
+
   logout(): void {
     this.authService.logout().subscribe({
       next: () => {

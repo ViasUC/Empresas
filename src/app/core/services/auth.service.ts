@@ -2,63 +2,12 @@ import { Injectable } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
+import { User, RegistroData, LoginResponse, RegisterResponse } from '../models/auth.models';
 
 export interface LoginCredentials {
   email: string;
   password: string;
   tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'DOCENTE' | 'ADMIN';
-}
-
-export interface User {
-  id: number;
-  email: string;
-  nombre: string;
-  apellido: string;
-  tipo: string;
-  token?: string;
-}
-
-export interface LoginResponse {
-  login: {
-    idUsuario: string;
-    nombre: string;
-    apellido: string;
-    rolPrincipal: string;
-  };
-}
-
-export interface RegistroData {
-  tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'DOCENTE';
-  nombre: string;
-  apellido: string;
-  email: string;
-  telefono: string;
-  password: string;
-  ubicacion?: string;
-  datosEmpresa?: {
-    nombreEmpresa: string;
-    ruc: string;
-    razonSocial: string;
-    contacto: string;
-    ubicacion: string;
-    email: string;
-    rolEnEmpresa: string;
-  };
-}
-
-export interface RegisterResponse {
-  register: {
-    token: string;
-    usuario: {
-      idUsuario: string;
-      nombre: string;
-      apellido: string;
-      email: string;
-      rol: string;
-    };
-    success: boolean;
-    message: string;
-  };
 }
 
 /**
@@ -134,6 +83,17 @@ export class AuthService {
       verificarEmailDisponible(email: $email)
     }
   `;
+  
+  private LISTAR_EMPRESAS_QUERY = gql`
+    query ListarEmpresas {
+      listarEmpresas {
+        idEmpresa
+        nombreEmpresa
+        ruc
+        razonSocial
+      }
+    }
+  `;
 
   constructor(private apollo: Apollo) {
     this.loadStoredUser();
@@ -172,22 +132,24 @@ export class AuthService {
       }
     }).pipe(
       map(result => {
-        console.log('Login result from backend:', result);
+        // Si hay errores, propagarlos
+        if (result.errors && result.errors.length > 0) {
+          const error = result.errors[0];
+          // Propagar el error original del backend
+          throw error;
+        }
+        
         if (!result.data) {
-          console.error('Errors from backend:', result.errors);
-          if (result.errors && result.errors.length > 0) {
-            throw result.errors[0];
-          }
           throw new Error('No se recibió respuesta del servidor');
         }
+        
         if (!result.data.login) {
-          console.error('Login data is null. Full result:', result);
           throw new Error('Credenciales inválidas o usuario no encontrado');
         }
+        
         return result.data.login;
       }),
       tap(loginData => {
-        console.log('Login data received:', loginData);
         // Backend original no devuelve token, adaptamos la respuesta
         // Mapear rolPrincipal del backend original a tipo del frontend
         const tipoMapeado = this.mapRolPrincipalToTipo(loginData.rolPrincipal);
@@ -220,39 +182,45 @@ export class AuthService {
    * Registra un nuevo usuario
    */
   register(datos: RegistroData): Observable<User> {
+    // Preparar el input base
+    const input: any = {
+      tipoUsuario: datos.tipoUsuario,
+      nombre: datos.nombre,
+      apellido: datos.apellido,
+      email: datos.email,
+      telefono: datos.telefono,
+      password: datos.password,
+      ubicacion: datos.ubicacion || 'Asunción'
+    };
+    
+    // Si es EMPLEADOR, manejar datos de empresa
+    if (datos.tipoUsuario === 'EMPLEADOR' && datos.datosEmpresa) {
+      if (datos.datosEmpresa.unirseAExistente && datos.datosEmpresa.idEmpresa) {
+        // Caso: Unirse a empresa existente
+        input.idEmpresaExistente = datos.datosEmpresa.idEmpresa;
+        input.rolSolicitado = datos.datosEmpresa.rolEnEmpresa; // GERENTE_RRHH o AUXILIAR_RRHH
+      } else {
+        // Caso: Crear empresa nueva
+        input.nombreEmpresa = datos.datosEmpresa.nombreEmpresa;
+        input.ruc = datos.datosEmpresa.ruc;
+        input.razonSocial = datos.datosEmpresa.razonSocial;
+        input.contacto = datos.datosEmpresa.contacto || '';
+        input.ubicacionEmpresa = datos.datosEmpresa.ubicacion || 'Asunción';
+        input.emailEmpresa = datos.datosEmpresa.email || '';
+      }
+    }
+    
     return this.apollo.mutate<RegisterResponse>({
       mutation: this.REGISTER_MUTATION,
-      variables: {
-        input: {
-          tipoUsuario: datos.tipoUsuario,
-          nombre: datos.nombre,
-          apellido: datos.apellido,
-          email: datos.email,
-          telefono: datos.telefono,
-          password: datos.password,
-          ubicacion: datos.ubicacion || 'Asunción',
-          // Datos de empresa solo para empleadores
-          ...(datos.tipoUsuario === 'EMPLEADOR' && datos.datosEmpresa ? {
-            nombreEmpresa: datos.datosEmpresa.nombreEmpresa,
-            ruc: datos.datosEmpresa.ruc,
-            razonSocial: datos.datosEmpresa.razonSocial,
-            contacto: datos.datosEmpresa.contacto,
-            ubicacionEmpresa: datos.datosEmpresa.ubicacion,
-            emailEmpresa: datos.datosEmpresa.email,
-            rolEnEmpresa: datos.datosEmpresa.rolEnEmpresa
-          } : {})
-        }
-      }
+      variables: { input }
     }).pipe(
       map(result => {
-        console.log('Register result from backend:', result);
         if (!result.data) {
           throw new Error('No se recibió respuesta del servidor');
         }
         return result.data.register;
       }),
       tap(registerData => {
-        console.log('Register data received:', registerData);
         // Mapear la respuesta del backend al formato User del frontend
         const tipoMapeado = this.mapRolPrincipalToTipo(registerData.usuario.rol);
         const user: User = {
@@ -420,5 +388,21 @@ export class AuthService {
     localStorage.removeItem('viasuc_refresh_token');
     this.currentUserSubject.next(null);
     this.tokenSubject.next(null);
+  }
+  
+  /**
+   * Lista todas las empresas disponibles para unirse
+   */
+  listarEmpresas(): Observable<any[]> {
+    return this.apollo.query<any>({
+      query: this.LISTAR_EMPRESAS_QUERY,
+      fetchPolicy: 'network-only'
+    }).pipe(
+      map(result => result.data.listarEmpresas),
+      catchError(error => {
+        console.error('Error al listar empresas:', error);
+        return of([]);
+      })
+    );
   }
 }

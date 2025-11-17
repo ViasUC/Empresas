@@ -12,7 +12,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { AuthService, LoginCredentials } from '../../../core/services/auth.service';
-import { RegisterComponent, RegistroData } from '../register/register.component';
+import { RegisterComponent } from '../register/register.component';
+import { RegistroData } from '../../../core/models/auth.models';
+import { UsuarioEmpresaService, RolEmpresa } from '../../empleador/services/usuario-empresa.service';
+import { Apollo, gql } from 'apollo-angular';
 import * as THREE from 'three';
 
 @Component({
@@ -57,7 +60,9 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
     private authService: AuthService,
     private router: Router,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private apollo: Apollo,
+    private usuarioEmpresaService: UsuarioEmpresaService
   ) {
     this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
@@ -596,26 +601,49 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
         error: (error) => {
           this.isLoading = false;
           
-          // Detectar si el usuario no existe (404 o USER_NOT_FOUND)
-          const isUserNotFound = this.isUserNotFoundError(error);
+          // Extraer mensaje de error
+          let errorMsg = this.getLoginErrorMessage(error);
           
-          if (isUserNotFound) {
-            this.userNotFoundEmail = this.loginForm.value.email;
-            this.showUserNotFoundMessage = true;
-            this.errorMessage = 'Usuario no encontrado';
+          // PRIMERO: Detectar si es pendiente de aprobación (ANTES de user not found)
+          const isPendienteAprobacion = errorMsg.includes('PENDIENTE_APROBACION') || 
+                                        errorMsg.includes('pendiente de aprobación');
+          
+          if (isPendienteAprobacion) {
+            // Usuario pendiente de aprobación - mensaje especial destacado
+            const mensaje = errorMsg.replace('PENDIENTE_APROBACION:', '').trim() || 
+                           'Tu acceso está pendiente de aprobación por el administrador de la empresa.';
+            
+            this.errorMessage = mensaje;
+            this.snackBar.open(
+              mensaje + '\n\nRecibirás un correo cuando tu acceso sea aprobado.', 
+              'Entendido', 
+              { 
+                duration: 12000,
+                panelClass: ['warning-snackbar'],
+                horizontalPosition: 'center',
+                verticalPosition: 'top'
+              }
+            );
           } else {
-            this.errorMessage = this.getLoginErrorMessage(error);
+            // SEGUNDO: Detectar si el usuario no existe (solo si NO es pendiente)
+            const isUserNotFound = this.isUserNotFoundError(error);
             
-            // Duración más larga para mensajes importantes como EMAIL_NOT_VERIFIED
-            const duracion = error.graphQLErrors?.[0]?.extensions?.code === 'EMAIL_NOT_VERIFIED' ? 10000 : 7000;
-            
-            this.snackBar.open(this.errorMessage, 'Cerrar', { 
-              duration: duracion,
-              panelClass: ['error-snackbar']
-            });
+            if (isUserNotFound) {
+              this.userNotFoundEmail = this.loginForm.value.email;
+              this.showUserNotFoundMessage = true;
+              this.errorMessage = 'Usuario no encontrado';
+            } else {
+              this.errorMessage = errorMsg;
+              
+              // Duración más larga para mensajes importantes como EMAIL_NOT_VERIFIED
+              const duracion = error.graphQLErrors?.[0]?.extensions?.code === 'EMAIL_NOT_VERIFIED' ? 10000 : 7000;
+              
+              this.snackBar.open(this.errorMessage, 'Cerrar', { 
+                duration: duracion,
+                panelClass: ['error-snackbar']
+              });
+            }
           }
-          
-          console.error('Error en login:', error);
         }
       });
     } else {
@@ -625,7 +653,6 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
 
   onRolChange(event: any) {
     this.selectedRol = event.tab.textLabel.toLowerCase();
-    console.log('Rol seleccionado:', this.selectedRol);
   }
 
   private markFormGroupTouched() {
@@ -655,7 +682,8 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
   private redirectAfterLogin(tipoUsuario: string): void {
     switch (tipoUsuario) {
       case 'EMPLEADOR':
-        this.router.navigate(['/dashboard/empleador']);
+        // Para empleadores, cargar empresa y rol antes de redirigir
+        this.cargarEmpresaYRol();
         break;
       case 'ESTUDIANTE':
         this.router.navigate(['/dashboard/estudiante']);
@@ -675,11 +703,82 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Carga la empresa y el rol del usuario empleador
+   */
+  private cargarEmpresaYRol(): void {
+    const usuario = this.authService.getCurrentUser();
+    if (!usuario || !usuario.id) {
+      console.error('No se pudo obtener usuario actual');
+      this.router.navigate(['/dashboard/empleador']);
+      return;
+    }
+
+    const QUERY_MI_EMPRESA = gql`
+      query MiEmpresa($idUsuario: ID!) {
+        miEmpresa(idUsuario: $idUsuario) {
+          idEmpresa
+          nombreEmpresa
+          ruc
+          razonSocial
+        }
+      }
+    `;
+
+    this.apollo.query<any>({
+      query: QUERY_MI_EMPRESA,
+      variables: { idUsuario: usuario.id.toString() },
+      fetchPolicy: 'network-only'
+    }).subscribe({
+      next: (result) => {
+        const empresa = result.data.miEmpresa;
+        if (empresa) {
+          const idEmpresa = empresa.idEmpresa;
+          
+          // Obtener el rol del usuario en esta empresa
+          this.usuarioEmpresaService.obtenerRolUsuario(idEmpresa, usuario.id.toString())
+            .subscribe({
+              next: (rol) => {
+                // Guardar empresa con rol en localStorage
+                const empresaConRol = {
+                  ...empresa,
+                  id: idEmpresa,
+                  rolEnEmpresa: rol
+                };
+                localStorage.setItem('empresa', JSON.stringify(empresaConRol));
+                
+                // Ahora sí redirigir
+                this.router.navigate(['/dashboard/empleador']);
+              },
+              error: (err) => {
+                console.error('Error al obtener rol:', err);
+                // Guardar empresa sin rol
+                localStorage.setItem('empresa', JSON.stringify({ ...empresa, id: idEmpresa }));
+                this.router.navigate(['/dashboard/empleador']);
+              }
+            });
+        } else {
+          console.warn('No se encontró empresa para el usuario');
+          this.router.navigate(['/dashboard/empleador']);
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar empresa:', err);
+        this.router.navigate(['/dashboard/empleador']);
+      }
+    });
+  }
+
+  /**
    * Obtiene mensaje de error amigable para el login
    * PRIORIDAD: Siempre usar el mensaje del backend si está disponible
    */
   private getLoginErrorMessage(error: any): string {
-    // PRIMERO: Intentar obtener el mensaje de GraphQL
+    // PRIMERO: Verificar si el error tiene mensaje directo (cuando viene de auth.service.ts)
+    if (error.message && typeof error.message === 'string') {
+      return error.message;
+    }
+    
+    // SEGUNDO: Intentar obtener el mensaje de GraphQL errors array
     if (error.graphQLErrors && error.graphQLErrors.length > 0) {
       const graphQLError = error.graphQLErrors[0];
       
@@ -712,7 +811,7 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     
     // Error genérico
-    return error.message || 'Error al iniciar sesión. Por favor intente nuevamente';
+    return 'Error al iniciar sesión. Por favor intente nuevamente';
   }
 
   /**

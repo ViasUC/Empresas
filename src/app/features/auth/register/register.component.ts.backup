@@ -1,9 +1,8 @@
 import { Component, EventEmitter, Output, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, AbstractControl, ValidationErrors, AsyncValidatorFn } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors, AsyncValidatorFn } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
-import { RegistroData, DatosEmpresaRegistro } from '../../../core/models/auth.models';
 import { map, debounceTime, switchMap, take } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,13 +14,31 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatStepperModule } from '@angular/material/stepper';
 
+export interface RegistroData {
+  tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO';
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono: string;
+  password: string;
+  ubicacion?: string;
+  datosEmpresa?: {
+    nombreEmpresa: string;
+    ruc: string;
+    razonSocial: string;
+    contacto: string;
+    ubicacion: string;
+    email: string;
+    rolEnEmpresa: string;
+  };
+}
+
 @Component({
   selector: 'app-register',
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    FormsModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -48,13 +65,6 @@ export class RegisterComponent implements OnInit {
   
   tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' = 'EMPLEADOR';
   
-  // Flujo dual: crear empresa o unirse a existente
-  tipoRegistro: 'nueva' | 'existente' | null = null;
-  empresasDisponibles: any[] = [];
-  empresaSeleccionada: number | null = null;
-  rolSeleccionado: string = 'GERENTE_RRHH';
-  cargandoEmpresas = false;
-  
   sectoresIndustria = [
     'Tecnología',
     'Finanzas',
@@ -69,11 +79,6 @@ export class RegisterComponent implements OnInit {
     'Energía',
     'Telecomunicaciones',
     'Otro'
-  ];
-  
-  rolesDisponibles = [
-    { valor: 'GERENTE_RRHH', nombre: 'Gerente de RRHH' },
-    { valor: 'AUXILIAR_RRHH', nombre: 'Auxiliar de RRHH' }
   ];
 
   constructor(
@@ -91,27 +96,6 @@ export class RegisterComponent implements OnInit {
     if (this.data && this.data.email) {
       this.datosPersonalesForm.patchValue({ email: this.data.email });
     }
-    
-    // Cargar lista de empresas disponibles
-    this.cargarEmpresas();
-  }
-  
-  cargarEmpresas(): void {
-    this.cargandoEmpresas = true;
-    this.authService.listarEmpresas().subscribe({
-      next: (empresas) => {
-        this.empresasDisponibles = empresas;
-        this.cargandoEmpresas = false;
-      },
-      error: (err) => {
-        console.error('Error al cargar empresas:', err);
-        this.cargandoEmpresas = false;
-      }
-    });
-  }
-  
-  seleccionarTipoRegistro(tipo: 'nueva' | 'existente'): void {
-    this.tipoRegistro = tipo;
   }
 
   private createDatosPersonalesForm(): FormGroup {
@@ -281,25 +265,10 @@ export class RegisterComponent implements OnInit {
       return;
     }
     
-    // Si es empleador, validar según el tipo de registro
-    if (this.tipoUsuario === 'EMPLEADOR') {
-      if (this.tipoRegistro === 'nueva') {
-        // Crear empresa nueva: validar formulario de empresa
-        if (!this.datosEmpresaForm.valid) {
-          this.markAllAsTouched();
-          return;
-        }
-      } else if (this.tipoRegistro === 'existente') {
-        // Unirse a empresa: validar que haya seleccionado empresa y rol
-        if (!this.empresaSeleccionada || !this.rolSeleccionado) {
-          alert('Por favor seleccione una empresa y un rol');
-          return;
-        }
-      } else {
-        // No ha seleccionado tipo de registro
-        alert('Por favor seleccione si desea crear una empresa nueva o unirse a una existente');
-        return;
-      }
+    // Si es empleador, validar datos de empresa
+    if (this.tipoUsuario === 'EMPLEADOR' && !this.datosEmpresaForm.valid) {
+      this.markAllAsTouched();
+      return;
     }
     
     this.isLoading = true;
@@ -311,32 +280,10 @@ export class RegisterComponent implements OnInit {
       ubicacion: 'Asunción' // Por defecto, se puede agregar al formulario si es necesario
     };
     
-    // Agregar datos de empresa según el tipo de registro
+    // Agregar datos de empresa si es empleador
     if (this.tipoUsuario === 'EMPLEADOR') {
-      if (this.tipoRegistro === 'nueva') {
-        // Crear empresa nueva con rol Administrador
-        registroData.datosEmpresa = {
-          ...this.datosEmpresaForm.value,
-          rolEnEmpresa: 'ADMINISTRADOR'
-        };
-      } else if (this.tipoRegistro === 'existente') {
-        // Unirse a empresa existente con rol seleccionado
-        const empresaSeleccionadaObj = this.empresasDisponibles.find(
-          e => e.idEmpresa === this.empresaSeleccionada
-        );
-        
-        registroData.datosEmpresa = {
-          idEmpresa: this.empresaSeleccionada || undefined,
-          nombreEmpresa: empresaSeleccionadaObj?.nombreEmpresa || '',
-          ruc: empresaSeleccionadaObj?.ruc || '',
-          razonSocial: empresaSeleccionadaObj?.razonSocial || '',
-          rolEnEmpresa: this.rolSeleccionado,
-          unirseAExistente: true // Flag para indicar que se une a existente
-        };
-      }
+      registroData.datosEmpresa = this.datosEmpresaForm.value;
     }
-    
-    console.log('Datos de registro:', registroData);
     
     // Emitir evento de registro
     this.registroExitoso.emit(registroData);

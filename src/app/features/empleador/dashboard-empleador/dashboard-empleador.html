@@ -45,6 +45,13 @@
         <p>Revisa las postulaciones a tus ofertas</p>
         <button class="btn-primary" disabled>Proximamente</button>
       </div>
+
+      <!-- Solo para ADMINISTRADOR -->
+      <div class="card" *ngIf="esAdministrador()">
+        <h3>Gestión de Usuarios</h3>
+        <p>Gestiona el equipo de tu empresa y aprueba solicitudes de acceso</p>
+        <button class="btn-primary" (click)="irAGestionUsuarios()">Gestionar Equipo</button>
+      </div>
     </div>
   </main>
 </div>

@@ -663,9 +663,190 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
 
   descargarPerfil(portafolio: Portafolio, event: Event): void {
     event.stopPropagation();
-    // TODO: Mostrar menú de opciones de descarga (PDF, Word, etc.)
-    console.log('Descargar perfil:', portafolio);
-    alert(`Funcionalidad en desarrollo: Descargar perfil de ${portafolio.nombre} ${portafolio.apellido}`);
+    this.generarPDF(portafolio);
+  }
+
+  private async generarPDF(portafolio: Portafolio): Promise<void> {
+    try {
+      // Importación dinámica de jsPDF y autoTable
+      const { jsPDF } = await import('jspdf');
+      const autoTable = (await import('jspdf-autotable')).default;
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+      let yPosition = 20;
+
+      // === HEADER - Datos Personales ===
+      doc.setFillColor(25, 118, 210); // Azul #1976d2
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${portafolio.nombre} ${portafolio.apellido}`, pageWidth / 2, 15, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(portafolio.carrera || 'Carrera no especificada', pageWidth / 2, 25, { align: 'center' });
+      
+      if (portafolio.ubicacion) {
+        doc.setFontSize(10);
+        doc.text(portafolio.ubicacion, pageWidth / 2, 32, { align: 'center' });
+      }
+
+      yPosition = 50;
+      doc.setTextColor(0, 0, 0);
+
+      // === INFORMACIÓN DE CONTACTO ===
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(25, 118, 210);
+      doc.text('Información de Contacto', 14, yPosition);
+      yPosition += 8;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      
+      if (portafolio.email) {
+        doc.text(`Email: ${portafolio.email}`, 14, yPosition);
+        yPosition += 6;
+      }
+      
+      if (portafolio.telefono) {
+        doc.text(`Teléfono: ${portafolio.telefono}`, 14, yPosition);
+        yPosition += 6;
+      }
+
+      yPosition += 5;
+
+      // === DESCRIPCIÓN / PERFIL PROFESIONAL ===
+      if (portafolio.descripcion) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(25, 118, 210);
+        doc.text('Perfil Profesional', 14, yPosition);
+        yPosition += 8;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        const descripcionLines = doc.splitTextToSize(portafolio.descripcion, pageWidth - 28);
+        doc.text(descripcionLines, 14, yPosition);
+        yPosition += (descripcionLines.length * 5) + 5;
+      }
+
+      // === FORMACIÓN ACADÉMICA ===
+      if (portafolio.carrera || portafolio.anioEstudio) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(25, 118, 210);
+        doc.text('Formación Académica', 14, yPosition);
+        yPosition += 8;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        
+        if (portafolio.carrera) {
+          doc.text(`Carrera: ${portafolio.carrera}`, 14, yPosition);
+          yPosition += 6;
+        }
+        
+        if (portafolio.anioEstudio) {
+          doc.text(`Año de estudio: ${portafolio.anioEstudio}°`, 14, yPosition);
+          yPosition += 6;
+        }
+        
+        if (portafolio.promedio) {
+          doc.text(`Promedio: ${portafolio.promedio.toFixed(2)}`, 14, yPosition);
+          yPosition += 6;
+        }
+
+        yPosition += 5;
+      }
+
+      // === HABILIDADES TÉCNICAS ===
+      if (portafolio.habilidades && portafolio.habilidades.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(25, 118, 210);
+        doc.text('Habilidades Técnicas', 14, yPosition);
+        yPosition += 8;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        
+        const habilidadesText = portafolio.habilidades.join(' • ');
+        const habilidadesLines = doc.splitTextToSize(habilidadesText, pageWidth - 28);
+        doc.text(habilidadesLines, 14, yPosition);
+        yPosition += (habilidadesLines.length * 5) + 5;
+      }
+
+      // === IDIOMAS ===
+      if (portafolio.idiomas && portafolio.idiomas.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(25, 118, 210);
+        doc.text('Idiomas', 14, yPosition);
+        yPosition += 8;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        doc.text(portafolio.idiomas.join(' • '), 14, yPosition);
+        yPosition += 10;
+      }
+
+      // === EXPERIENCIA LABORAL ===
+      if (portafolio.experiencia) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(25, 118, 210);
+        doc.text('Experiencia', 14, yPosition);
+        yPosition += 8;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        doc.text(portafolio.experiencia, 14, yPosition);
+        yPosition += 10;
+      }
+
+      // === MODALIDAD DE TRABAJO ===
+      if (portafolio.modalidad) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(25, 118, 210);
+        doc.text('Modalidad Preferida', 14, yPosition);
+        yPosition += 8;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        const modalidadTexto = portafolio.modalidad.charAt(0).toUpperCase() + portafolio.modalidad.slice(1);
+        doc.text(modalidadTexto, 14, yPosition);
+        yPosition += 10;
+      }
+
+      // === FOOTER ===
+      const fechaGeneracion = new Date().toLocaleDateString('es-PY', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Documento generado el ${fechaGeneracion} desde VIASUC`, pageWidth / 2, 285, { align: 'center' });
+
+      // === DESCARGAR PDF ===
+      const nombreArchivo = `Portafolio_${portafolio.nombre}_${portafolio.apellido}.pdf`.replace(/\s+/g, '_');
+      doc.save(nombreArchivo);
+    } catch (error) {
+      alert('Error al generar el PDF. Por favor, intenta nuevamente.');
+    }
   }
 
   enviarMensaje(portafolio: Portafolio): void {
@@ -675,7 +856,6 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
   }
 
   // === Helpers ===
-
   getTipoBadge(tipo: string): string {
     const tipos: { [key: string]: string } = {
       'PORTAFOLIO': 'Portafolio',

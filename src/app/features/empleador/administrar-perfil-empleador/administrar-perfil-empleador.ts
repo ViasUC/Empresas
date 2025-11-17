@@ -48,8 +48,10 @@ export class AdministrarPerfilEmpleador implements OnInit {
     this.empleadorService.obtenerMiEmpresa().subscribe({
       next: (empresa) => {
         if (empresa) {
-          this.idEmpresa = empresa.id;
+          // Usar idEmpresa (numero) y convertir a string si es necesario
+          this.idEmpresa = (empresa.idEmpresa || empresa.id)?.toString() || null;
           console.log('Datos de empresa cargados:', empresa);
+          console.log('idEmpresa:', this.idEmpresa);
           
           // Llenar formulario con datos de la empresa
           this.perfilForm.patchValue({

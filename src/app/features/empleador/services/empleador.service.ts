@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 const GET_MI_EMPRESA = gql`
   query MiEmpresa($idUsuario: ID!) {
     miEmpresa(idUsuario: $idUsuario) {
-      id
+      idEmpresa
       nombreEmpresa
       ruc
       razonSocial
@@ -26,7 +26,7 @@ const ACTUALIZAR_EMPRESA = gql`
       success
       message
       empresa {
-        id
+        idEmpresa
         nombreEmpresa
         ruc
         razonSocial
@@ -40,7 +40,8 @@ const ACTUALIZAR_EMPRESA = gql`
 `;
 
 export interface Empresa {
-  id: string;
+  id?: string; // Mantener por compatibilidad
+  idEmpresa: number;
   nombreEmpresa: string;
   ruc: string;
   razonSocial: string;
