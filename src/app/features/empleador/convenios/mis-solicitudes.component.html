@@ -1,0 +1,200 @@
+<div class="mis-solicitudes-container">
+  <div class="header">
+    <h1>Mis Solicitudes de Convenio</h1>
+    <button class="btn btn-primary" (click)="nuevaSolicitud()">
+      <span class="icon">+</span>
+      Nueva Solicitud
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+    <p>Cargando solicitudes...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="icon-alert"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Sin solicitudes -->
+  <div *ngIf="!isLoading && solicitudes.length === 0 && !errorMessage" class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h2>No hay solicitudes</h2>
+    <p>Aún no has realizado ninguna solicitud de convenio</p>
+    <button class="btn btn-primary" (click)="nuevaSolicitud()">
+      Crear primera solicitud
+    </button>
+  </div>
+
+  <!-- Lista de solicitudes -->
+  <div *ngIf="!isLoading && solicitudes.length > 0" class="solicitudes-list">
+    <div class="list-header">
+      <span>Encontradas {{ solicitudes.length }} solicitud(es)</span>
+    </div>
+
+    <div class="cards-grid">
+      <div *ngFor="let solicitud of solicitudes" class="solicitud-card" (click)="verDetalle(solicitud)">
+        <div class="card-header">
+          <h3>{{ solicitud.institucion }}</h3>
+          <span class="estado-badge" [ngClass]="getEstadoClass(solicitud.estado)">
+            {{ getEstadoIcon(solicitud.estado) }} {{ solicitud.estado }}
+          </span>
+        </div>
+
+        <div class="card-body">
+          <p class="descripcion">{{ solicitud.descripcion }}</p>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Fecha Inicio:</span>
+              <span class="value">{{ formatDate(solicitud.fechaIni) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Fecha Fin:</span>
+              <span class="value">{{ formatDate(solicitud.fechaFin) }}</span>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="solicitud.responsables">
+            <span class="label">Responsables:</span>
+            <span class="value">{{ solicitud.responsables }}</span>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <span class="fecha-creacion">
+            Creado: {{ formatDate(solicitud.fechaCreacion) }}
+          </span>
+          <button class="btn-link">Ver detalle →</button>
+        </div>
+
+        <!-- Alerta para rechazadas -->
+        <div *ngIf="solicitud.estado === 'Rechazado'" class="alert-inline alert-danger">
+          <strong>Motivo del rechazo:</strong>
+          <p>{{ solicitud.observaciones || 'No se especificó un motivo' }}</p>
+        </div>
+
+        <!-- Alerta para pendientes de documentación -->
+        <div *ngIf="solicitud.estado === 'Pendiente' && !solicitud.documentoAdjunto" class="alert-inline alert-warning">
+          <strong>⚠️ Documentación pendiente</strong>
+          <p>Se requiere adjuntar documentación para procesar la solicitud</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Detalle -->
+  <div *ngIf="selectedSolicitud" class="modal-overlay" (click)="cerrarDetalle()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Detalle de Solicitud</h2>
+        <button class="btn-close" (click)="cerrarDetalle()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detalle-section">
+          <h3>Información General</h3>
+          <div class="detalle-grid">
+            <div class="detalle-item">
+              <span class="label">ID Convenio:</span>
+              <span class="value">{{ selectedSolicitud.idConven }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="label">Estado:</span>
+              <span class="estado-badge" [ngClass]="getEstadoClass(selectedSolicitud.estado)">
+                {{ getEstadoIcon(selectedSolicitud.estado) }} {{ selectedSolicitud.estado }}
+              </span>
+            </div>
+            <div class="detalle-item full-width">
+              <span class="label">Institución:</span>
+              <span class="value">{{ selectedSolicitud.institucion }}</span>
+            </div>
+            <div class="detalle-item full-width">
+              <span class="label">Descripción:</span>
+              <span class="value">{{ selectedSolicitud.descripcion }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detalle-section">
+          <h3>Vigencia</h3>
+          <div class="detalle-grid">
+            <div class="detalle-item">
+              <span class="label">Fecha Inicio:</span>
+              <span class="value">{{ formatDate(selectedSolicitud.fechaIni) }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="label">Fecha Fin:</span>
+              <span class="value">{{ formatDate(selectedSolicitud.fechaFin) }}</span>
+            </div>
+            <div class="detalle-item" *ngIf="selectedSolicitud.duracion">
+              <span class="label">Duración:</span>
+              <span class="value">{{ selectedSolicitud.duracion }}</span>
+            </div>
+            <div class="detalle-item" *ngIf="selectedSolicitud.cantHoras">
+              <span class="label">Horas:</span>
+              <span class="value">{{ selectedSolicitud.cantHoras }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedSolicitud.responsables">
+          <h3>Responsables</h3>
+          <p>{{ selectedSolicitud.responsables }}</p>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedSolicitud.objetivos">
+          <h3>Objetivos</h3>
+          <p>{{ selectedSolicitud.objetivos }}</p>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedSolicitud.beneficios">
+          <h3>Beneficios</h3>
+          <p>{{ selectedSolicitud.beneficios }}</p>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedSolicitud.requisitos">
+          <h3>Requisitos</h3>
+          <p>{{ selectedSolicitud.requisitos }}</p>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedSolicitud.observaciones">
+          <h3>Observaciones</h3>
+          <p>{{ selectedSolicitud.observaciones }}</p>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedSolicitud.documentoAdjunto">
+          <h3>Documentación</h3>
+          <p class="documento-adjunto">📎 {{ selectedSolicitud.documentoAdjunto }}</p>
+        </div>
+
+        <div class="timeline-section">
+          <h3>Timeline</h3>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <span class="timeline-date">{{ formatDate(selectedSolicitud.fechaCreacion) }}</span>
+                <span class="timeline-text">Solicitud creada</span>
+              </div>
+            </div>
+            <div class="timeline-item" *ngIf="selectedSolicitud.fechaActualizacion !== selectedSolicitud.fechaCreacion">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <span class="timeline-date">{{ formatDate(selectedSolicitud.fechaActualizacion) }}</span>
+                <span class="timeline-text">Última actualización</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarDetalle()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

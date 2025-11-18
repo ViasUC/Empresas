@@ -349,9 +349,11 @@ export class AuthService {
    * Almacena los datos de autenticación en localStorage
    */
   private storeAuthData(user: User, token: string, refreshToken: string): void {
-    localStorage.setItem('viasuc_user', JSON.stringify(user));
-    localStorage.setItem('viasuc_token', token);
-    localStorage.setItem('viasuc_refresh_token', refreshToken);
+    localStorage.setItem('usuario', JSON.stringify(user));
+    localStorage.setItem('token', token);
+    if (refreshToken) {
+      localStorage.setItem('refresh_token', refreshToken);
+    }
   }
 
   /**
@@ -359,8 +361,8 @@ export class AuthService {
    */
   private loadStoredUser(): void {
     try {
-      const userJson = localStorage.getItem('viasuc_user');
-      const token = localStorage.getItem('viasuc_token');
+      const userJson = localStorage.getItem('usuario');
+      const token = localStorage.getItem('token');
       
       if (userJson && token) {
         const user = JSON.parse(userJson);
@@ -376,16 +378,17 @@ export class AuthService {
    * Obtiene el token almacenado
    */
   private getStoredToken(): string | null {
-    return localStorage.getItem('viasuc_token');
+    return localStorage.getItem('token');
   }
 
   /**
    * Limpia todos los datos de autenticación
    */
   private clearAuthData(): void {
-    localStorage.removeItem('viasuc_user');
-    localStorage.removeItem('viasuc_token');
-    localStorage.removeItem('viasuc_refresh_token');
+    localStorage.removeItem('usuario');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('empresa');
     this.currentUserSubject.next(null);
     this.tokenSubject.next(null);
   }

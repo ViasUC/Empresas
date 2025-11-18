@@ -1,0 +1,191 @@
+<div class="solicitar-convenio-container">
+  <div class="header">
+    <h1>Solicitar Convenio</h1>
+    <p class="subtitle">Complete el formulario para solicitar un nuevo convenio con una institución</p>
+  </div>
+
+  <!-- Mensajes de éxito y error -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="icon-check"></i>
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="icon-alert"></i>
+    {{ errorMessage }}
+  </div>
+
+  <form [formGroup]="convenioForm" (ngSubmit)="onSubmit()" class="convenio-form">
+    
+    <!-- Información Básica -->
+    <div class="form-section">
+      <h2>Información Básica</h2>
+      
+      <div class="form-group">
+        <label for="institucion">Institución *</label>
+        <input
+          type="text"
+          id="institucion"
+          formControlName="institucion"
+          placeholder="Nombre de la institución"
+          [class.invalid]="convenioForm.get('institucion')?.invalid && convenioForm.get('institucion')?.touched"
+        />
+        <span class="error-message" *ngIf="convenioForm.get('institucion')?.invalid && convenioForm.get('institucion')?.touched">
+          La institución es obligatoria (mínimo 3 caracteres)
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción del Convenio *</label>
+        <textarea
+          id="descripcion"
+          formControlName="descripcion"
+          rows="4"
+          placeholder="Describa brevemente el convenio"
+          [class.invalid]="convenioForm.get('descripcion')?.invalid && convenioForm.get('descripcion')?.touched"
+        ></textarea>
+        <span class="error-message" *ngIf="convenioForm.get('descripcion')?.invalid && convenioForm.get('descripcion')?.touched">
+          La descripción es obligatoria (mínimo 10 caracteres)
+        </span>
+      </div>
+    </div>
+
+    <!-- Vigencia -->
+    <div class="form-section">
+      <h2>Vigencia</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fechaIni">Fecha de Inicio *</label>
+          <input
+            type="date"
+            id="fechaIni"
+            formControlName="fechaIni"
+            [class.invalid]="convenioForm.get('fechaIni')?.invalid && convenioForm.get('fechaIni')?.touched"
+          />
+          <span class="error-message" *ngIf="convenioForm.get('fechaIni')?.invalid && convenioForm.get('fechaIni')?.touched">
+            La fecha de inicio es obligatoria
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="fechaFin">Fecha de Fin *</label>
+          <input
+            type="date"
+            id="fechaFin"
+            formControlName="fechaFin"
+            [class.invalid]="convenioForm.get('fechaFin')?.invalid && convenioForm.get('fechaFin')?.touched"
+          />
+          <span class="error-message" *ngIf="convenioForm.get('fechaFin')?.invalid && convenioForm.get('fechaFin')?.touched">
+            La fecha de fin es obligatoria
+          </span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="duracion">Duración</label>
+          <input
+            type="text"
+            id="duracion"
+            formControlName="duracion"
+            placeholder="Ej: 12 meses, 2 años"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="cantHoras">Cantidad de Horas</label>
+          <input
+            type="text"
+            id="cantHoras"
+            formControlName="cantHoras"
+            placeholder="Ej: 40 horas semanales"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Responsables -->
+    <div class="form-section">
+      <h2>Responsables</h2>
+      
+      <div class="form-group">
+        <label for="responsables">Responsables del Convenio *</label>
+        <input
+          type="text"
+          id="responsables"
+          formControlName="responsables"
+          placeholder="Nombres de los responsables"
+          [class.invalid]="convenioForm.get('responsables')?.invalid && convenioForm.get('responsables')?.touched"
+        />
+        <span class="error-message" *ngIf="convenioForm.get('responsables')?.invalid && convenioForm.get('responsables')?.touched">
+          Los responsables son obligatorios
+        </span>
+      </div>
+    </div>
+
+    <!-- Detalles -->
+    <div class="form-section">
+      <h2>Detalles del Convenio</h2>
+      
+      <div class="form-group">
+        <label for="objetivos">Objetivos</label>
+        <textarea
+          id="objetivos"
+          formControlName="objetivos"
+          rows="3"
+          placeholder="Objetivos del convenio"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="beneficios">Beneficios</label>
+        <textarea
+          id="beneficios"
+          formControlName="beneficios"
+          rows="3"
+          placeholder="Beneficios del convenio"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="requisitos">Requisitos</label>
+        <textarea
+          id="requisitos"
+          formControlName="requisitos"
+          rows="3"
+          placeholder="Requisitos del convenio"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Documentación -->
+    <div class="form-section">
+      <h2>Documentación</h2>
+      
+      <div class="form-group">
+        <label for="documentoAdjunto">Documento Adjunto</label>
+        <input
+          type="file"
+          id="documentoAdjunto"
+          (change)="onFileSelected($event)"
+          accept=".pdf,.doc,.docx"
+        />
+        <span class="file-info" *ngIf="documentoAdjunto">
+          Archivo seleccionado: {{ documentoAdjunto }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="isSubmitting">
+        Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || convenioForm.invalid">
+        <span *ngIf="!isSubmitting">Enviar Solicitud</span>
+        <span *ngIf="isSubmitting">Enviando...</span>
+      </button>
+    </div>
+  </form>
+</div>
