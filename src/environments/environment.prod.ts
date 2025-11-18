@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.viasuc.com/graphql', // URL del servidor GraphQL en producción
+  apiUrl: 'https://api.viasuc.com/api/v1', // URL del servidor REST en producción
+  graphqlUrl: 'https://api.viasuc.com/graphql', // URL del servidor GraphQL en producción
   wsUrl: 'wss://api.viasuc.com/graphql', // WebSocket seguro para subscriptions
   appName: 'VIASUC - Empresas',
   version: '1.0.0',

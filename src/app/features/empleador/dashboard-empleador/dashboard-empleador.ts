@@ -39,6 +39,18 @@ export class DashboardEmpleador implements OnInit {
     this.router.navigate(['/dashboard/empleador/gestion-usuarios']);
   }
 
+  irASolicitarConvenio(): void {
+    this.router.navigate(['/dashboard/empleador/solicitar-convenio']);
+  }
+
+  irAMisSolicitudes(): void {
+    this.router.navigate(['/dashboard/empleador/mis-solicitudes']);
+  }
+
+  irAConveniosVigentes(): void {
+    this.router.navigate(['/dashboard/empleador/convenios-vigentes']);
+  }
+
   esAdministrador(): boolean {
     // Puedes mejorar esto según cómo guardes el rol en el dashboard
     const empresaStr = localStorage.getItem('empresa');

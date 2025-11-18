@@ -1,6 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/graphql', // URL del servidor GraphQL Spring Boot
+  apiUrl: 'http://localhost:8080/api/v1', // URL del servidor REST Spring Boot
+  graphqlUrl: 'http://localhost:8080/graphql', // URL del servidor GraphQL Spring Boot
   wsUrl: 'ws://localhost:8080/graphql', // WebSocket para subscriptions
   appName: 'VIASUC - Empresas',
   version: '1.0.0',

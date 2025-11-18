@@ -1,0 +1,88 @@
+<div class="container">
+  <header>
+    <h1>Mis Solicitudes de Convenio</h1>
+    <button class="btn-back" (click)="volver()">← Volver al Dashboard</button>
+  </header>
+
+  <div class="content">
+    <div *ngIf="loading" class="loading">Cargando solicitudes...</div>
+    
+    <div *ngIf="!loading && errorMessage" class="error-state">
+      <p>{{ errorMessage }}</p>
+      <button class="btn-retry" (click)="cargarSolicitudes()">Reintentar</button>
+    </div>
+    
+    <div *ngIf="!loading && !errorMessage && solicitudes.length === 0" class="empty-state">
+      <p>No tienes solicitudes de convenio pendientes</p>
+      <button class="btn-primary" routerLink="/dashboard/empleador/solicitar-convenio">
+        Solicitar un Convenio
+      </button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && solicitudes.length > 0" class="solicitudes-list">
+      <div *ngFor="let solicitud of solicitudes" class="solicitud-card">
+        <div class="card-header">
+          <div class="header-left">
+            <h3>{{ solicitud.institucion }}</h3>
+            <span class="fecha-info">📅 Solicitado el {{ solicitud.fechaCreacion | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <span class="estado-badge" [class.pendiente]="solicitud.estado === 'Pendiente'">{{ solicitud.estado }}</span>
+        </div>
+        
+        <div class="card-body">
+          <p class="descripcion">{{ solicitud.descripcion }}</p>
+          
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="icon">📆</span>
+              <div class="detail-content">
+                <span class="label">Periodo de Vigencia</span>
+                <span class="value">{{ solicitud.fechaIni }} → {{ solicitud.fechaFin }}</span>
+              </div>
+            </div>
+            
+            <div class="detail-item">
+              <span class="icon">👤</span>
+              <div class="detail-content">
+                <span class="label">Responsable</span>
+                <span class="value">{{ solicitud.responsables }}</span>
+              </div>
+            </div>
+            
+            <div class="detail-item">
+              <span class="icon">⏱️</span>
+              <div class="detail-content">
+                <span class="label">Duración</span>
+                <span class="value">{{ solicitud.duracion || 'No especificada' }}</span>
+              </div>
+            </div>
+            
+            <div class="detail-item">
+              <span class="icon">🕐</span>
+              <div class="detail-content">
+                <span class="label">Horas Totales</span>
+                <span class="value">{{ solicitud.cantHoras || 'No especificadas' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="extra-info" *ngIf="solicitud.objetivos || solicitud.beneficios">
+            <div class="info-section" *ngIf="solicitud.objetivos">
+              <strong>🎯 Objetivos:</strong>
+              <p>{{ solicitud.objetivos }}</p>
+            </div>
+            <div class="info-section" *ngIf="solicitud.beneficios">
+              <strong>✨ Beneficios:</strong>
+              <p>{{ solicitud.beneficios }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-footer">
+          <span class="empresa-tag">🏢 {{ solicitud.nombreEmpresa }}</span>
+          <span class="id-tag">ID: #{{ solicitud.idConven }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
