@@ -76,9 +76,11 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Initialize Three.js scene after view is ready
-    this.initThreeJS();
-    this.animate();
+    // Initialize Three.js scene after view is ready with small delay
+    setTimeout(() => {
+      this.initThreeJS();
+      this.animate();
+    }, 100);
   }
 
   ngOnDestroy(): void {

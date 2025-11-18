@@ -29,7 +29,7 @@ $success-green: #10b981;
     flex: 1;
     background: linear-gradient(135deg, $primary-navy 0%, $secondary-navy 100%);
     color: $white;
-    padding: 3rem 2rem;
+    padding: 2rem 2rem; // Reducido de 3rem a 2rem arriba/abajo
     @include flex-center;
     flex-direction: column;
     position: relative;
@@ -42,8 +42,10 @@ $success-green: #10b981;
       left: 0;
       width: 100%;
       height: 100%;
+      min-height: 100vh;
       z-index: 0;
       opacity: 0.4;
+      display: block;
     }
     
     // Efecto overlay sutil
@@ -66,13 +68,13 @@ $success-green: #10b981;
     
     .branding {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 1.5rem; // Reducido de 3rem a 1.5rem
       
       .logo {
         font-size: 3.5rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
-        margin-top: -0.8rem; // Solo un pequeño ajuste hacia arriba
+        margin-bottom: 0.3rem; // Reducido de 0.5rem
+        margin-top: -0.8rem;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         letter-spacing: 2px;
       }
@@ -82,6 +84,7 @@ $success-green: #10b981;
         opacity: 0.9;
         font-weight: 300;
         letter-spacing: 0.5px;
+        margin-top: 0; // Sin margen superior adicional
       }
     }
     
@@ -130,13 +133,13 @@ $success-green: #10b981;
     .features {
       width: 100%;
       max-width: 400px;
-      margin-top: 1.5rem;
+      margin-top: 1rem; // Reducido de 1.5rem
       
       .feature-item {
         display: flex;
         align-items: flex-start;
-        margin-bottom: 1.2rem;
-        padding: 0.8rem;
+        margin-bottom: 0.8rem; // Reducido de 1.2rem
+        padding: 0.6rem; // Reducido de 0.8rem
         background: rgba($white, 0.08);
         backdrop-filter: blur(5px);
         border-radius: 10px;
@@ -183,7 +186,7 @@ $success-green: #10b981;
     
     // Sección de confianza
     .trust-section {
-      margin-top: 2rem;
+      margin-top: 1rem; // Reducido de 2rem
       text-align: center;
       width: 100%;
       max-width: 400px;
@@ -191,7 +194,7 @@ $success-green: #10b981;
       .trust-text {
         font-size: 0.85rem;
         color: rgba($white, 0.7);
-        margin-bottom: 1rem;
+        margin-bottom: 0.7rem; // Reducido de 1rem
         font-weight: 300;
         letter-spacing: 0.3px;
       }
@@ -768,6 +771,256 @@ $success-green: #10b981;
         }
       }
     }
+  }
+}
+
+// ========================================
+// Redes Sociales
+// ========================================
+.social-media-section {
+  margin-top: 1rem; // Reducido de 2rem
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+  
+  .social-title {
+    font-size: 0.85rem; // Reducido de 0.9rem
+    color: rgba($white, 0.8);
+    margin-bottom: 0.7rem; // Reducido de 1rem
+    font-weight: 300;
+    letter-spacing: 0.3px;
+  }
+  
+  .social-links {
+    display: flex;
+    justify-content: center;
+    gap: 1rem; // Reducido de 1.2rem
+    
+    .social-link {
+      width: 42px; // Reducido de 48px
+      height: 42px; // Reducido de 48px
+      border-radius: 50%;
+      @include flex-center;
+      @include transition-smooth;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba($white, 0.2);
+      position: relative;
+      overflow: hidden;
+      
+      svg {
+        width: 22px; // Reducido de 24px
+        height: 22px; // Reducido de 24px
+        position: relative;
+        z-index: 2;
+        @include transition-smooth;
+      }
+      
+      // Efecto de fondo al hover
+      &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        @include transition-smooth;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+      }
+      
+      &:hover {
+        transform: translateY(-5px) scale(1.1);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        border-color: rgba($white, 0.4);
+        
+        &::before {
+          width: 100%;
+          height: 100%;
+        }
+        
+        svg {
+          transform: scale(1.1);
+        }
+      }
+      
+      // Facebook
+      &.facebook {
+        background: rgba(24, 119, 242, 0.15);
+        
+        svg {
+          color: #1877F2;
+        }
+        
+        &::before {
+          background: #1877F2;
+        }
+        
+        &:hover svg {
+          color: $white;
+        }
+      }
+      
+      // Twitter/X
+      &.twitter {
+        background: rgba(0, 0, 0, 0.15);
+        
+        svg {
+          color: #000000;
+        }
+        
+        &::before {
+          background: #000000;
+        }
+        
+        &:hover svg {
+          color: $white;
+        }
+      }
+      
+      // Instagram
+      &.instagram {
+        background: linear-gradient(45deg, 
+          rgba(131, 58, 180, 0.15), 
+          rgba(253, 29, 29, 0.15), 
+          rgba(252, 176, 69, 0.15)
+        );
+        
+        svg {
+          color: #E1306C;
+        }
+        
+        &::before {
+          background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+        }
+        
+        &:hover svg {
+          color: $white;
+        }
+      }
+      
+      // YouTube
+      &.youtube {
+        background: rgba(255, 0, 0, 0.15);
+        
+        svg {
+          color: #FF0000;
+        }
+        
+        &::before {
+          background: #FF0000;
+        }
+        
+        &:hover svg {
+          color: $white;
+        }
+      }
+    }
+  }
+}
+
+// ========================================
+// Enlaces Flotantes Laterales
+// ========================================
+.floating-sidebar-links {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  
+  .floating-link {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, $primary-navy 0%, $secondary-navy 100%);
+    color: $white;
+    text-decoration: none;
+    padding: 0.8rem 1rem 0.8rem 0.6rem;
+    border-radius: 0 25px 25px 0;
+    box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.3);
+    @include transition-smooth;
+    transform: translateX(-100%);
+    width: auto;
+    
+    .floating-icon {
+      width: 40px;
+      height: 40px;
+      @include flex-center;
+      background: rgba($white, 0.15);
+      border-radius: 50%;
+      margin-right: 0;
+      flex-shrink: 0;
+      @include transition-smooth;
+      
+      svg {
+        width: 24px;
+        height: 24px;
+        color: $white;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      }
+    }
+    
+    .floating-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+      white-space: nowrap;
+      opacity: 0;
+      max-width: 0;
+      overflow: hidden;
+      @include transition-smooth;
+      letter-spacing: 0.3px;
+    }
+    
+    &:hover {
+      transform: translateX(0);
+      box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.4);
+      padding-right: 1.5rem;
+      
+      .floating-icon {
+        background: rgba($white, 0.25);
+        margin-right: 0.8rem;
+        transform: scale(1.1);
+      }
+      
+      .floating-text {
+        opacity: 1;
+        max-width: 150px;
+        margin-left: 0;
+      }
+    }
+    
+    // Animación de entrada escalonada
+    &:nth-child(1) {
+      animation: slideInFromLeft 0.6s ease-out 0.2s forwards;
+    }
+    
+    &:nth-child(2) {
+      animation: slideInFromLeft 0.6s ease-out 0.4s forwards;
+    }
+    
+    &:nth-child(3) {
+      animation: slideInFromLeft 0.6s ease-out 0.6s forwards;
+    }
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+// Responsive para enlaces flotantes
+@media (max-width: 1024px) {
+  .floating-sidebar-links {
+    display: none; // Ocultamos en tablets y móviles para no interferir
   }
 }
 

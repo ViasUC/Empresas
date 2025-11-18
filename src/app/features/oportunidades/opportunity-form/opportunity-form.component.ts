@@ -8,7 +8,7 @@ import {
   FormsModule,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MODALIDADES, TIPOS, Opportunity, OpportunityInput } from '../../../core/models/opportunity.model';
+import { MODALIDADES, TIPOS, Opportunity, OpportunityInput, OpportunityState } from '../../../core/models/opportunity.model';
 import { OpportunityService } from '../services/opportunity.service';
 
 @Component({
@@ -26,6 +26,8 @@ export class OpportunityFormComponent implements OnInit {
   isEdit = false;
   opportunityId?: number;
   editing = false;
+  currentOpportunity?: Opportunity;
+  isEditable = true; // Solo es editable si está en BORRADOR
 
   constructor(
     private fb: FormBuilder,
@@ -47,6 +49,18 @@ export class OpportunityFormComponent implements OnInit {
         .getById(this.opportunityId)
         .subscribe((opp: Opportunity | undefined) => {
           if (opp) {
+            this.currentOpportunity = opp;
+            
+            // Editable según estado:
+            // - 'cerrado': NO editable (solo lectura)
+            // - Otros estados: SÍ editable
+            this.isEditable = opp.estado !== 'cerrado';
+            
+            // Si está cerrado, deshabilitar formulario completamente
+            if (!this.isEditable) {
+              this.form.disable();
+            }
+            
             this.form.patchValue({
               titulo: opp.titulo,
               descripcion: opp.descripcion,
@@ -81,6 +95,10 @@ export class OpportunityFormComponent implements OnInit {
       return;
     }
 
+    const etiquetasArray = this.form.value.etiquetas
+      ? this.form.value.etiquetas.split(',').map((e: string) => e.trim()).filter((e: string) => e)
+      : [];
+
     const payload: OpportunityInput = {
       titulo: this.form.value.titulo,
       descripcion: this.form.value.descripcion,
@@ -88,9 +106,8 @@ export class OpportunityFormComponent implements OnInit {
       ubicacion: this.form.value.ubicacion,
       modalidad: this.form.value.modalidad,
       tipo: this.form.value.tipo,
-      fechaCierre: this.form.value.fechaCierre
-        ? new Date(this.form.value.fechaCierre).toISOString()
-        : null,
+      fechaCierre: this.form.value.fechaCierre || null,
+      etiquetas: etiquetasArray
     };
 
     const request$ = this.isEdit && this.opportunityId
@@ -102,7 +119,7 @@ export class OpportunityFormComponent implements OnInit {
         this.router.navigate(['/oportunidades']);
       },
       error: (err) => {
-        console.error('Error guardando oportunidad', err);
+        console.error('Error guardando oportunidad:', err);
       },
     });
   }
@@ -113,5 +130,18 @@ export class OpportunityFormComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/dashboard/empleador']);
+  }
+
+  /**
+   * Obtiene la etiqueta legible del estado para mostrar en UI
+   */
+  getEstadoLabel(estado: OpportunityState): string {
+    const labels: Record<OpportunityState, string> = {
+      'borrador': 'Borrador',
+      'activo': 'Activa',
+      'pausada': 'Pausada',
+      'cerrado': 'Cerrada'
+    };
+    return labels[estado] || estado;
   }
 }

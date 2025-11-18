@@ -65,16 +65,18 @@ export class OpportunityListComponent implements OnInit {
     this.router.navigate(['oportunidades', id, 'editar']);
   }
 
-  // ===== Métodos de cambio de estado =====
+  // ===== Métodos de cambio de estado (con auditoría automática en backend) =====
 
   publish(opp: Opportunity): void {
-    if (opp.estado === 'ACTIVA') return;
+    if (opp.estado === 'activo') return;
     const id = opp.id || opp.idOportunidad;
     if (!id) {
       console.error('ID de oportunidad no disponible');
       return;
     }
-    this.service.changeState(id, 'ACTIVA').subscribe({
+    if (!confirm('¿Publicar esta oportunidad? Pasará a estado ACTIVO y será visible para todos.')) return;
+    
+    this.service.changeState(id, 'activo').subscribe({
       next: () => this.load(),
       error: (err: any) => console.error('Error al publicar', err),
     });
@@ -90,7 +92,9 @@ export class OpportunityListComponent implements OnInit {
       console.error('ID de oportunidad no disponible');
       return;
     }
-    this.service.changeState(id, 'PAUSADA').subscribe({
+    if (!confirm('¿Pausar esta oportunidad? Dejará de ser visible temporalmente.')) return;
+    
+    this.service.changeState(id, 'pausada').subscribe({
       next: () => this.load(),
       error: (err: any) => console.error('Error al pausar', err),
     });
@@ -101,13 +105,15 @@ export class OpportunityListComponent implements OnInit {
   }
 
   reanudar(opp: Opportunity): void {
-    if (opp.estado === 'PAUSADA') {
+    if (opp.estado === 'pausada') {
       const id = opp.id || opp.idOportunidad;
       if (!id) {
         console.error('ID de oportunidad no disponible');
         return;
       }
-      this.service.changeState(id, 'ACTIVA').subscribe({
+      if (!confirm('¿Reanudar esta oportunidad? Volverá a estar ACTIVO y visible.')) return;
+      
+      this.service.changeState(id, 'activo').subscribe({
         next: () => this.load(),
         error: (err: any) => console.error('Error al reanudar', err),
       });
@@ -120,14 +126,16 @@ export class OpportunityListComponent implements OnInit {
       console.error('ID de oportunidad no disponible');
       return;
     }
-    this.service.changeState(id, 'CERRADA').subscribe({
+    if (!confirm('¿Cerrar definitivamente esta oportunidad? No podrá ser reabierta.')) return;
+    
+    this.service.changeState(id, 'cerrado').subscribe({
       next: () => this.load(),
       error: (err: any) => console.error('Error al cerrar', err),
     });
   }
 
   cerrar(opp: Opportunity): void {
-    if (['ACTIVA', 'PAUSADA'].includes(opp.estado)) {
+    if (['activo', 'pausada'].includes(opp.estado)) {
       this.close(opp);
     }
   }
@@ -146,7 +154,8 @@ export class OpportunityListComponent implements OnInit {
   }
 
   borrar(opp: Opportunity): void {
-    if (opp.estado === 'BORRADOR') {
+    // Solo se puede eliminar si está en estado borrador
+    if (opp.estado === 'borrador') {
       this.delete(opp);
     }
   }

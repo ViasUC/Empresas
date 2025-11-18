@@ -80,41 +80,57 @@
               </span>
             </td>
             <td class="acciones-col">
-              <button class="btn-sm" (click)="editar(opp)">Editar</button>
+              <!-- Editar: siempre visible (se controla editabilidad dentro del form) -->
+              <button 
+                class="btn-sm" 
+                (click)="editar(opp)"
+                [title]="opp.estado === 'cerrado' ? 'Solo lectura (cerrada)' : 'Editar oportunidad'"
+              >
+                {{ opp.estado === 'cerrado' ? 'Ver' : 'Editar' }}
+              </button>
 
+              <!-- Publicar: solo si está en borrador -->
               <button
                 class="btn-sm outline"
-                *ngIf="opp.estado === 'BORRADOR'"
+                *ngIf="opp.estado === 'borrador'"
                 (click)="publish(opp)"
               >
                 Publicar
               </button>
 
+              <!-- Pausar: solo si está activo -->
               <button
                 class="btn-sm outline"
-                *ngIf="opp.estado === 'ACTIVA'"
+                *ngIf="opp.estado === 'activo'"
                 (click)="pause(opp)"
               >
                 Pausar
               </button>
 
+              <!-- Reanudar: solo si está pausada -->
               <button
                 class="btn-sm outline"
-                *ngIf="opp.estado === 'PAUSADA'"
-                (click)="publish(opp)"
+                *ngIf="opp.estado === 'pausada'"
+                (click)="reanudar(opp)"
               >
                 Reanudar
               </button>
 
+              <!-- Cerrar: solo si está activo o pausada -->
               <button
                 class="btn-sm outline"
-                *ngIf="opp.estado !== 'CERRADA'"
+                *ngIf="opp.estado === 'activo' || opp.estado === 'pausada'"
                 (click)="close(opp)"
               >
                 Cerrar
               </button>
 
-              <button class="btn-sm danger" (click)="delete(opp)">
+              <!-- Eliminar: solo si está en borrador -->
+              <button 
+                class="btn-sm danger" 
+                *ngIf="opp.estado === 'borrador'"
+                (click)="delete(opp)"
+              >
                 Eliminar
               </button>
             </td>

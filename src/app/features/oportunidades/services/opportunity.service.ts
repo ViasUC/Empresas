@@ -87,8 +87,8 @@ export class OpportunityService {
   `;
 
   private readonly ACTUALIZAR_OPORTUNIDAD = gql`
-    mutation ActualizarOportunidad($id: ID!, $input: CrearOportunidadInput!, $idActor: ID!) {
-      actualizarOportunidad(id: $id, input: $input, idActor: $idActor) {
+    mutation EditarOportunidad($input: EditarOportunidadInput!) {
+      editarOportunidad(input: $input) {
         id: idOportunidad
         idOportunidad
         titulo
@@ -105,8 +105,8 @@ export class OpportunityService {
   `;
 
   private readonly CAMBIAR_ESTADO = gql`
-    mutation CambiarEstado($id: ID!, $estado: String!, $idActor: ID!) {
-      cambiarEstadoOportunidad(id: $id, estado: $estado, idActor: $idActor) {
+    mutation CambiarEstado($idOportunidad: ID!, $nuevoEstado: EstadoOportunidad!, $idActor: ID!) {
+      cambiarEstadoOportunidad(idOportunidad: $idOportunidad, nuevoEstado: $nuevoEstado, idActor: $idActor) {
         id: idOportunidad
         idOportunidad
         estado
@@ -131,30 +131,34 @@ export class OpportunityService {
    */
   private get currentUserId(): number {
     const user = this.authService.getCurrentUser();
-    if (!user || !user.id) {
-      throw new Error('Usuario no autenticado');
+    console.log('🔍 Obteniendo currentUserId, usuario completo:', JSON.stringify(user));
+    if (!user) {
+      console.error('❌ Usuario no autenticado - user es null/undefined');
+      throw new Error('Usuario no autenticado. Por favor, inicia sesión nuevamente.');
+    }
+    if (!user.id) {
+      console.error('❌ Usuario no tiene ID:', user);
+      throw new Error('El usuario no tiene ID válido');
     }
     return user.id;
   }
 
   /**
-   * Mapea el estado del backend al formato del frontend
+   * Mapea el estado del backend (constraint PostgreSQL: activo, borrador, pausada, cerrado)
    */
   private mapEstadoFromBackend(estado: string | null | undefined): OpportunityState {
     const value = (estado || '').toLowerCase();
     switch (value) {
       case 'activo':
-      case 'activa':
-        return 'ACTIVA';
+        return 'activo';
       case 'borrador':
-        return 'BORRADOR';
+        return 'borrador';
       case 'pausada':
-        return 'PAUSADA';
+        return 'pausada';
       case 'cerrado':
-      case 'cerrada':
-        return 'CERRADA';
+        return 'cerrado';
       default:
-        return 'BORRADOR';
+        return 'borrador';
     }
   }
 
@@ -271,17 +275,17 @@ export class OpportunityService {
    */
   update(id: number, input: OpportunityInput): Observable<Opportunity> {
     const variables = {
-      id,
-      idActor: this.currentUserId,
       input: {
-        idCreador: String(this.currentUserId),
+        idOportunidad: id,
+        idEditor: String(this.currentUserId),
         titulo: input.titulo,
         descripcion: input.descripcion,
         requisitos: input.requisitos || '',
         ubicacion: input.ubicacion,
         modalidad: input.modalidad,
         tipo: input.tipo,
-        fechaCierre: input.fechaCierre || null,
+        fechaCierre: input.fechaCierre ? `${input.fechaCierre}T23:59:00` : null,
+        estado: null, // No cambiar estado en edición regular
       },
     };
 
@@ -292,10 +296,10 @@ export class OpportunityService {
       })
       .pipe(
         map((result) => {
-          if (!result.data?.actualizarOportunidad) {
+          if (!result.data?.editarOportunidad) {
             throw new Error('No se recibió respuesta al actualizar la oportunidad');
           }
-          return this.mapFromGql(result.data.actualizarOportunidad);
+          return this.mapFromGql(result.data.editarOportunidad);
         }),
         catchError((error) => {
           console.error('Error al actualizar oportunidad:', error);
@@ -305,16 +309,17 @@ export class OpportunityService {
   }
 
   /**
-   * Cambia el estado de una oportunidad (BORRADOR, ACTIVA, PAUSADA, CERRADA)
+   * Cambia el estado de una oportunidad con auditoría automática
+   * Estados: 'borrador', 'activo', 'pausada', 'cerrado'
    */
   changeState(id: number, newState: OpportunityState): Observable<Opportunity> {
     return this.apollo
       .mutate<ChangeStateResponse>({
         mutation: this.CAMBIAR_ESTADO,
         variables: {
-          id,
-          estado: newState,
-          idActor: this.currentUserId,
+          idOportunidad: id,
+          nuevoEstado: newState,
+          idActor: this.currentUserId.toString(),
         },
       })
       .pipe(

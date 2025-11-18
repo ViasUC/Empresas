@@ -2,7 +2,8 @@
  * Modelos para el módulo de Oportunidades Laborales
  */
 
-export type OpportunityState = 'BORRADOR' | 'ACTIVA' | 'PAUSADA' | 'CERRADA';
+// Estados según constraint PostgreSQL: ('activo', 'borrador', 'pausada', 'cerrado')
+export type OpportunityState = 'activo' | 'borrador' | 'pausada' | 'cerrado';
 export type OpportunityModalidad = 'PRESENCIAL' | 'HIBRIDO' | 'REMOTO';
 export type OpportunityTipo = 'PASANTIA' | 'TIEMPO_COMPLETO' | 'TIEMPO_PARCIAL' | 'PROYECTO';
 
@@ -61,7 +62,7 @@ export interface CreateOpportunityResponse {
  * Respuesta de GraphQL al actualizar oportunidad
  */
 export interface UpdateOpportunityResponse {
-  actualizarOportunidad: Opportunity;
+  editarOportunidad: Opportunity;
 }
 
 /**
@@ -79,13 +80,13 @@ export interface DeleteOpportunityResponse {
 }
 
 /**
- * Constantes para estados
+ * Constantes para estados (valores exactos del constraint PostgreSQL)
  */
 export const OPPORTUNITY_STATES: { value: OpportunityState; label: string }[] = [
-  { value: 'BORRADOR', label: 'Borrador' },
-  { value: 'ACTIVA', label: 'Activa' },
-  { value: 'PAUSADA', label: 'Pausada' },
-  { value: 'CERRADA', label: 'Cerrada' },
+  { value: 'borrador', label: 'Borrador' },
+  { value: 'activo', label: 'Activa' },
+  { value: 'pausada', label: 'Pausada' },
+  { value: 'cerrado', label: 'Cerrada' },
 ];
 
 /**

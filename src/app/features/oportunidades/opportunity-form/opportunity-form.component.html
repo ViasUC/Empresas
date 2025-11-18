@@ -8,15 +8,28 @@
 
     <div class="page-title-group">
       <h1>{{ editing ? 'Editar oportunidad' : 'Crear oportunidad' }}</h1>
-      <p>
-        Completa los campos para
-        {{ editing ? 'actualizar' : 'publicar' }} una oferta laboral.
+      
+      <!-- Estado actual si está editando -->
+      <div *ngIf="editing && currentOpportunity" style="margin: 8px 0;">
+        <span style="padding: 4px 12px; background: #e5e7eb; border-radius: 6px; font-size: 0.9rem; font-weight: 500;">
+          Estado: <strong>{{ getEstadoLabel(currentOpportunity.estado) }}</strong>
+        </span>
+      </div>
+      
+      <p *ngIf="isEditable && editing">
+        Puedes actualizar los campos de esta oportunidad.
+      </p>
+      <p *ngIf="isEditable && !editing">
+        Completa los campos para crear una nueva oferta laboral.
+      </p>
+      <p *ngIf="!isEditable" style="color: #dc2626; font-weight: 500; margin-top: 8px;">
+        🔒 Esta oportunidad está CERRADA y no se puede modificar.
       </p>
     </div>
 
     <div class="header-actions">
-      <button class="btn-secondary" (click)="cancelar()">Cancelar</button>
-      <button class="btn-primary" (click)="save()">Guardar</button>
+      <button class="btn-secondary" (click)="cancelar()">{{ isEditable ? 'Cancelar' : 'Volver' }}</button>
+      <button class="btn-primary" (click)="save()" *ngIf="isEditable">Guardar Cambios</button>
     </div>
   </header>
 
@@ -83,8 +96,8 @@
             formControlName="modalidad"
           >
             <option value="" disabled>Seleccione...</option>
-            <option *ngFor="let m of modalidades" [value]="m">
-              {{ m }}
+            <option *ngFor="let m of modalidades" [value]="m.value">
+              {{ m.label }}
             </option>
           </select>
         </div>
@@ -93,19 +106,19 @@
           <label for="tipo">Tipo *</label>
           <select id="tipo" class="input" formControlName="tipo">
             <option value="" disabled>Seleccione...</option>
-            <option *ngFor="let t of tipos" [value]="t">
-              {{ t }}
+            <option *ngFor="let t of tipos" [value]="t.value">
+              {{ t.label }}
             </option>
           </select>
         </div>
 
         <div class="form-field">
-          <label for="fecha_cierre">Fecha de cierre *</label>
+          <label for="fechaCierre">Fecha de cierre *</label>
           <input
-            id="fecha_cierre"
+            id="fechaCierre"
             type="date"
             class="input"
-            formControlName="fecha_cierre"
+            formControlName="fechaCierre"
           />
         </div>
 
