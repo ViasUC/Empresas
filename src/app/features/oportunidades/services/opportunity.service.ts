@@ -131,13 +131,13 @@ export class OpportunityService {
    */
   private get currentUserId(): number {
     const user = this.authService.getCurrentUser();
-    console.log('🔍 Obteniendo currentUserId, usuario completo:', JSON.stringify(user));
+    console.log('Obteniendo currentUserId, usuario completo:', JSON.stringify(user));
     if (!user) {
-      console.error('❌ Usuario no autenticado - user es null/undefined');
+      console.error('Usuario no autenticado - user es null/undefined');
       throw new Error('Usuario no autenticado. Por favor, inicia sesión nuevamente.');
     }
     if (!user.id) {
-      console.error('❌ Usuario no tiene ID:', user);
+      console.error('Usuario no tiene ID:', user);
       throw new Error('El usuario no tiene ID válido');
     }
     return user.id;

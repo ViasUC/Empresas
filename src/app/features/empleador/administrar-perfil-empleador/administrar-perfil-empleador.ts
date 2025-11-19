@@ -100,7 +100,9 @@ export class AdministrarPerfilEmpleador implements OnInit {
           
           if (response.actualizarEmpresa.success) {
             alert(response.actualizarEmpresa.message);
-            // Recargar datos
+            
+            // El servicio ya actualiza localStorage automáticamente
+            // Recargar datos para refrescar el formulario
             this.cargarDatosEmpresa();
           } else {
             alert('Error: ' + response.actualizarEmpresa.message);

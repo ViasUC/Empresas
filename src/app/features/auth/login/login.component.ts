@@ -611,13 +611,16 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
                                         errorMsg.includes('pendiente de aprobación');
           
           if (isPendienteAprobacion) {
-            // Usuario pendiente de aprobación - mensaje especial destacado
+            // Usuario pendiente de aprobación - mensaje combinado que aparece arriba
             const mensaje = errorMsg.replace('PENDIENTE_APROBACION:', '').trim() || 
                            'Tu acceso está pendiente de aprobación por el administrador de la empresa.';
             
             this.errorMessage = mensaje;
+            
+            // Mensaje único con ambas líneas de información
             this.snackBar.open(
-              mensaje + '\n\nRecibirás un correo cuando tu acceso sea aprobado.', 
+              'Tu acceso está pendiente de aprobación por el administrador de la empresa.\n\n' +
+              'Recibirás un correo de confirmación cuando tu cuenta sea activada.', 
               'Entendido', 
               { 
                 duration: 12000,
@@ -711,9 +714,13 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
     const usuario = this.authService.getCurrentUser();
     if (!usuario || !usuario.id) {
       console.error('No se pudo obtener usuario actual');
+      this.snackBar.open('Sesión iniciada sin datos de empresa', 'Cerrar', { duration: 3000 });
       this.router.navigate(['/dashboard/empleador']);
       return;
     }
+
+    // Mostrar mensaje mientras carga
+    this.snackBar.open('Cargando datos de empresa...', '', { duration: 2000 });
 
     const QUERY_MI_EMPRESA = gql`
       query MiEmpresa($idUsuario: ID!) {
@@ -722,51 +729,68 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
           nombreEmpresa
           ruc
           razonSocial
+          contacto
+          ubicacion
+          email
+          descripcion
         }
       }
     `;
 
-    this.apollo.query<any>({
+    // Timeout de 5 segundos
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout')), 5000)
+    );
+
+    const queryPromise = this.apollo.query<any>({
       query: QUERY_MI_EMPRESA,
       variables: { idUsuario: usuario.id.toString() },
       fetchPolicy: 'network-only'
-    }).subscribe({
-      next: (result) => {
-        const empresa = result.data.miEmpresa;
-        if (empresa) {
-          const idEmpresa = empresa.idEmpresa;
-          
-          // Obtener el rol del usuario en esta empresa
-          this.usuarioEmpresaService.obtenerRolUsuario(idEmpresa, usuario.id.toString())
-            .subscribe({
-              next: (rol) => {
-                // Guardar empresa con rol en localStorage
-                const empresaConRol = {
-                  ...empresa,
-                  id: idEmpresa,
-                  rolEnEmpresa: rol
-                };
-                localStorage.setItem('empresa', JSON.stringify(empresaConRol));
-                
-                // Ahora sí redirigir
-                this.router.navigate(['/dashboard/empleador']);
-              },
-              error: (err) => {
-                console.error('Error al obtener rol:', err);
-                // Guardar empresa sin rol
-                localStorage.setItem('empresa', JSON.stringify({ ...empresa, id: idEmpresa }));
-                this.router.navigate(['/dashboard/empleador']);
-              }
-            });
-        } else {
-          console.warn('No se encontró empresa para el usuario');
-          this.router.navigate(['/dashboard/empleador']);
-        }
-      },
-      error: (err) => {
-        console.error('Error al cargar empresa:', err);
+    }).toPromise();
+
+    Promise.race([queryPromise, timeoutPromise]).then((result: any) => {
+      const empresa = result.data?.miEmpresa;
+      if (empresa) {
+        const idEmpresa = empresa.idEmpresa;
+        
+        // Obtener el rol del usuario en esta empresa
+        this.usuarioEmpresaService.obtenerRolUsuario(idEmpresa, usuario.id.toString())
+          .subscribe({
+            next: (rol) => {
+              // Guardar empresa con rol en localStorage
+              const empresaConRol = {
+                ...empresa,
+                id: idEmpresa,
+                rolEnEmpresa: rol
+              };
+              localStorage.setItem('empresa', JSON.stringify(empresaConRol));
+              this.snackBar.open('Sesión iniciada correctamente', 'Cerrar', { duration: 2000 });
+              
+              // Ahora sí redirigir
+              this.router.navigate(['/dashboard/empleador']);
+            },
+            error: (err) => {
+              console.error('Error al obtener rol:', err);
+              // Guardar empresa sin rol
+              localStorage.setItem('empresa', JSON.stringify({ ...empresa, id: idEmpresa }));
+              this.snackBar.open('Empresa cargada sin rol', 'Cerrar', { duration: 2000 });
+              this.router.navigate(['/dashboard/empleador']);
+            }
+          });
+      } else {
+        console.warn('No se encontró empresa para el usuario');
+        this.snackBar.open('No se encontró empresa asociada', 'Cerrar', { duration: 3000 });
         this.router.navigate(['/dashboard/empleador']);
       }
+    }).catch((err) => {
+      console.error('Error al cargar empresa:', err);
+      if (err.message === 'Timeout') {
+        this.snackBar.open('Timeout al cargar empresa. Redirigiendo...', 'Cerrar', { duration: 3000 });
+      } else {
+        this.snackBar.open('Error al cargar datos. Continuando...', 'Cerrar', { duration: 3000 });
+      }
+      // SIEMPRE redirigir, incluso si falla
+      this.router.navigate(['/dashboard/empleador']);
     });
   }
 
@@ -889,23 +913,52 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
   private handleRegistro(data: RegistroData): void {
     this.isLoading = true;
     
+    // Verificar si es colaborador uniéndose a empresa existente
+    const esColaborador = data.tipoUsuario === 'EMPLEADOR' && 
+                         data.datosEmpresa?.unirseAExistente === true;
+    
+    console.log('HandleRegistro:', { 
+      tipoUsuario: data.tipoUsuario, 
+      esColaborador, 
+      datosEmpresa: data.datosEmpresa 
+    });
+    
     this.authService.register(data).subscribe({
       next: (user) => {
         this.isLoading = false;
         
-        this.snackBar.open(
-          '¡Cuenta creada exitosamente! Bienvenido ' + user.nombre, 
-          'Cerrar', 
-          { 
-            duration: 5000,
-            panelClass: ['success-snackbar']
-          }
-        );
-        
-        // Redirigir al dashboard según el tipo de usuario
-        this.redirectAfterLogin(user.tipo);
-        
-        this.resetUserNotFoundState();
+        if (esColaborador) {
+          // COLABORADOR: No iniciar sesión automáticamente - mensaje combinado arriba
+          this.snackBar.open(
+            'Tu acceso está pendiente de aprobación por el administrador de la empresa.\n\n Recibirás un correo de confirmación cuando tu cuenta sea activada.', 
+            'Entendido', 
+            {
+              duration: 12000,
+              panelClass: ['warning-snackbar'],
+              horizontalPosition: 'center',
+              verticalPosition: 'top'
+            }
+          );
+          
+          // NO redirigir, mantener en login
+          this.resetUserNotFoundState();
+          
+        } else {
+          // EMPRESA NUEVA o OTRO TIPO DE USUARIO: Iniciar sesión automáticamente
+          this.snackBar.open(
+            '¡Cuenta creada exitosamente! Bienvenido ' + user.nombre, 
+            'Cerrar', 
+            { 
+              duration: 5000,
+              panelClass: ['success-snackbar']
+            }
+          );
+          
+          // Redirigir al dashboard según el tipo de usuario
+          this.redirectAfterLogin(user.tipo);
+          
+          this.resetUserNotFoundState();
+        }
       },
       error: (error) => {
         this.isLoading = false;

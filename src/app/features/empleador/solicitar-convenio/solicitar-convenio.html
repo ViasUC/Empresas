@@ -128,14 +128,14 @@
           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
           style="display: none">
         <label for="archivo" class="upload-button">
-          <span class="upload-icon">📎</span>
+          <span class="upload-icon">[+]</span>
           <span>Seleccionar archivo</span>
         </label>
       </div>
 
       <div class="archivo-seleccionado" *ngIf="archivoSeleccionado">
         <div class="archivo-info">
-          <span class="archivo-icon">📄</span>
+          <span class="archivo-icon">[FILE]</span>
           <div class="archivo-detalles">
             <span class="archivo-nombre">{{ archivoNombre }}</span>
             <span class="archivo-tamano">{{ formatearTamano(archivoSeleccionado.size) }}</span>

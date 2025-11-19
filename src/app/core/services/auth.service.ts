@@ -182,6 +182,16 @@ export class AuthService {
    * Registra un nuevo usuario
    */
   register(datos: RegistroData): Observable<User> {
+    // Verificar si es colaborador que se une a empresa existente
+    const esColaboradorPendiente = datos.tipoUsuario === 'EMPLEADOR' && 
+                                   datos.datosEmpresa?.unirseAExistente === true;
+    
+    console.log('AuthService.register:', { 
+      tipoUsuario: datos.tipoUsuario, 
+      esColaboradorPendiente,
+      unirseAExistente: datos.datosEmpresa?.unirseAExistente 
+    });
+    
     // Preparar el input base
     const input: any = {
       tipoUsuario: datos.tipoUsuario,
@@ -196,17 +206,19 @@ export class AuthService {
     // Si es EMPLEADOR, manejar datos de empresa
     if (datos.tipoUsuario === 'EMPLEADOR' && datos.datosEmpresa) {
       if (datos.datosEmpresa.unirseAExistente && datos.datosEmpresa.idEmpresa) {
-        // Caso: Unirse a empresa existente
+        // Caso: Unirse a empresa existente (COLABORADOR)
         input.idEmpresaExistente = datos.datosEmpresa.idEmpresa;
         input.rolSolicitado = datos.datosEmpresa.rolEnEmpresa; // GERENTE_RRHH o AUXILIAR_RRHH
+        console.log('Registrando COLABORADOR pendiente de aprobación');
       } else {
-        // Caso: Crear empresa nueva
+        // Caso: Crear empresa nueva (ADMINISTRADOR)
         input.nombreEmpresa = datos.datosEmpresa.nombreEmpresa;
         input.ruc = datos.datosEmpresa.ruc;
         input.razonSocial = datos.datosEmpresa.razonSocial;
         input.contacto = datos.datosEmpresa.contacto || '';
         input.ubicacionEmpresa = datos.datosEmpresa.ubicacion || 'Asunción';
         input.emailEmpresa = datos.datosEmpresa.email || '';
+        console.log('Registrando EMPRESA NUEVA con administrador');
       }
     }
     
@@ -231,11 +243,19 @@ export class AuthService {
           tipo: tipoMapeado,
           token: registerData.token
         };
-        this.setCurrentUser(user, registerData.token);
-        this.storeAuthData(user, registerData.token, ''); // Sin refreshToken por ahora
+        
+        // SOLO guardar sesión si NO es colaborador pendiente
+        if (!esColaboradorPendiente) {
+          console.log('Guardando sesión para usuario con acceso inmediato');
+          this.setCurrentUser(user, registerData.token);
+          this.storeAuthData(user, registerData.token, ''); // Sin refreshToken por ahora
+        } else {
+          console.log('NO guardando sesión - colaborador pendiente de aprobación');
+          // No guardar sesión para colaboradores pendientes
+        }
       }),
       map(registerData => {
-        // Retornar el user construido
+        // Retornar el user construido (sin importar si guardamos sesión o no)
         const tipoMapeado = this.mapRolPrincipalToTipo(registerData.usuario.rol);
         return {
           id: parseInt(registerData.usuario.idUsuario),

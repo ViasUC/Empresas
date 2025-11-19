@@ -99,13 +99,20 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Inicializar formulario de filtros simplificado
+    // Inicializar formulario de filtros con valores EXPLÍCITAMENTE vacíos
     this.filtrosForm = this.fb.group({
-      // Filtros principales
       carrera: [''],
       habilidades: [''],
       ubicacion: ['']
     });
+
+    // Limpiar cualquier dato previo
+    this.searchText = '';
+    this.filtrosActivos = [];
+    this.resultados = [];
+    this.total = 0;
+    this.busquedaRealizada = false;
+    this.ordenActual = 'relevancia';
 
     // Configurar debounce para búsqueda
     this.searchSubscription = this.searchSubject.pipe(
@@ -159,8 +166,26 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
   }
 
   clearSearch(): void {
+    console.log('Limpiando campo de búsqueda');
     this.searchText = '';
-    this.aplicarFiltros();
+    this.searchSubject.next(''); // Forzar emisión de valor vacío
+    this.calcularFiltrosActivos(); // Recalcular chips sin el texto de búsqueda
+    
+    // Si no hay otros filtros activos, limpiar resultados
+    if (this.filtrosActivos.length === 0 && !this.tieneFiltrosFormulario()) {
+      this.resultados = [];
+      this.total = 0;
+      this.busquedaRealizada = false;
+    } else {
+      // Si hay otros filtros, reaplicar sin el texto de búsqueda
+      this.aplicarFiltros();
+    }
+  }
+
+  // Método helper para verificar si hay filtros en el formulario
+  private tieneFiltrosFormulario(): boolean {
+    const formValue = this.filtrosForm.value;
+    return !!(formValue.carrera || formValue.ubicacion || formValue.habilidades?.trim());
   }
 
   // === Métodos de filtros ===
@@ -170,8 +195,16 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
   }
 
   aplicarFiltros(): void {
-    // Recalcular filtros activos para mostrar chips
+    console.log('===== APLICANDO FILTROS =====');
+    
+    // Primero recalcular filtros activos para mostrar chips correctos
     this.calcularFiltrosActivos();
+    
+    console.log('Filtros a aplicar:', {
+      searchText: this.searchText,
+      formulario: this.filtrosForm.value,
+      totalChips: this.filtrosActivos.length
+    });
     
     // Resetear a página 1 al aplicar filtros
     this.buscar(1);
@@ -181,8 +214,10 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
     this.filtrosActivos = [];
     const formValue = this.filtrosForm.value;
 
+    console.log('Calculando filtros activos. Valores del formulario:', formValue);
+
     // Texto de búsqueda
-    if (this.searchText.trim()) {
+    if (this.searchText && this.searchText.trim()) {
       this.filtrosActivos.push({
         key: 'searchText',
         label: `Búsqueda: "${this.searchText}"`,
@@ -191,7 +226,7 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
     }
 
     // Carrera
-    if (formValue.carrera) {
+    if (formValue.carrera && formValue.carrera !== '') {
       this.filtrosActivos.push({
         key: 'carrera',
         label: `Carrera: ${formValue.carrera}`,
@@ -200,7 +235,7 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
     }
 
     // Ubicación
-    if (formValue.ubicacion) {
+    if (formValue.ubicacion && formValue.ubicacion !== '') {
       this.filtrosActivos.push({
         key: 'ubicacion',
         label: `Ubicación: ${formValue.ubicacion}`,
@@ -209,7 +244,7 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
     }
 
     // Habilidades
-    if (formValue.habilidades) {
+    if (formValue.habilidades && formValue.habilidades.trim()) {
       this.filtrosActivos.push({
         key: 'habilidades',
         label: `Habilidades: ${formValue.habilidades}`,
@@ -217,104 +252,73 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
       });
     }
 
-    // Promedio mínimo
-    if (formValue.promedioMin > 0) {
-      this.filtrosActivos.push({
-        key: 'promedioMin',
-        label: `Promedio ≥ ${formValue.promedioMin}`,
-        value: formValue.promedioMin
-      });
-    }
-
-    // Salario
-    if (formValue.salarioMin || formValue.salarioMax) {
-      let label = 'Salario: ';
-      if (formValue.salarioMin && formValue.salarioMax) {
-        label += `$${formValue.salarioMin} - $${formValue.salarioMax}`;
-      } else if (formValue.salarioMin) {
-        label += `≥ $${formValue.salarioMin}`;
-      } else {
-        label += `≤ $${formValue.salarioMax}`;
-      }
-      this.filtrosActivos.push({
-        key: 'salario',
-        label: label,
-        value: { min: formValue.salarioMin, max: formValue.salarioMax }
-      });
-    }
-
-    // Rating mínimo
-    if (formValue.ratingMin > 0) {
-      this.filtrosActivos.push({
-        key: 'ratingMin',
-        label: `Rating ≥ ${formValue.ratingMin}`,
-        value: formValue.ratingMin
-      });
-    }
-
-    // Modalidad
-    if (formValue.modalidad) {
-      const option = this.modalidadesOptions.find(o => o.value === formValue.modalidad);
-      this.filtrosActivos.push({
-        key: 'modalidad',
-        label: `Modalidad: ${option?.label || formValue.modalidad}`,
-        value: formValue.modalidad
-      });
-    }
-
-    // Año de estudio
-    if (formValue.anioEstudio) {
-      const option = this.aniosEstudioOptions.find(o => o.value === formValue.anioEstudio);
-      this.filtrosActivos.push({
-        key: 'anioEstudio',
-        label: `Año: ${option?.label || formValue.anioEstudio}`,
-        value: formValue.anioEstudio
-      });
-    }
-
-    // Idiomas
-    if (formValue.idiomas && formValue.idiomas.length > 0) {
-      formValue.idiomas.forEach((idioma: string) => {
-        const option = this.idiomasOptions.find(o => o.value === idioma);
-        this.filtrosActivos.push({
-          key: 'idiomas',
-          label: `Idioma: ${option?.label || idioma}`,
-          value: idioma
-        });
-      });
-    }
-
-    // Experiencia
-    if (formValue.experiencia) {
-      const option = this.experienciasOptions.find(o => o.value === formValue.experiencia);
-      this.filtrosActivos.push({
-        key: 'experiencia',
-        label: `Experiencia: ${option?.label || formValue.experiencia}`,
-        value: formValue.experiencia
-      });
-    }
+    console.log('Filtros activos calculados:', this.filtrosActivos);
   }
 
   removerFiltro(filtro: FiltroActivo): void {
+    console.log('Removiendo filtro:', filtro);
+    
     if (filtro.key === 'searchText') {
       this.searchText = '';
-    } else {
-      // Para el resto, resetear el campo individual
+    } else if (['carrera', 'ubicacion', 'habilidades'].includes(filtro.key)) {
+      // Resetear solo los campos que existen en el formulario
       this.filtrosForm.patchValue({ [filtro.key]: '' });
     }
 
-    // Reaplicar filtros
+    // Reaplicar filtros (esto recalcula los chips activos)
     this.aplicarFiltros();
   }
 
   limpiarFiltros(): void {
-    this.filtrosForm.reset({
+    console.log('===== LIMPIANDO TODOS LOS FILTROS =====');
+    console.log('Antes de limpiar:', {
+      formulario: this.filtrosForm.value,
+      searchText: this.searchText,
+      filtrosActivos: this.filtrosActivos.length
+    });
+    
+    // 1. Resetear el formulario usando setValue para forzar valores vacíos
+    this.filtrosForm.setValue({
       carrera: '',
       habilidades: '',
       ubicacion: ''
     });
+    
+    // 2. Marcar el formulario como pristine y untouched
+    this.filtrosForm.markAsPristine();
+    this.filtrosForm.markAsUntouched();
+    
+    // 3. Limpiar texto de búsqueda
     this.searchText = '';
-    this.aplicarFiltros();
+    
+    // 4. Limpiar array de filtros activos (chips)
+    this.filtrosActivos = [];
+    
+    // 5. Limpiar resultados
+    this.resultados = [];
+    this.total = 0;
+    this.totalPaginas = 0;
+    this.paginaActual = 1;
+    this.busquedaRealizada = false;
+    
+    // 6. Resetear ordenamiento
+    this.ordenActual = 'relevancia';
+    
+    // 7. Limpiar URL de query params
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      replaceUrl: true
+    });
+    
+    console.log('Después de limpiar:', {
+      formulario: this.filtrosForm.value,
+      searchText: this.searchText,
+      filtrosActivos: this.filtrosActivos.length,
+      pristine: this.filtrosForm.pristine,
+      untouched: this.filtrosForm.untouched
+    });
+    console.log('===== FILTROS LIMPIADOS COMPLETAMENTE =====');
   }
 
   // === Ordenamiento ===

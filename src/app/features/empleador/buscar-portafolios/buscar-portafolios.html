@@ -20,7 +20,11 @@
           placeholder="Buscar por nombre, apellido o habilidad..."
           [(ngModel)]="searchText"
           (ngModelChange)="onSearchTextChange($event)"
-          (keyup.enter)="buscarInmediato()">
+          (keyup.enter)="buscarInmediato()"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false">
         <button 
           *ngIf="searchText" 
           class="btn-clear-search" 
@@ -44,11 +48,11 @@
           </button>
         </div>
 
-        <form [formGroup]="filtrosForm" *ngIf="!filtersPanelCollapsed">
+        <form [formGroup]="filtrosForm" *ngIf="!filtersPanelCollapsed" autocomplete="off">
           <!-- Carrera -->
           <div class="filter-group">
             <h3>Carrera</h3>
-            <select formControlName="carrera">
+            <select formControlName="carrera" autocomplete="off">
               <option value="">Todas las carreras</option>
               <option *ngFor="let carrera of filtrosDisponibles?.carreras" [value]="carrera">
                 {{ carrera }}
@@ -59,7 +63,7 @@
           <!-- Ubicación -->
           <div class="filter-group">
             <h3>Ubicación</h3>
-            <select formControlName="ubicacion">
+            <select formControlName="ubicacion" autocomplete="off">
               <option value="">Todas las ubicaciones</option>
               <option *ngFor="let ubicacion of filtrosDisponibles?.ubicaciones" [value]="ubicacion">
                 {{ ubicacion }}
@@ -73,7 +77,11 @@
             <input 
               type="text"
               formControlName="habilidades"
-              placeholder="Ej: JavaScript, React">
+              placeholder="Ej: JavaScript, React"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false">
           </div>
 
           <!-- Botones -->

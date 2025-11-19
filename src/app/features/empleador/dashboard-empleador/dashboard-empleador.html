@@ -2,19 +2,26 @@
   <header class="dashboard-header">
     <div class="header-content">
       <h1>Panel de Empleador</h1>
-      <div class="user-info">
-        <span class="user-name">{{ nombreCompleto }}</span>
-        <button class="btn-logout" (click)="logout()">Cerrar Sesion</button>
+      <div class="header-right">
+        <div class="empresa-info">
+          <div class="empresa-nombre">{{ nombreEmpresa }}</div>
+          <div class="empresa-telefono" *ngIf="telefonoEmpresa">
+            <mat-icon class="icon-small">phone</mat-icon>
+            {{ telefonoEmpresa }}
+          </div>
+        </div>
+        <div class="user-info">
+          <div class="user-details">
+            <span class="user-name">{{ nombreCompleto }}</span>
+            <span class="user-email">{{ email }}</span>
+          </div>
+          <button class="btn-logout" (click)="logout()">Cerrar Sesion</button>
+        </div>
       </div>
     </div>
   </header>
 
   <main class="dashboard-main">
-    <div class="welcome-section">
-      <h2>Bienvenido, {{ nombreCompleto }}</h2>
-      <p class="user-email">{{ email }}</p>
-    </div>
-
     <div class="cards-grid">
       <div class="card">
         <h3>Administrar Perfil</h3>

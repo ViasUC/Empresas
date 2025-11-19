@@ -29,9 +29,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             error.error?.errors?.some((e: any) => e.extensions?.code === 'UNAUTHENTICATED')) {
           console.warn('Sesion expirada. Cerrando sesion automaticamente...');
           // Limpiar datos locales inmediatamente y redirigir (sin llamar al backend)
-          localStorage.removeItem('viasuc_user');
-          localStorage.removeItem('viasuc_token');
-          localStorage.removeItem('viasuc_refresh_token');
+          localStorage.removeItem('usuario');
+          localStorage.removeItem('token');
+          localStorage.removeItem('empresa');
           router.navigate(['/login']);
           alert('Tu sesion ha expirado. Por favor, inicia sesion nuevamente.');
         }

@@ -48,9 +48,9 @@ export const appConfig: ApplicationConfig = {
                 err.message.includes('Token inválido') ||
                 err.message.includes('No autenticado')) {
               console.warn('[Apollo] Sesión expirada. Cerrando sesión automáticamente...');
-              localStorage.removeItem('viasuc_user');
-              localStorage.removeItem('viasuc_token');
-              localStorage.removeItem('viasuc_refresh_token');
+              localStorage.removeItem('usuario');
+              localStorage.removeItem('token');
+              localStorage.removeItem('empresa');
               router.navigate(['/login']);
               alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
             }

@@ -64,13 +64,13 @@ export class MisSolicitudesComponent implements OnInit {
 
   getEstadoIcon(estado: string): string {
     const iconMap: { [key: string]: string } = {
-      'Pendiente': '⏳',
-      'En Revisión': '🔍',
-      'Aprobado': '✅',
-      'Rechazado': '❌',
-      'Vigente': '✔️'
+      'Pendiente': '[P]',
+      'En Revisión': '[R]',
+      'Aprobado': '[OK]',
+      'Rechazado': '[X]',
+      'Vigente': '[V]'
     };
-    return iconMap[estado] || '📄';
+    return iconMap[estado] || '[?]';
   }
 
   formatDate(date: string): string {
