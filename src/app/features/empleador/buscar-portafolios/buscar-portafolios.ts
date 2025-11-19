@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angul
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { BusquedaService, Portafolio, FiltrosDisponibles, ResultadoBusqueda } from '../services/busqueda.service';
+import { BusquedaService, Portafolio, FiltrosDisponibles, ResultadoBusqueda } from '../../../core/services/busqueda.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 // Interfaz para filtros activos (chips)

@@ -577,8 +577,7 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
       
       const credentials: LoginCredentials = {
         email: this.loginForm.value.email,
-        password: this.loginForm.value.password,
-        tipoUsuario: this.mapRolToTipo(this.selectedRol)
+        password: this.loginForm.value.password
       };
 
       this.authService.login(credentials).subscribe({

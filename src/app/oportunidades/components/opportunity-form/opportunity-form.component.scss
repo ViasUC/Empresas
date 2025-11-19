@@ -1,0 +1,163 @@
+/* src/app/oportunidades/components/opportunity-form/opportunity-form.component.scss */
+
+.page-container {
+  min-height: 100vh;
+  padding: 32px 48px;
+  background: #050816;
+  color: #e5e7eb;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.page-title-group {
+  flex: 1;
+  margin: 0 16px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #f9fafb;
+  }
+
+  p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: #9ca3af;
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.card {
+  background: #0b1120;
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.4);
+  border: 1px solid #111827;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 24px;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+
+  label {
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: #d1d5db;
+  }
+}
+
+.input {
+  background: #020617;
+  border-radius: 8px;
+  border: 1px solid #1f2937;
+  padding: 8px 10px;
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+/* Botones (reutilizamos estilos) */
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #f9fafb;
+  padding: 8px 20px;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: #111827;
+  color: #e5e7eb;
+  padding: 8px 20px;
+  border: 1px solid #374151;
+}
+
+.btn-secondary:hover {
+  background: #1f2937;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #e5e7eb;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #374151;
+}
+
+.btn-ghost:hover {
+  background: #111827;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-container {
+    padding: 24px 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    align-self: stretch;
+    justify-content: flex-end;
+  }
+}

@@ -22,16 +22,28 @@
         <button class="btn-primary" (click)="irAPerfil()">Ir a Perfil</button>
       </div>
 
+      <!-- Publicar Oferta -->
       <div class="card">
         <h3>Publicar Oferta</h3>
         <p>Crea nuevas ofertas laborales para tu empresa</p>
-        <button class="btn-primary" disabled>Proximamente</button>
+        <button
+          class="btn btn-primary"
+          [routerLink]="['/oportunidades', 'nueva']"
+        >
+          Publicar
+        </button>
       </div>
 
+      <!-- Mis Ofertas -->
       <div class="card">
         <h3>Mis Ofertas</h3>
         <p>Gestiona las ofertas activas de tu empresa</p>
-        <button class="btn-primary" disabled>Proximamente</button>
+        <button
+          class="btn btn-primary"
+          [routerLink]="['/oportunidades']"
+        >
+          Ver ofertas
+        </button>
       </div>
 
       <div class="card">
@@ -42,8 +54,10 @@
 
       <div class="card">
         <h3>Postulaciones</h3>
-        <p>Revisa las postulaciones a tus ofertas</p>
-        <button class="btn-primary" disabled>Proximamente</button>
+        <p>Revisá las postulaciones a tus ofertas</p>
+        <button class="btn-primary" routerLink="/empleador/postulaciones">
+          Ver postulaciones
+        </button>
       </div>
     </div>
   </main>

@@ -6,7 +6,6 @@ import { map, tap, catchError } from 'rxjs/operators';
 export interface LoginCredentials {
   email: string;
   password: string;
-  tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'DOCENTE' | 'ADMIN';
 }
 
 export interface User {
@@ -20,6 +19,7 @@ export interface User {
 
 export interface LoginResponse {
   login: {
+    token: string;
     idUsuario: string;
     nombre: string;
     apellido: string;
@@ -28,7 +28,7 @@ export interface LoginResponse {
 }
 
 export interface RegistroData {
-  tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO' | 'DOCENTE';
+  tipoUsuario: 'EMPLEADOR' | 'ESTUDIANTE' | 'EGRESADO';
   nombre: string;
   apellido: string;
   email: string;
@@ -48,16 +48,9 @@ export interface RegistroData {
 
 export interface RegisterResponse {
   register: {
+    user: User;
     token: string;
-    usuario: {
-      idUsuario: string;
-      nombre: string;
-      apellido: string;
-      email: string;
-      rol: string;
-    };
-    success: boolean;
-    message: string;
+    refreshToken: string;
   };
 }
 
@@ -78,8 +71,9 @@ export class AuthService {
 
   // GraphQL Mutations
   private LOGIN_MUTATION = gql`
-    mutation Login($input: LoginInput!) {
-      login(input: $input) {
+    mutation Login($email: String!, $password: String!) {
+      login(input: { email: $email, password: $password }) {
+        token
         idUsuario
         nombre
         apellido
@@ -91,16 +85,15 @@ export class AuthService {
   private REGISTER_MUTATION = gql`
     mutation Register($input: RegisterInput!) {
       register(input: $input) {
-        token
-        usuario {
-          idUsuario
+        user {
+          id
+          email
           nombre
           apellido
-          email
-          rol
+          tipo
         }
-        success
-        message
+        token
+        refreshToken
       }
     }
   `;
@@ -140,35 +133,14 @@ export class AuthService {
   }
 
   /**
-   * Mapea los roles del backend original a los tipos del frontend
-   */
-  private mapRolPrincipalToTipo(rolPrincipal: string): string {
-    const roleMap: { [key: string]: string } = {
-      'empresa': 'EMPLEADOR',
-      'empleador': 'EMPLEADOR',
-      'alumno': 'ESTUDIANTE',
-      'estudiante': 'ESTUDIANTE',
-      'egresado': 'EGRESADO',
-      'profesor': 'DOCENTE',
-      'investigador': 'DOCENTE',
-      'docente': 'DOCENTE',
-      'administrador': 'ADMIN',
-      'admin': 'ADMIN'
-    };
-    return roleMap[rolPrincipal?.toLowerCase()] || rolPrincipal || 'EMPLEADOR';
-  }
-
-  /**
    * Inicia sesión con credenciales
    */
   login(credentials: LoginCredentials): Observable<User> {
     return this.apollo.mutate<LoginResponse>({
       mutation: this.LOGIN_MUTATION,
       variables: {
-        input: {
-          email: credentials.email,
-          password: credentials.password
-        }
+        email: credentials.email,
+        password: credentials.password
       }
     }).pipe(
       map(result => {
@@ -180,38 +152,33 @@ export class AuthService {
           }
           throw new Error('No se recibió respuesta del servidor');
         }
-        if (!result.data.login) {
-          console.error('Login data is null. Full result:', result);
-          throw new Error('Credenciales inválidas o usuario no encontrado');
-        }
         return result.data.login;
       }),
       tap(loginData => {
-        console.log('Login data received:', loginData);
-        // Backend original no devuelve token, adaptamos la respuesta
-        // Mapear rolPrincipal del backend original a tipo del frontend
-        const tipoMapeado = this.mapRolPrincipalToTipo(loginData.rolPrincipal);
-        const user: User = { 
+        // Convertir la respuesta del backend al formato User
+        // Mapear el rol del backend al tipo esperado por el frontend
+        const tipoUsuario = this.mapRolBackendToFrontend(loginData.rolPrincipal);
+        
+        const user: User = {
           id: parseInt(loginData.idUsuario),
-          email: credentials.email,
-          nombre: loginData.nombre || '',
-          apellido: loginData.apellido || '',
-          tipo: tipoMapeado
+          nombre: loginData.nombre,
+          apellido: loginData.apellido,
+          email: credentials.email, // Usar el email del formulario
+          tipo: tipoUsuario
         };
-        this.setCurrentUser(user, ''); // Sin token en backend original
-        this.storeAuthData(user, '', '');
+        // Guardar con el token real del backend
+        this.setCurrentUser(user, loginData.token);
+        this.storeAuthData(user, loginData.token, '');
       }),
       map(loginData => {
-        // Retornamos el user construido
-        const tipoMapeado = this.mapRolPrincipalToTipo(loginData.rolPrincipal);
-        const user: User = { 
+        const tipoUsuario = this.mapRolBackendToFrontend(loginData.rolPrincipal);
+        return {
           id: parseInt(loginData.idUsuario),
+          nombre: loginData.nombre,
+          apellido: loginData.apellido,
           email: credentials.email,
-          nombre: loginData.nombre || '',
-          apellido: loginData.apellido || '',
-          tipo: tipoMapeado
+          tipo: tipoUsuario
         };
-        return user;
       })
     );
   }
@@ -245,39 +212,17 @@ export class AuthService {
       }
     }).pipe(
       map(result => {
-        console.log('Register result from backend:', result);
         if (!result.data) {
           throw new Error('No se recibió respuesta del servidor');
         }
         return result.data.register;
       }),
       tap(registerData => {
-        console.log('Register data received:', registerData);
-        // Mapear la respuesta del backend al formato User del frontend
-        const tipoMapeado = this.mapRolPrincipalToTipo(registerData.usuario.rol);
-        const user: User = {
-          id: parseInt(registerData.usuario.idUsuario),
-          email: registerData.usuario.email,
-          nombre: registerData.usuario.nombre,
-          apellido: registerData.usuario.apellido,
-          tipo: tipoMapeado,
-          token: registerData.token
-        };
+        const user = { ...registerData.user, token: registerData.token };
         this.setCurrentUser(user, registerData.token);
-        this.storeAuthData(user, registerData.token, ''); // Sin refreshToken por ahora
+        this.storeAuthData(user, registerData.token, registerData.refreshToken);
       }),
-      map(registerData => {
-        // Retornar el user construido
-        const tipoMapeado = this.mapRolPrincipalToTipo(registerData.usuario.rol);
-        return {
-          id: parseInt(registerData.usuario.idUsuario),
-          email: registerData.usuario.email,
-          nombre: registerData.usuario.nombre,
-          apellido: registerData.usuario.apellido,
-          tipo: tipoMapeado,
-          token: registerData.token
-        };
-      })
+      map(registerData => registerData.user)
     );
   }
 
@@ -420,5 +365,24 @@ export class AuthService {
     localStorage.removeItem('viasuc_refresh_token');
     this.currentUserSubject.next(null);
     this.tokenSubject.next(null);
+  }
+
+  /**
+   * Mapea los roles del backend (minúsculas) a los tipos del frontend (mayúsculas)
+   */
+  private mapRolBackendToFrontend(rol: string): string {
+    const roleMap: { [key: string]: string } = {
+      'empresa': 'EMPLEADOR',
+      'empleador': 'EMPLEADOR',
+      'alumno': 'ESTUDIANTE',
+      'estudiante': 'ESTUDIANTE',
+      'egresado': 'EGRESADO',
+      'profesor': 'DOCENTE',
+      'docente': 'DOCENTE',
+      'investigador': 'DOCENTE',
+      'administrador': 'ADMIN',
+      'admin': 'ADMIN'
+    };
+    return roleMap[rol.toLowerCase()] || rol.toUpperCase();
   }
 }

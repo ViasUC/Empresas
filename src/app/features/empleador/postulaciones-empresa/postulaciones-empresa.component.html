@@ -1,0 +1,132 @@
+<div class="postulaciones-container">
+  <!-- ========== HEADER ========== -->
+  <header class="postulaciones-header">
+    <div class="header-top">
+      <button class="btn-back" (click)="volver()">
+        ← Volver
+      </button>
+      <h1>Postulaciones a mis Ofertas</h1>
+      <div class="header-actions">
+        <button class="btn-reload" (click)="recargar()" [disabled]="loading" title="Recargar postulaciones">
+          <span class="icon">🔄</span>
+          <span class="text">Recargar</span>
+        </button>
+        <button class="btn-logout" (click)="logout()">
+          Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== CONTENIDO PRINCIPAL ========== -->
+  <div class="postulaciones-main">
+    <div class="postulaciones-content">
+      
+      <!-- LOADING -->
+      <div class="loading-overlay" *ngIf="loading">
+        <div class="loading-spinner">⏳</div>
+        <p>Cargando postulaciones...</p>
+      </div>
+
+      <!-- ERROR -->
+      <div class="error-message" *ngIf="errorMessage && !loading">
+        <div class="icon">⚠️</div>
+        <h3>Error al cargar</h3>
+        <p>{{ errorMessage }}</p>
+      </div>
+
+      <!-- RESULTADOS -->
+      <div class="results-area" *ngIf="!loading && !errorMessage">
+        
+        <!-- Header con contador -->
+        <div class="resultados-header">
+          <div class="resultados-count">
+            <h2>Postulaciones Recibidas</h2>
+            <p>{{ total }} postulación{{ total !== 1 ? 'es' : '' }} en total</p>
+          </div>
+        </div>
+
+        <!-- SIN POSTULACIONES -->
+        <div class="sin-resultados" *ngIf="postulaciones.length === 0">
+          <div class="icon">📋</div>
+          <h3>No hay postulaciones todavía</h3>
+          <p>No se encontraron postulantes para ninguna de tus ofertas</p>
+          <p class="hint">Cuando los candidatos se postulen, aparecerán aquí. Puedes usar el botón "Recargar" para actualizar.</p>
+        </div>
+
+        <!-- TABLA DE POSTULACIONES -->
+        <div class="table-container" *ngIf="postulaciones.length > 0">
+          <table class="postulaciones-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Oferta</th>
+                <th>Postulante</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of postulaciones">
+                <td class="fecha-col">
+                  <span class="fecha-badge">{{ p.fechaPostulacion | date : 'dd/MM/yyyy' }}</span>
+                  <span class="hora-badge">{{ p.fechaPostulacion | date : 'HH:mm' }}</span>
+                </td>
+                <td class="oferta-col">
+                  <div class="oferta-info">
+                    <span class="oferta-titulo">{{ p.oportunidad?.titulo || '(sin título)' }}</span>
+                  </div>
+                </td>
+                <td class="postulante-col">
+                  <div class="postulante-info" *ngIf="p.postulante; else noPostulante">
+                    <span class="postulante-nombre">{{ p.postulante.nombre }} {{ p.postulante.apellido }}</span>
+                    <span class="postulante-email">{{ p.postulante.email }}</span>
+                  </div>
+                  <ng-template #noPostulante>
+                    <span class="no-data">—</span>
+                  </ng-template>
+                </td>
+                <td class="estado-col">
+                  <span class="estado-badge" [ngClass]="getEstadoClass(p.estado)">{{ p.estado }}</span>
+                </td>
+                <td class="acciones-col">
+                  <button class="btn-accion btn-ver" title="Ver detalles">
+                    <span class="icon">👁️</span>
+                  </button>
+                  <button class="btn-accion btn-aceptar" title="Aceptar postulación">
+                    <span class="icon">✓</span>
+                  </button>
+                  <button class="btn-accion btn-rechazar" title="Rechazar postulación">
+                    <span class="icon">✕</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINACIÓN -->
+        <div class="paginacion" *ngIf="total > 0">
+          <button 
+            (click)="paginaAnterior()" 
+            [disabled]="!puedeIrAtras"
+            class="btn-pag">
+            ← Anterior
+          </button>
+          
+          <span class="pag-info">
+            Página {{ page + 1 }}
+          </span>
+          
+          <button 
+            (click)="paginaSiguiente()" 
+            [disabled]="!puedeIrAdelante"
+            class="btn-pag">
+            Siguiente →
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
