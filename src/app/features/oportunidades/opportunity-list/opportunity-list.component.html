@@ -1,0 +1,142 @@
+<!-- src/app/oportunidades/components/opportunity-list/opportunity-list.component.html -->
+
+<div class="page-container">
+  <!-- Encabezado con botón Volver -->
+  <header class="page-header">
+    <button class="btn-ghost" (click)="goBack()">
+      ← Volver
+    </button>
+
+    <div class="page-title-group">
+      <h1>Gestión de Oportunidades</h1>
+      <p>Administra las ofertas laborales publicadas por tu empresa.</p>
+    </div>
+
+    <button class="btn-primary" (click)="nueva()">
+      + Nueva Oportunidad
+    </button>
+  </header>
+
+  <!-- Contenido principal -->
+  <section class="card">
+    <!-- Filtros -->
+    <div class="filters-row">
+      <div class="filter-item">
+        <label for="filtroTexto">Buscar...</label>
+        <input
+          id="filtroTexto"
+          type="text"
+          class="input"
+          placeholder="Buscar por título, descripción..."
+          [(ngModel)]="filtroTexto"
+          (input)="aplicarFiltros()"
+        />
+      </div>
+
+      <div class="filter-item">
+        <label for="filtroEstado">Estado</label>
+        <select
+          id="filtroEstado"
+          class="input"
+          [(ngModel)]="filtroEstado"
+          (change)="aplicarFiltros()"
+        >
+          <option value="">Todos los estados</option>
+          <option *ngFor="let e of estados" [ngValue]="e.value">
+            {{ e.label }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Ubicación</th>
+            <th>Modalidad</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th class="acciones-col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="filtered.length === 0">
+            <td colspan="6" class="no-results">
+              No hay resultados
+            </td>
+          </tr>
+
+          <tr *ngFor="let opp of filtered">
+            <td>{{ opp.titulo }}</td>
+            <td>{{ opp.ubicacion }}</td>
+            <td>{{ opp.modalidad }}</td>
+            <td>{{ opp.tipo }}</td>
+            <td>
+              <span class="badge" [ngClass]="opp.estado.toLowerCase()">
+                {{ opp.estado }}
+              </span>
+            </td>
+            <td class="acciones-col">
+              <!-- Editar: siempre visible (se controla editabilidad dentro del form) -->
+              <button 
+                class="btn-sm" 
+                (click)="editar(opp)"
+                [title]="opp.estado === 'cerrado' ? 'Solo lectura (cerrada)' : 'Editar oportunidad'"
+              >
+                {{ opp.estado === 'cerrado' ? 'Ver' : 'Editar' }}
+              </button>
+
+              <!-- Publicar: solo si está en borrador -->
+              <button
+                class="btn-sm outline"
+                *ngIf="opp.estado === 'borrador'"
+                (click)="publish(opp)"
+              >
+                Publicar
+              </button>
+
+              <!-- Pausar: solo si está activo -->
+              <button
+                class="btn-sm outline"
+                *ngIf="opp.estado === 'activo'"
+                (click)="pause(opp)"
+              >
+                Pausar
+              </button>
+
+              <!-- Reanudar: solo si está pausada -->
+              <button
+                class="btn-sm outline"
+                *ngIf="opp.estado === 'pausada'"
+                (click)="reanudar(opp)"
+              >
+                Reanudar
+              </button>
+
+              <!-- Cerrar: solo si está activo o pausada -->
+              <button
+                class="btn-sm outline"
+                *ngIf="opp.estado === 'activo' || opp.estado === 'pausada'"
+                (click)="close(opp)"
+              >
+                Cerrar
+              </button>
+
+              <!-- Eliminar: solo si está en borrador -->
+              <button 
+                class="btn-sm danger" 
+                *ngIf="opp.estado === 'borrador'"
+                (click)="delete(opp)"
+              >
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

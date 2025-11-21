@@ -1,0 +1,323 @@
+<div class="register-container">
+  <div class="register-card">
+    <div class="register-header">
+      <h2>Crear Cuenta Nueva</h2>
+      <p>Complete el formulario para registrarse en VIAS-UC</p>
+    </div>
+
+    <mat-stepper linear #stepper>
+      <!-- Paso 1: Datos Personales -->
+      <mat-step [stepControl]="datosPersonalesForm" [editable]="true">
+        <form [formGroup]="datosPersonalesForm">
+          <ng-template matStepLabel>Datos Personales</ng-template>
+          
+          <div class="form-section">
+            <h3>Tipo de Usuario</h3>
+            <div class="tipo-usuario-buttons">
+              <button type="button" mat-raised-button 
+                      [color]="tipoUsuario === 'EMPLEADOR' ? 'primary' : ''"
+                      (click)="onTipoUsuarioChange('EMPLEADOR')">
+                <mat-icon>business</mat-icon>
+                Empleador
+              </button>
+              <button type="button" mat-raised-button 
+                      [color]="tipoUsuario === 'ESTUDIANTE' ? 'primary' : ''"
+                      (click)="onTipoUsuarioChange('ESTUDIANTE')">
+                <mat-icon>school</mat-icon>
+                Estudiante
+              </button>
+              <button type="button" mat-raised-button 
+                      [color]="tipoUsuario === 'EGRESADO' ? 'primary' : ''"
+                      (click)="onTipoUsuarioChange('EGRESADO')">
+                <mat-icon>work</mat-icon>
+                Egresado
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="nombre" placeholder="Ingrese su nombre">
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error>{{getErrorMessage(datosPersonalesForm, 'nombre')}}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Apellido</mat-label>
+              <input matInput formControlName="apellido" placeholder="Ingrese su apellido">
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error>{{getErrorMessage(datosPersonalesForm, 'apellido')}}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" placeholder="ejemplo@correo.com">
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-error>{{getErrorMessage(datosPersonalesForm, 'email')}}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Teléfono</mat-label>
+              <input matInput formControlName="telefono" placeholder="0981234567">
+              <mat-icon matPrefix>phone</mat-icon>
+              <mat-error>{{getErrorMessage(datosPersonalesForm, 'telefono')}}</mat-error>
+              <mat-hint>Solo números, sin espacios ni guiones</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="step-actions">
+            <button mat-button (click)="onCancelar()">Cancelar</button>
+            <button mat-raised-button color="primary" matStepperNext 
+                    [disabled]="!datosPersonalesForm.valid">
+              Siguiente
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- Paso 2: Selección de Tipo de Registro (solo para Empleador) -->
+      <mat-step *ngIf="tipoUsuario === 'EMPLEADOR' && tipoRegistro === null">
+        <ng-template matStepLabel>Tipo de Registro</ng-template>
+        
+        <div class="tipo-registro-section">
+          <h3>¿Cómo desea registrarse?</h3>
+          <p class="subtitle">Elija si desea crear una empresa nueva o unirse a una empresa existente</p>
+          
+          <div class="tipo-registro-options">
+            <div class="opcion-card" (click)="seleccionarTipoRegistro('nueva')">
+              <div class="opcion-icon">🏢</div>
+              <h4>Crear Empresa Nueva</h4>
+              <p>Registra tu empresa por primera vez en la plataforma</p>
+              <p class="rol-info">Serás el <strong>Administrador</strong></p>
+            </div>
+            
+            <div class="opcion-card" (click)="seleccionarTipoRegistro('existente')">
+              <div class="opcion-icon">🤝</div>
+              <h4>Unirse a Empresa Existente</h4>
+              <p>Únete como colaborador de una empresa ya registrada</p>
+              <p class="rol-info">Rol: <strong>Gerente o Auxiliar RRHH</strong></p>
+            </div>
+          </div>
+        </div>
+      </mat-step>
+
+      <!-- Paso 3a: Selección de Empresa Existente -->
+      <mat-step *ngIf="tipoUsuario === 'EMPLEADOR' && tipoRegistro === 'existente'">
+        <ng-template matStepLabel>Seleccionar Empresa</ng-template>
+        
+        <div class="empresa-seleccion-section">
+          <h3>Únete a una Empresa</h3>
+          <p class="subtitle-small">Completa los datos para solicitar acceso</p>
+          
+          <div *ngIf="cargandoEmpresas" class="loading-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Cargando empresas disponibles...</p>
+          </div>
+          
+          <div *ngIf="!cargandoEmpresas" class="form-section-compact">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Empresa a la que desea unirse</mat-label>
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-select [(ngModel)]="empresaSeleccionada" placeholder="Seleccione una empresa">
+                <mat-option *ngFor="let empresa of empresasDisponibles" [value]="empresa.idEmpresa">
+                  <div class="empresa-option">
+                    <strong>{{ empresa.nombreEmpresa }}</strong>
+                    <span class="empresa-details">RUC: {{ empresa.ruc }} | {{ empresa.razonSocial }}</span>
+                  </div>
+                </mat-option>
+              </mat-select>
+              <mat-hint *ngIf="empresasDisponibles.length === 0">No hay empresas disponibles</mat-hint>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Rol en la Empresa</mat-label>
+              <mat-icon matPrefix>work</mat-icon>
+              <mat-select [(ngModel)]="rolSeleccionado">
+                <mat-option *ngFor="let rol of rolesDisponibles" [value]="rol.valor">
+                  {{ rol.nombre }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            
+            <div class="info-message-compact">
+              <mat-icon>info</mat-icon>
+              <span>Su acceso quedará pendiente de aprobación por un administrador de la empresa</span>
+            </div>
+          </div>
+          
+          <div class="step-actions">
+            <button mat-button matStepperPrevious>Atrás</button>
+            <button mat-raised-button color="primary" matStepperNext
+                    [disabled]="!empresaSeleccionada || !rolSeleccionado">
+              Siguiente
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-step>
+
+      <!-- Paso 3b: Datos de Empresa Nueva -->
+      <mat-step [stepControl]="datosEmpresaForm" [editable]="true" *ngIf="tipoUsuario === 'EMPLEADOR' && tipoRegistro === 'nueva'">
+        <form [formGroup]="datosEmpresaForm">
+          <ng-template matStepLabel>Datos de Empresa</ng-template>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nombre de la Empresa</mat-label>
+              <input matInput formControlName="nombreEmpresa" placeholder="Ingrese el nombre de la empresa">
+              <mat-icon matPrefix>business</mat-icon>
+              <mat-error>{{getErrorMessage(datosEmpresaForm, 'nombreEmpresa')}}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>RUC</mat-label>
+              <input matInput formControlName="ruc" placeholder="80000000-0">
+              <mat-icon matPrefix>badge</mat-icon>
+              <mat-error>{{getErrorMessage(datosEmpresaForm, 'ruc')}}</mat-error>
+              <mat-hint>RUC de la empresa (formato: 80000000-0)</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Razón Social</mat-label>
+              <input matInput formControlName="razonSocial" placeholder="Razón social de la empresa">
+              <mat-icon matPrefix>description</mat-icon>
+              <mat-error>{{getErrorMessage(datosEmpresaForm, 'razonSocial')}}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Teléfono de Contacto</mat-label>
+              <input matInput formControlName="contacto" placeholder="0981234567">
+              <mat-icon matPrefix>phone</mat-icon>
+              <mat-error>{{getErrorMessage(datosEmpresaForm, 'contacto')}}</mat-error>
+              <mat-hint>Teléfono de la empresa (8-15 dígitos)</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Ubicación</mat-label>
+              <input matInput formControlName="ubicacion" placeholder="Asunción">
+              <mat-icon matPrefix>location_on</mat-icon>
+              <mat-error>{{getErrorMessage(datosEmpresaForm, 'ubicacion')}}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email de la Empresa</mat-label>
+              <input matInput type="email" formControlName="email" placeholder="contacto@empresa.com">
+              <mat-icon matPrefix>email</mat-icon>
+              <mat-error>{{getErrorMessage(datosEmpresaForm, 'email')}}</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="step-actions">
+            <button mat-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon>
+              Atrás
+            </button>
+            <button mat-raised-button color="primary" matStepperNext 
+                    [disabled]="!datosEmpresaForm.valid">
+              Siguiente
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- Paso 3: Seguridad -->
+      <mat-step [stepControl]="seguridadForm" [editable]="true">
+        <form [formGroup]="seguridadForm">
+          <ng-template matStepLabel>Seguridad</ng-template>
+          
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Contraseña</mat-label>
+              <input matInput [type]="hidePassword ? 'password' : 'text'" 
+                     formControlName="password" placeholder="Ingrese su contraseña">
+              <mat-icon matPrefix>lock</mat-icon>
+              <button mat-icon-button matSuffix type="button" 
+                      (click)="hidePassword = !hidePassword">
+                <mat-icon>{{hidePassword ? 'visibility' : 'visibility_off'}}</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+
+          <!-- Indicadores de fortaleza de contraseña -->
+          <div class="password-requirements" *ngIf="seguridadForm.get('password')?.touched">
+            <p class="requirements-title">La contraseña debe cumplir:</p>
+            <ul class="requirements-list">
+              <li *ngFor="let error of getPasswordErrors()" class="error-item">
+                <mat-icon>close</mat-icon>
+                {{error}}
+              </li>
+              <li *ngIf="getPasswordErrors().length === 0" class="success-item">
+                <mat-icon>check_circle</mat-icon>
+                Contraseña segura
+              </li>
+            </ul>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Confirmar Contraseña</mat-label>
+              <input matInput [type]="hideConfirmPassword ? 'password' : 'text'" 
+                     formControlName="confirmPassword" placeholder="Confirme su contraseña">
+              <mat-icon matPrefix>lock</mat-icon>
+              <button mat-icon-button matSuffix type="button" 
+                      (click)="hideConfirmPassword = !hideConfirmPassword">
+                <mat-icon>{{hideConfirmPassword ? 'visibility' : 'visibility_off'}}</mat-icon>
+              </button>
+              <mat-error *ngIf="!passwordsMatch()">Las contraseñas no coinciden</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-checkbox formControlName="aceptaTerminos" class="terms-checkbox">
+              Acepto los <a href="/terminos" target="_blank">Términos y Condiciones</a> 
+              y la <a href="/privacidad" target="_blank">Política de Privacidad</a>
+            </mat-checkbox>
+            <mat-error *ngIf="seguridadForm.get('aceptaTerminos')?.touched && 
+                              seguridadForm.get('aceptaTerminos')?.hasError('required')">
+              Debe aceptar los términos y condiciones
+            </mat-error>
+          </div>
+
+          <div class="step-actions">
+            <button mat-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon>
+              Atrás
+            </button>
+            <button mat-raised-button color="primary" 
+                    (click)="onSubmit()" 
+                    [disabled]="!seguridadForm.valid || isLoading">
+              <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+              <span *ngIf="!isLoading">
+                <mat-icon>person_add</mat-icon>
+                Registrarse
+              </span>
+            </button>
+          </div>
+        </form>
+      </mat-step>
+    </mat-stepper>
+
+    <div class="register-footer">
+      <p>¿Ya tienes una cuenta? <a (click)="onCancelar()" class="link-login">Iniciar Sesión</a></p>
+    </div>
+  </div>
+</div>

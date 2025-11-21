@@ -1,0 +1,120 @@
+<div class="perfil-container">
+  <header class="perfil-header">
+    <div class="header-content">
+      <button class="btn-back" (click)="volver()">
+        <span class="arrow">←</span> Volver
+      </button>
+      <h1>Administrar perfil</h1>
+      <button class="btn-logout" (click)="logout()">Cerrar Sesion</button>
+    </div>
+  </header>
+
+  <main class="perfil-main">
+    <div *ngIf="cargando" class="loading-overlay">
+      <div class="loading-spinner">Cargando datos...</div>
+    </div>
+    
+    <form [formGroup]="perfilForm" (ngSubmit)="guardarPerfil()" class="perfil-form" *ngIf="!cargando">
+      
+      <!-- Seccion: Identidad de la empresa -->
+      <section class="form-section">
+        <h2 class="section-title">Identidad de la empresa</h2>
+        
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="nombreEmpresa">Nombre de empresa *</label>
+            <input 
+              type="text" 
+              id="nombreEmpresa"
+              formControlName="nombreEmpresa"
+              placeholder="Nombre de tu empresa"
+              [class.error]="perfilForm.get('nombreEmpresa')?.invalid && perfilForm.get('nombreEmpresa')?.touched">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ruc">RUC (o DNI) *</label>
+            <input 
+              type="text" 
+              id="ruc"
+              formControlName="ruc"
+              placeholder="80012345-6"
+              [class.error]="perfilForm.get('ruc')?.invalid && perfilForm.get('ruc')?.touched">
+          </div>
+          <div class="form-group">
+            <label for="razonSocial">Razon social *</label>
+            <input 
+              type="text" 
+              id="razonSocial"
+              formControlName="razonSocial"
+              placeholder="Nombre legal de la empresa"
+              [class.error]="perfilForm.get('razonSocial')?.invalid && perfilForm.get('razonSocial')?.touched">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="descripcion">Descripcion</label>
+            <textarea 
+              id="descripcion"
+              formControlName="descripcion"
+              rows="6"
+              placeholder="Describe tu empresa, su mision, valores y tecnologias usadas (Max 2000 caracteres)"
+              [class.error]="perfilForm.get('descripcion')?.invalid && perfilForm.get('descripcion')?.touched"></textarea>
+            <small class="char-count">{{ perfilForm.get('descripcion')?.value?.length || 0 }}/2000</small>
+          </div>
+        </div>
+      </section>
+
+      <!-- Seccion: Contacto y ubicacion -->
+      <section class="form-section">
+        <h2 class="section-title">Contacto y ubicacion</h2>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email de contacto *</label>
+            <input 
+              type="email" 
+              id="email"
+              formControlName="email"
+              placeholder="contacto@empresa.com"
+              [class.error]="perfilForm.get('email')?.invalid && perfilForm.get('email')?.touched">
+          </div>
+          <div class="form-group">
+            <label for="contacto">Telefono *</label>
+            <input 
+              type="tel" 
+              id="contacto"
+              formControlName="contacto"
+              placeholder="+595 21 123 4567"
+              [class.error]="perfilForm.get('contacto')?.invalid && perfilForm.get('contacto')?.touched">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="ubicacion">Direccion *</label>
+            <input 
+              type="text" 
+              id="ubicacion"
+              formControlName="ubicacion"
+              placeholder="Av. España 1234, Asuncion"
+              [class.error]="perfilForm.get('ubicacion')?.invalid && perfilForm.get('ubicacion')?.touched">
+          </div>
+        </div>
+      </section>
+
+      <!-- Botones de accion -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="volver()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="guardando">
+          <span *ngIf="!guardando">Guardar cambios</span>
+          <span *ngIf="guardando">Guardando...</span>
+        </button>
+      </div>
+    </form>
+  </main>
+</div>

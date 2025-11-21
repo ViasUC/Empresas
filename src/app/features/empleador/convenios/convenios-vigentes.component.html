@@ -1,0 +1,285 @@
+<div class="convenios-vigentes-container">
+  <div class="header">
+    <h1>Convenios Vigentes</h1>
+    <p class="subtitle">Administre los convenios activos de su empresa</p>
+  </div>
+
+  <!-- Mensajes -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <i class="icon-check"></i>
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <i class="icon-alert"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+    <p>Cargando convenios vigentes...</p>
+  </div>
+
+  <!-- Sin convenios -->
+  <div *ngIf="!isLoading && convenios.length === 0 && !errorMessage" class="empty-state">
+    <div class="empty-icon">📄</div>
+    <h2>No hay convenios vigentes</h2>
+    <p>Actualmente no tiene convenios activos</p>
+  </div>
+
+  <!-- Lista de convenios -->
+  <div *ngIf="!isLoading && convenios.length > 0" class="convenios-list">
+    <div class="list-header">
+      <span>{{ convenios.length }} convenio(s) vigente(s)</span>
+    </div>
+
+    <div class="cards-grid">
+      <div *ngFor="let convenio of convenios" class="convenio-card">
+        <div class="card-header">
+          <div class="header-left">
+            <h3>{{ convenio.institucion }}</h3>
+            <span class="estado-badge" [ngClass]="getEstadoClass(convenio.estado)">
+              {{ convenio.estado }}
+            </span>
+          </div>
+          <div class="card-actions">
+            <button class="btn-icon" (click)="verDetalle(convenio)" title="Ver detalle">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <p class="descripcion">{{ convenio.descripcion }}</p>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">📅 Vigencia:</span>
+              <span class="value">{{ formatDate(convenio.fechaIni) }} - {{ formatDate(convenio.fechaFin) }}</span>
+            </div>
+            <div class="info-item" *ngIf="convenio.responsables">
+              <span class="label">👤 Responsables:</span>
+              <span class="value">{{ convenio.responsables }}</span>
+            </div>
+            <div class="info-item" *ngIf="convenio.duracion">
+              <span class="label">⏱️ Duración:</span>
+              <span class="value">{{ convenio.duracion }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button class="btn btn-sm btn-outline" (click)="abrirModalActualizar(convenio)">
+            Actualizar Responsable
+          </button>
+          <button class="btn btn-sm btn-outline" (click)="abrirModalRenovar(convenio)">
+            Solicitar Renovación
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="abrirModalBaja(convenio)">
+            Dar de Baja
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Actualizar Responsable -->
+  <div *ngIf="showUpdateModal" class="modal-overlay" (click)="cerrarModales()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Actualizar Responsable</h2>
+        <button class="btn-close" (click)="cerrarModales()">×</button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="updateForm" (ngSubmit)="actualizarResponsable()">
+          <div class="form-group">
+            <label for="responsables">Responsables *</label>
+            <input
+              type="text"
+              id="responsables"
+              formControlName="responsables"
+              placeholder="Nombres de los responsables"
+              [class.invalid]="updateForm.get('responsables')?.invalid && updateForm.get('responsables')?.touched"
+            />
+            <span class="error-message" *ngIf="updateForm.get('responsables')?.invalid && updateForm.get('responsables')?.touched">
+              Los responsables son obligatorios
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="observaciones">Observaciones</label>
+            <textarea
+              id="observaciones"
+              formControlName="observaciones"
+              rows="3"
+              placeholder="Observaciones adicionales (opcional)"
+            ></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="cerrarModales()" [disabled]="isSubmitting">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || updateForm.invalid">
+              <span *ngIf="!isSubmitting">Actualizar</span>
+              <span *ngIf="isSubmitting">Actualizando...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Solicitar Renovación -->
+  <div *ngIf="showRenovarModal" class="modal-overlay" (click)="cerrarModales()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Solicitar Renovación</h2>
+        <button class="btn-close" (click)="cerrarModales()">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="confirmation-text">
+          ¿Está seguro que desea solicitar la renovación del convenio con 
+          <strong>{{ selectedConvenio?.institucion }}</strong>?
+        </p>
+        <p class="info-text">
+          Se enviará una solicitud de renovación al área administrativa para su evaluación.
+        </p>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="cerrarModales()" [disabled]="isSubmitting">
+            Cancelar
+          </button>
+          <button class="btn btn-primary" (click)="solicitarRenovacion()" [disabled]="isSubmitting">
+            <span *ngIf="!isSubmitting">Confirmar Renovación</span>
+            <span *ngIf="isSubmitting">Procesando...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Dar de Baja -->
+  <div *ngIf="showBajaModal" class="modal-overlay" (click)="cerrarModales()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Dar de Baja Convenio</h2>
+        <button class="btn-close" (click)="cerrarModales()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <strong>⚠️ Advertencia:</strong> Esta acción cambiará el estado del convenio a "Rescindido".
+        </div>
+
+        <form [formGroup]="bajaForm" (ngSubmit)="darDeBaja()">
+          <div class="form-group">
+            <label for="motivo">Motivo de la Baja *</label>
+            <textarea
+              id="motivo"
+              formControlName="motivo"
+              rows="4"
+              placeholder="Explique el motivo de la baja del convenio"
+              [class.invalid]="bajaForm.get('motivo')?.invalid && bajaForm.get('motivo')?.touched"
+            ></textarea>
+            <span class="error-message" *ngIf="bajaForm.get('motivo')?.invalid && bajaForm.get('motivo')?.touched">
+              El motivo es obligatorio
+            </span>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="cerrarModales()" [disabled]="isSubmitting">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-danger" [disabled]="isSubmitting || bajaForm.invalid">
+              <span *ngIf="!isSubmitting">Dar de Baja</span>
+              <span *ngIf="isSubmitting">Procesando...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ver Detalle -->
+  <div *ngIf="selectedConvenio && !showUpdateModal && !showRenovarModal && !showBajaModal" 
+       class="modal-overlay" (click)="cerrarDetalle()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Detalle del Convenio</h2>
+        <button class="btn-close" (click)="cerrarDetalle()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="detalle-section">
+          <h3>Información General</h3>
+          <div class="detalle-grid">
+            <div class="detalle-item">
+              <span class="label">Institución:</span>
+              <span class="value">{{ selectedConvenio.institucion }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="label">Estado:</span>
+              <span class="estado-badge" [ngClass]="getEstadoClass(selectedConvenio.estado)">
+                {{ selectedConvenio.estado }}
+              </span>
+            </div>
+            <div class="detalle-item full-width">
+              <span class="label">Descripción:</span>
+              <span class="value">{{ selectedConvenio.descripcion }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detalle-section">
+          <h3>Vigencia</h3>
+          <div class="detalle-grid">
+            <div class="detalle-item">
+              <span class="label">Fecha Inicio:</span>
+              <span class="value">{{ formatDate(selectedConvenio.fechaIni) }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="label">Fecha Fin:</span>
+              <span class="value">{{ formatDate(selectedConvenio.fechaFin) }}</span>
+            </div>
+            <div class="detalle-item" *ngIf="selectedConvenio.duracion">
+              <span class="label">Duración:</span>
+              <span class="value">{{ selectedConvenio.duracion }}</span>
+            </div>
+            <div class="detalle-item" *ngIf="selectedConvenio.cantHoras">
+              <span class="label">Horas:</span>
+              <span class="value">{{ selectedConvenio.cantHoras }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedConvenio.responsables">
+          <h3>Responsables</h3>
+          <p>{{ selectedConvenio.responsables }}</p>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedConvenio.objetivos">
+          <h3>Objetivos</h3>
+          <p>{{ selectedConvenio.objetivos }}</p>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedConvenio.beneficios">
+          <h3>Beneficios</h3>
+          <p>{{ selectedConvenio.beneficios }}</p>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedConvenio.requisitos">
+          <h3>Requisitos</h3>
+          <p>{{ selectedConvenio.requisitos }}</p>
+        </div>
+
+        <div class="detalle-section" *ngIf="selectedConvenio.observaciones">
+          <h3>Observaciones</h3>
+          <p>{{ selectedConvenio.observaciones }}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarDetalle()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

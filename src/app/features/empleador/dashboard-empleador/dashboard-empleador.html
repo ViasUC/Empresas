@@ -1,0 +1,94 @@
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1>Panel de Empleador</h1>
+      <div class="header-right">
+        <div class="empresa-info">
+          <div class="empresa-nombre">{{ nombreEmpresa }}</div>
+          <div class="empresa-telefono" *ngIf="telefonoEmpresa">
+            <mat-icon class="icon-small">phone</mat-icon>
+            {{ telefonoEmpresa }}
+          </div>
+        </div>
+        <div class="user-info">
+          <div class="user-details">
+            <span class="user-name">{{ nombreCompleto }}</span>
+            <span class="user-email">{{ email }}</span>
+          </div>
+          <button class="btn-logout" (click)="logout()">Cerrar Sesion</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="cards-grid">
+      <div class="card">
+        <h3>Administrar Perfil</h3>
+        <p>Gestiona la informacion de tu empresa</p>
+        <button class="btn-primary" (click)="irAPerfil()">Ir a Perfil</button>
+      </div>
+
+      <!-- Publicar Oferta -->
+      <div class="card">
+        <h3>Publicar Oportunidad Laboral</h3>
+        <p>Crea nuevas ofertas laborales para tu empresa</p>
+        <button
+          class="btn btn-primary"
+          [routerLink]="['/oportunidades', 'nueva']"
+        >
+          Publicar
+        </button>
+      </div>
+
+      <!-- Mis Ofertas -->
+      <div class="card">
+        <h3>Mis Ofertas</h3>
+        <p>Gestiona las ofertas activas de tu empresa</p>
+        <button
+          class="btn btn-primary"
+          [routerLink]="['/oportunidades']"
+        >
+          Ver ofertas
+        </button>
+      </div>
+
+      <div class="card">
+        <h3>Buscar Candidatos</h3>
+        <p>Busca portafolios de estudiantes y egresados</p>
+        <button class="btn-primary" (click)="irABusqueda()">Buscar Ahora</button>
+      </div>
+
+      <div class="card">
+        <h3>Postulaciones</h3>
+        <p>Revisa las postulaciones a tus ofertas</p>
+        <button class="btn-primary" disabled>Proximamente</button>
+      </div>
+
+      <!-- Solo para ADMINISTRADOR -->
+      <div class="card" *ngIf="esAdministrador()">
+        <h3>Gestión de Usuarios</h3>
+        <p>Gestiona el equipo de tu empresa y aprueba solicitudes de acceso</p>
+        <button class="btn-primary" (click)="irAGestionUsuarios()">Gestionar Equipo</button>
+      </div>
+
+      <div class="card">
+        <h3>Solicitar Convenio</h3>
+        <p>Solicita un nuevo convenio con instituciones educativas</p>
+        <button class="btn-primary" (click)="irASolicitarConvenio()">Solicitar Ahora</button>
+      </div>
+
+      <div class="card">
+        <h3>Mis Solicitudes</h3>
+        <p>Revisa el estado de tus solicitudes de convenio</p>
+        <button class="btn-primary" (click)="irAMisSolicitudes()">Ver Solicitudes</button>
+      </div>
+
+      <div class="card">
+        <h3>Convenios Vigentes</h3>
+        <p>Administra los convenios activos de tu empresa</p>
+        <button class="btn-primary" (click)="irAConveniosVigentes()">Ver Convenios</button>
+      </div>
+    </div>
+  </main>
+</div>

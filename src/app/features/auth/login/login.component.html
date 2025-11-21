@@ -1,0 +1,301 @@
+<div class="login-container">
+  <!-- Panel Izquierdo - Información VIASUC -->
+  <div class="left-panel">
+    <!-- Canvas 3D en el fondo -->
+    <canvas #threeCanvas class="three-canvas"></canvas>
+    
+    <div class="branding">
+      <h2 class="logo">VIAS-UC</h2>
+      <br>
+      <h1 class="tagline">Conectando Academia, Industria y Sociedad </h1>
+    </div>
+    
+    <!-- Estadísticas -->
+    <div class="stats-section">
+      <div class="stat-card">
+        <div class="stat-number">500+</div>
+        <div class="stat-label">Estudiantes Activos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">100+</div>
+        <div class="stat-label">Empresas Aliadas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">250+</div>
+        <div class="stat-label">Oportunidades</div>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feature-item">
+        <mat-icon>work</mat-icon>
+        <div class="feature-text">
+          <span class="feature-title">Oportunidades de Pasantías</span>
+          <span class="feature-desc">Accede a pasantías exclusivas</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <mat-icon>business</mat-icon>
+        <div class="feature-text">
+          <span class="feature-title">Colaboración Empresarial</span>
+          <span class="feature-desc">Conecta con líderes de industria</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <mat-icon>folder</mat-icon>
+        <div class="feature-text">
+          <span class="feature-title">Gestión de Portafolios</span>
+          <span class="feature-desc">Muestra tus proyectos y logros</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <mat-icon>search</mat-icon>
+        <div class="feature-text">
+          <span class="feature-title">Búsqueda Inteligente</span>
+          <span class="feature-desc">Encuentra el talento perfecto</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de Confianza -->
+    <div class="trust-section">
+      <p class="trust-text">Confiado por universidades y empresas líderes</p>
+      <div class="trust-badges">
+        <div class="trust-badge">
+          <mat-icon>verified</mat-icon>
+          <span>Seguro</span>
+        </div>
+        <div class="trust-badge">
+          <mat-icon>rocket_launch</mat-icon>
+          <span>Innovador</span>
+        </div>
+        <div class="trust-badge">
+          <mat-icon>people</mat-icon>
+          <span>Colaborativo</span>
+        </div>
+      </div>
+
+      <!-- Redes Sociales -->
+      <div class="social-media-section">
+        <p class="social-title">Síguenos en nuestras redes</p>
+        <div class="social-links">
+          <a href="https://www.facebook.com/unicatolicapy" target="_blank" rel="noopener" class="social-link facebook" title="Facebook Universidad Católica">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+          </a>
+          <a href="https://x.com/unicatolicapy" target="_blank" rel="noopener" class="social-link twitter" title="X (Twitter) Universidad Católica">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+          <a href="https://www.instagram.com/unicatolicapy/" target="_blank" rel="noopener" class="social-link instagram" title="Instagram Universidad Católica">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+          </a>
+          <a href="https://www.youtube.com/channel/UCdrupjf9CzpKZe0YPyQh7Ew?view_as=subscriber" target="_blank" rel="noopener" class="social-link youtube" title="YouTube Universidad Católica">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enlaces Flotantes Laterales -->
+  <div class="floating-sidebar-links">
+    <a href="https://universidadcatolica.edu.py/beneficios/" target="_blank" rel="noopener" class="floating-link" title="Beneficios UC">
+      <div class="floating-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+        </svg>
+      </div>
+      <span class="floating-text">Beneficios</span>
+    </a>
+    <a href="https://www.caritas.com.py/" target="_blank" rel="noopener" class="floating-link" title="Radio Cáritas">
+      <div class="floating-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.89 2 2 2h16c1.11 0 2-.9 2-2V8c0-1.11-.89-2-2-2H8.3l8.26-3.34L15.88 1 3.24 6.15zM7 20c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-8h-2v-2h-2v2H4V8h16v4z"/>
+        </svg>
+      </div>
+      <span class="floating-text">Radio Cáritas</span>
+    </a>
+    <a href="https://alumnos.sapientia.uc.edu.py/" target="_blank" rel="noopener" class="floating-link" title="Sapientia">
+      <div class="floating-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+        </svg>
+      </div>
+      <span class="floating-text">Sapientia</span>
+    </a>
+  </div>
+
+  <!-- Panel Derecho - Formulario de Login -->
+  <div class="right-panel">
+    <div class="login-form-container">
+      
+      <!-- Mensaje de Usuario No Encontrado -->
+      <div class="user-not-found-message" *ngIf="showUserNotFoundMessage">
+        <div class="not-found-illustration">
+          <div class="illustration-circle">
+            <mat-icon class="main-icon">person_search</mat-icon>
+          </div>
+        </div>
+        
+        <div class="not-found-content">
+          <h2>¡Ups! No encontramos tu cuenta</h2>
+          <p class="email-message">
+            El correo <strong class="highlight-email">{{userNotFoundEmail}}</strong> 
+            no está registrado en VIAS-UC
+          </p>
+          
+          <div class="info-box">
+            <mat-icon class="info-icon">info</mat-icon>
+            <p>¿Primera vez aquí? Únete a nuestra comunidad y descubre oportunidades increíbles</p>
+          </div>
+          
+          <div class="action-buttons">
+            <button 
+              mat-raised-button 
+              color="primary" 
+              class="create-account-btn"
+              (click)="openRegisterDialog()">
+              <mat-icon>person_add</mat-icon>
+              Crear Mi Cuenta
+            </button>
+            <button 
+              mat-stroked-button 
+              class="back-btn"
+              (click)="backToLogin()">
+              <mat-icon>arrow_back</mat-icon>
+              Volver
+            </button>
+          </div>
+          
+          <div class="benefits-preview">
+            <p class="benefits-title">Con VIAS-UC podrás:</p>
+            <div class="benefits-list">
+              <div class="benefit-item">
+                <mat-icon>check_circle</mat-icon>
+                <span>Acceder a oportunidades exclusivas</span>
+              </div>
+              <div class="benefit-item">
+                <mat-icon>check_circle</mat-icon>
+                <span>Conectar con empresas líderes</span>
+              </div>
+              <div class="benefit-item">
+                <mat-icon>check_circle</mat-icon>
+                <span>Gestionar tu portafolio profesional</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario de Login (oculto si se muestra mensaje de usuario no encontrado) -->
+      <div class="login-form-section" [hidden]="showUserNotFoundMessage">
+        <div class="form-header">
+          <h2>Iniciar Sesión</h2>
+          <p>Descubre talento universitario</p>
+        </div>
+
+        <!-- Tabs de Roles -->
+      <mat-tab-group 
+        class="role-tabs" 
+        (selectedTabChange)="onRolChange($event)"
+        selectedIndex="1">
+        <mat-tab label="Estudiante">
+          <ng-template matTabContent>
+            <span>Estudiante</span>
+          </ng-template>
+        </mat-tab>
+        <mat-tab label="Empresas">
+          <ng-template matTabContent>
+            <span>Empresas</span>
+          </ng-template>
+        </mat-tab>
+        <mat-tab label="Egresado">
+          <ng-template matTabContent>
+            <span>Egresado</span>
+          </ng-template>
+        </mat-tab>
+        <mat-tab label="Docente">
+          <ng-template matTabContent>
+            <span>Docente</span>
+          </ng-template>
+        </mat-tab>
+        <mat-tab label="Admin">
+          <ng-template matTabContent>
+            <span>Admin</span>
+          </ng-template>
+        </mat-tab>
+      </mat-tab-group>
+
+      <!-- Formulario -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <!-- Campo Email -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Correo electrónico</mat-label>
+          <input 
+            matInput 
+            type="email" 
+            formControlName="email"
+            placeholder="ejemplo@empresa.com">
+          <mat-icon matSuffix>email</mat-icon>
+          <mat-error *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+            {{ getErrorMessage('email') }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Campo Contraseña -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <input 
+            matInput 
+            [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password"
+            placeholder="Ingresa tu contraseña">
+          <button 
+            mat-icon-button 
+            matSuffix 
+            type="button"
+            (click)="hidePassword = !hidePassword"
+            [attr.aria-label]="'Hide password'"
+            [attr.aria-pressed]="hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            {{ getErrorMessage('password') }}
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Recordar contraseña -->
+        <div class="remember-forgot">
+          <mat-checkbox formControlName="rememberMe" class="remember-checkbox">
+            ¿Recordar tu contraseña?
+          </mat-checkbox>
+        </div>
+
+        <!-- Botón Iniciar Sesión -->
+        <button 
+          mat-raised-button 
+          color="primary" 
+          type="submit"
+          class="login-button full-width"
+          [disabled]="loginForm.invalid">
+          Iniciar Sesión
+        </button>
+
+        <!-- Enlace Registro -->
+        <div class="register-link">
+          <span>¿No tienes cuenta? </span>
+          <a (click)="openRegisterDialog()" class="link">Regístrate aquí</a>
+        </div>
+      </form>
+      </div>
+      <!-- Fin de login-form-section -->
+    </div>
+  </div>
+</div>

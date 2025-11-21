@@ -1,0 +1,243 @@
+<div class="perfil-container">
+  <!-- Header con botón volver -->
+  <header class="perfil-header">
+    <div class="header-content">
+      <button class="btn-volver" (click)="volver()">
+        <span class="icono-volver">←</span> Volver
+      </button>
+      <div class="header-titulo">
+        <h1>Gestión de Usuarios</h1>
+        <p class="subtitulo">Administra los usuarios con acceso a la empresa</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs-container" *ngIf="!cargando && !error && esAdministrador()">
+    <button 
+      class="tab-button" 
+      [class.active]="tabActiva === 'usuarios'"
+      (click)="cambiarTab('usuarios')">
+      <span class="tab-icon">●</span>
+      <span class="tab-text">Usuarios Activos</span>
+      <span class="tab-badge">{{ usuarios.length }}</span>
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="tabActiva === 'solicitudes'"
+      (click)="cambiarTab('solicitudes')">
+      <span class="tab-icon">◷</span>
+      <span class="tab-text">Solicitudes Pendientes</span>
+      <span class="tab-badge" *ngIf="solicitudes.length > 0">{{ solicitudes.length }}</span>
+    </button>
+  </div>
+
+  <main class="perfil-main">
+    <!-- Loading -->
+    <div *ngIf="cargando" class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando usuarios...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error" class="error-container">
+      <div class="error-message">
+        {{ error }}
+      </div>
+    </div>
+
+    <!-- Sin permisos -->
+    <div *ngIf="!cargando && !error && !esAdministrador()" class="empty-state">
+      <div class="empty-icon">�</div>
+      <h3>Sin Permisos</h3>
+      <p>No tienes permisos para gestionar usuarios de la empresa.</p>
+      <p>Esta función es exclusiva para administradores.</p>
+    </div>
+
+    <!-- Tab de Usuarios Activos -->
+    <div *ngIf="!cargando && !error && esAdministrador() && tabActiva === 'usuarios'" class="usuarios-content">
+      
+      <!-- Sin usuarios -->
+      <div *ngIf="usuarios.length === 0" class="empty-state">
+        <div class="empty-icon">○</div>
+        <h3>No hay usuarios registrados</h3>
+        <p>Aún no hay colaboradores en esta empresa.</p>
+        <p>Los usuarios aparecerán aquí cuando se registren.</p>
+      </div>
+
+      <!-- Tabla de usuarios -->
+      <div *ngIf="usuarios.length > 0" class="tabla-container">
+        <div class="tabla-header">
+          <h2>Colaboradores de la Empresa</h2>
+          <span class="contador-usuarios">{{ usuarios.length }} {{ usuarios.length === 1 ? 'usuario' : 'usuarios' }}</span>
+        </div>
+
+        <table class="tabla-usuarios">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Contacto</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Fecha Alta</th>
+              <th class="col-acciones">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let usuario of usuarios" [class.usuario-actual]="usuario.idUsuario === idUsuarioActual">
+              <td class="id-usuario">
+                <span class="codigo-usuario">#{{ usuario.idUsuario }}</span>
+              </td>
+              <td>
+                <div class="usuario-info">
+                  <div class="usuario-avatar">
+                    {{ usuario.usuario.nombre.charAt(0) }}{{ usuario.usuario.apellido.charAt(0) }}
+                  </div>
+                  <div class="usuario-datos">
+                    <strong>{{ usuario.usuario.nombre }} {{ usuario.usuario.apellido }}</strong>
+                    <span *ngIf="usuario.idUsuario === idUsuarioActual" class="badge-tu">(Tú)</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="contacto-info">
+                  <div class="email">{{ usuario.usuario.email }}</div>
+                  <div class="telefono">{{ usuario.usuario.telefono || 'Sin teléfono' }}</div>
+                </div>
+              </td>
+              <td>
+                <span class="rol-badge" [ngClass]="getRolClass(usuario.rolEnEmpresa)">
+                  {{ getNombreRol(usuario.rolEnEmpresa) }}
+                </span>
+              </td>
+              <td>
+                <span class="estado-badge" [ngClass]="usuario.activo ? 'activo' : 'inactivo'">
+                  {{ usuario.activo ? '● Activo' : '○ Inactivo' }}
+                </span>
+              </td>
+              <td class="fecha">{{ formatearFecha(usuario.fechaAlta) }}</td>
+              <td class="col-acciones">
+                <div class="acciones-grupo">
+                  <button 
+                    class="btn-accion btn-editar" 
+                    (click)="abrirModalCambiarRol(usuario)"
+                    [disabled]="usuario.idUsuario === idUsuarioActual"
+                    title="Cambiar rol">
+                    ⚙
+                  </button>
+                  <button 
+                    class="btn-accion btn-desactivar" 
+                    (click)="confirmarDesactivar(usuario)"
+                    [disabled]="usuario.idUsuario === idUsuarioActual || !usuario.activo"
+                    title="Desactivar usuario">
+                    ✕
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal cambiar rol -->
+  <div *ngIf="mostrarModalRol" class="modal-overlay" (click)="cerrarModalRol()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Cambiar Rol de Usuario</h3>
+        <button class="btn-close" (click)="cerrarModalRol()">×</button>
+      </div>
+      
+      <div class="modal-body" *ngIf="usuarioEditando">
+        <div class="usuario-modal-info">
+          <strong>{{ usuarioEditando.usuario.nombre }} {{ usuarioEditando.usuario.apellido }}</strong>
+          <span>{{ usuarioEditando.usuario.email }}</span>
+        </div>
+
+        <div class="form-group">
+          <label>Rol actual:</label>
+          <div class="rol-actual">{{ getNombreRol(usuarioEditando.rolEnEmpresa) }}</div>
+        </div>
+
+        <div class="form-group">
+          <label for="nuevoRol">Nuevo rol:</label>
+          <select id="nuevoRol" [(ngModel)]="nuevoRol" class="form-control">
+            <option *ngFor="let rol of rolesDisponibles" [value]="rol.valor">
+              {{ rol.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <div class="info-message">
+          ⓘ El usuario mantendrá su acceso pero con las nuevas permisiones del rol seleccionado.
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn-secundario" (click)="cerrarModalRol()">Cancelar</button>
+        <button class="btn-primario" (click)="cambiarRol()">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab de Solicitudes Pendientes -->
+  <div *ngIf="!cargando && !error && esAdministrador() && tabActiva === 'solicitudes'" class="solicitudes-content">
+    
+    <!-- Empty state -->
+    <div *ngIf="solicitudes.length === 0" class="empty-state">
+      <div class="empty-icon">✓</div>
+      <h3>¡Todo al día!</h3>
+      <p>No hay solicitudes pendientes de aprobación</p>
+    </div>
+
+    <!-- Cards de solicitudes -->
+    <div *ngIf="solicitudes.length > 0" class="solicitudes-grid">
+      <div *ngFor="let solicitud of solicitudes" class="solicitud-card">
+        <div class="card-header-solicitud">
+          <div class="user-avatar-solicitud">
+            {{ solicitud.usuario.nombre.charAt(0) }}{{ solicitud.usuario.apellido.charAt(0) }}
+          </div>
+          <div class="user-info-solicitud">
+            <h3>{{ solicitud.usuario.nombre }} {{ solicitud.usuario.apellido }}</h3>
+            <p class="email-solicitud">{{ solicitud.usuario.email }}</p>
+            <p class="phone-solicitud" *ngIf="solicitud.usuario.telefono">
+              ☎ {{ solicitud.usuario.telefono }}
+            </p>
+          </div>
+        </div>
+
+        <div class="card-body-solicitud">
+          <div class="info-row">
+            <span class="label-solicitud">ID Usuario:</span>
+            <span class="codigo-usuario-card">#{{ solicitud.idUsuario }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="label-solicitud">Rol solicitado:</span>
+            <span class="rol-badge" [ngClass]="getRolClass(solicitud.rolSolicitado)">
+              {{ getNombreRol(solicitud.rolSolicitado) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="card-actions-solicitud">
+          <button 
+            class="btn-rechazar" 
+            (click)="rechazarSolicitud(solicitud)"
+            [disabled]="cargando">
+            ✕ Rechazar
+          </button>
+          <button 
+            class="btn-aprobar" 
+            (click)="aprobarSolicitud(solicitud)"
+            [disabled]="cargando">
+            ✓ Aprobar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,311 @@
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule } from '@angular/material/chips';
+import { 
+  SearchPortfolioState, 
+  SearchPortfolioEvent,
+  SearchPortfolioContext,
+  SearchCriteria 
+} from '../../shared/models/search-portfolio-fsm';
+import { SearchPortfolioFSMService } from '../../core/services/search-portfolio-fsm.service';
+
+/**
+ * Componente para búsqueda de portafolios de candidatos
+ * Implementa UC-EMP-004 usando FSM (Finite State Machine)
+ */
+@Component({
+  selector: 'app-search-portfolio',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatChipsModule
+  ],
+  templateUrl: './search-portfolio.component.html',
+  styleUrls: ['./search-portfolio.component.scss']
+})
+export class SearchPortfolioComponent implements OnInit, OnDestroy {
+  
+  // Estados del FSM para usar en template
+  public readonly States = SearchPortfolioState;
+  
+  // Formulario de búsqueda
+  public searchForm: FormGroup;
+  
+  // Estado y contexto actuales
+  public currentState: SearchPortfolioState = SearchPortfolioState.IDLE;
+  public context: SearchPortfolioContext;
+  
+  private subscriptions = new Subscription();
+  
+  constructor(
+    private fb: FormBuilder,
+    private searchFSM: SearchPortfolioFSMService
+  ) {
+    this.searchForm = this.createSearchForm();
+    this.context = this.searchFSM.context;
+  }
+  
+  ngOnInit(): void {
+    this.subscribeToFSM();
+    this.initializeSearch();
+  }
+  
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+  
+  /**
+   * Suscribe a los cambios de estado y contexto del FSM
+   */
+  private subscribeToFSM(): void {
+    // Suscribirse al estado actual
+    this.subscriptions.add(
+      this.searchFSM.currentState$.subscribe(state => {
+        this.currentState = state;
+        console.log('Estado actual:', state);
+      })
+    );
+    
+    // Suscribirse al contexto
+    this.subscriptions.add(
+      this.searchFSM.context$.subscribe(context => {
+        this.context = context;
+        this.updateFormWithFilters(context.filters);
+      })
+    );
+  }
+  
+  /**
+   * Inicializa la búsqueda
+   */
+  public initializeSearch(): void {
+    this.searchFSM.initialize();
+    
+    // Simular carga de filtros (en la realidad sería una llamada HTTP)
+    setTimeout(() => {
+      const mockFilters = this.getMockFilters();
+      this.searchFSM.transition(SearchPortfolioEvent.FILTERS_LOADED, { filters: mockFilters });
+    }, 1000);
+  }
+  
+  /**
+   * Ejecuta la búsqueda
+   */
+  public executeSearch(): void {
+    if (!this.searchFSM.canTransition(SearchPortfolioEvent.SEARCH_REQUESTED)) {
+      console.warn('No se puede ejecutar búsqueda en el estado actual');
+      return;
+    }
+    
+    const criteria: SearchCriteria = this.buildSearchCriteria();
+    this.searchFSM.transition(SearchPortfolioEvent.SEARCH_REQUESTED, { criteria });
+    
+    // Simular búsqueda (en la realidad sería una llamada HTTP)
+    this.simulateSearch(criteria);
+  }
+  
+  /**
+   * Reinicia la búsqueda
+   */
+  public resetSearch(): void {
+    this.searchFSM.transition(SearchPortfolioEvent.RESET);
+    this.searchForm.reset();
+  }
+  
+  /**
+   * Reintenta la operación fallida
+   */
+  public retry(): void {
+    if (this.searchFSM.canTransition(SearchPortfolioEvent.RETRY)) {
+      this.searchFSM.transition(SearchPortfolioEvent.RETRY);
+      
+      if (this.currentState === SearchPortfolioState.ERROR_SERVER) {
+        // Reintentar carga de filtros
+        setTimeout(() => {
+          const mockFilters = this.getMockFilters();
+          this.searchFSM.transition(SearchPortfolioEvent.FILTERS_LOADED, { filters: mockFilters });
+        }, 1000);
+      }
+    }
+  }
+  
+  /**
+   * Verifica si se puede ejecutar búsqueda
+   */
+  public canSearch(): boolean {
+    return this.currentState === SearchPortfolioState.READY && 
+           this.searchForm.valid;
+  }
+  
+  /**
+   * Verifica si está cargando
+   */
+  public isLoading(): boolean {
+    return this.context.isLoading;
+  }
+  
+  /**
+   * Verifica si hay error
+   */
+  public hasError(): boolean {
+    return this.currentState.includes('error');
+  }
+  
+  /**
+   * Verifica si hay resultados
+   */
+  public hasResults(): boolean {
+    return this.currentState === SearchPortfolioState.SUCCESS && 
+           this.context.results.length > 0;
+  }
+  
+  /**
+   * Crea el formulario de búsqueda
+   */
+  private createSearchForm(): FormGroup {
+    return this.fb.group({
+      carrera: [''],
+      skills: [''],
+      experienciaMin: [0],
+      experienciaMax: [10],
+      ubicacion: [''],
+      salarioMin: [0],
+      salarioMax: [5000000]
+    });
+  }
+  
+  /**
+   * Actualiza el formulario con los filtros disponibles
+   */
+  private updateFormWithFilters(filters: any[]): void {
+    // Aquí se actualizarían los options de los selects
+    console.log('Filtros disponibles:', filters);
+  }
+  
+  /**
+   * Construye el criterio de búsqueda desde el formulario
+   */
+  private buildSearchCriteria(): SearchCriteria {
+    const formValue = this.searchForm.value;
+    return {
+      carrera: formValue.carrera ? [formValue.carrera] : undefined,
+      skills: formValue.skills ? formValue.skills.split(',') : undefined,
+      experiencia: {
+        min: formValue.experienciaMin || 0,
+        max: formValue.experienciaMax || 10
+      },
+      ubicacion: formValue.ubicacion || undefined,
+      salario: {
+        min: formValue.salarioMin || 0,
+        max: formValue.salarioMax || 5000000
+      }
+    };
+  }
+  
+  /**
+   * Simula la búsqueda (en la realidad sería HTTP)
+   */
+  private simulateSearch(criteria: SearchCriteria): void {
+    setTimeout(() => {
+      // Simular diferentes escenarios
+      const random = Math.random();
+      
+      if (random < 0.1) {
+        // 10% chance de error de auth
+        this.searchFSM.transition(SearchPortfolioEvent.AUTH_ERROR);
+      } else if (random < 0.15) {
+        // 5% chance de error de validación
+        this.searchFSM.transition(SearchPortfolioEvent.VALIDATION_ERROR, {
+          message: 'El rango de salario no es válido'
+        });
+      } else if (random < 0.2) {
+        // 5% chance de error de servidor
+        this.searchFSM.transition(SearchPortfolioEvent.SERVER_ERROR);
+      } else {
+        // 80% chance de éxito
+        const mockResults = this.getMockResults();
+        this.searchFSM.transition(SearchPortfolioEvent.SEARCH_SUCCESS, {
+          results: mockResults,
+          totalResults: mockResults.length,
+          currentPage: 1
+        });
+      }
+    }, 2000);
+  }
+  
+  /**
+   * Obtiene filtros mock para testing
+   */
+  private getMockFilters(): any[] {
+    return [
+      {
+        id: 'carrera',
+        name: 'Carrera',
+        type: 'select',
+        options: [
+          { value: 'ingenieria-software', label: 'Ingeniería de Software' },
+          { value: 'ingenieria-sistemas', label: 'Ingeniería de Sistemas' },
+          { value: 'ciencias-computacion', label: 'Ciencias de la Computación' }
+        ]
+      },
+      {
+        id: 'skills',
+        name: 'Habilidades',
+        type: 'multiselect',
+        options: [
+          { value: 'angular', label: 'Angular' },
+          { value: 'react', label: 'React' },
+          { value: 'nodejs', label: 'Node.js' },
+          { value: 'python', label: 'Python' }
+        ]
+      }
+    ];
+  }
+  
+  /**
+   * Obtiene resultados mock para testing
+   */
+  private getMockResults(): any[] {
+    return [
+      {
+        id: '1',
+        candidatoId: 'cand-001',
+        nombre: 'Juan Pérez',
+        carrera: 'Ingeniería de Software',
+        skills: ['Angular', 'TypeScript', 'Node.js'],
+        experiencia: 3,
+        ubicacion: 'Santiago',
+        salarioEsperado: 1500000,
+        avatar: '',
+        rating: 4.5
+      },
+      {
+        id: '2',
+        candidatoId: 'cand-002',
+        nombre: 'María González',
+        carrera: 'Ciencias de la Computación',
+        skills: ['React', 'Python', 'Django'],
+        experiencia: 5,
+        ubicacion: 'Valparaíso',
+        salarioEsperado: 2000000,
+        avatar: '',
+        rating: 4.8
+      }
+    ];
+  }
+}

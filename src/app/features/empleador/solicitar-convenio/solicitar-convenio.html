@@ -1,0 +1,159 @@
+<div class="container">
+  <header>
+    <h1>Solicitar Convenio</h1>
+    <button class="btn-back" (click)="volver()">← Volver al Dashboard</button>
+  </header>
+
+  <form (ngSubmit)="onSubmit()" #convenioForm="ngForm">
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+    
+    <div class="form-group">
+      <label for="institucion">Institución *</label>
+      <input 
+        type="text" 
+        id="institucion" 
+        name="institucion"
+        [(ngModel)]="convenio.institucion" 
+        required
+        placeholder="Nombre de la institución educativa">
+    </div>
+
+    <div class="form-group">
+      <label for="descripcion">Descripción *</label>
+      <textarea 
+        id="descripcion" 
+        name="descripcion"
+        [(ngModel)]="convenio.descripcion" 
+        required
+        rows="4"
+        placeholder="Descripción del convenio"></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="fechaIni">Fecha Inicio *</label>
+        <input 
+          type="date" 
+          id="fechaIni" 
+          name="fechaIni"
+          [(ngModel)]="convenio.fechaIni" 
+          required>
+      </div>
+
+      <div class="form-group">
+        <label for="fechaFin">Fecha Fin *</label>
+        <input 
+          type="date" 
+          id="fechaFin" 
+          name="fechaFin"
+          [(ngModel)]="convenio.fechaFin" 
+          required>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="responsables">Responsables *</label>
+      <input 
+        type="text" 
+        id="responsables" 
+        name="responsables"
+        [(ngModel)]="convenio.responsables" 
+        required
+        placeholder="Nombre de los responsables">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="duracion">Duración</label>
+        <input 
+          type="text" 
+          id="duracion" 
+          name="duracion"
+          [(ngModel)]="convenio.duracion"
+          placeholder="Ej: 12 meses">
+      </div>
+
+      <div class="form-group">
+        <label for="cantHoras">Cantidad de Horas</label>
+        <input 
+          type="text" 
+          id="cantHoras" 
+          name="cantHoras"
+          [(ngModel)]="convenio.cantHoras"
+          placeholder="Ej: 160 horas">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="objetivos">Objetivos</label>
+      <textarea 
+        id="objetivos" 
+        name="objetivos"
+        [(ngModel)]="convenio.objetivos"
+        rows="3"
+        placeholder="Objetivos del convenio"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="beneficios">Beneficios</label>
+      <textarea 
+        id="beneficios" 
+        name="beneficios"
+        [(ngModel)]="convenio.beneficios"
+        rows="3"
+        placeholder="Beneficios del convenio"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="requisitos">Requisitos</label>
+      <textarea 
+        id="requisitos" 
+        name="requisitos"
+        [(ngModel)]="convenio.requisitos"
+        rows="3"
+        placeholder="Requisitos del convenio"></textarea>
+    </div>
+
+    <div class="form-group upload-section">
+      <label>Documentos Adjuntos (Opcional)</label>
+      <p class="upload-hint">Puede adjuntar documentos o imágenes (PDF, DOC, DOCX, JPG, PNG, GIF). Tamaño máximo: 10 MB</p>
+      
+      <div class="upload-area" *ngIf="!archivoSeleccionado">
+        <input 
+          type="file" 
+          id="archivo"
+          (change)="onArchivoSeleccionado($event)"
+          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+          style="display: none">
+        <label for="archivo" class="upload-button">
+          <span class="upload-icon">[+]</span>
+          <span>Seleccionar archivo</span>
+        </label>
+      </div>
+
+      <div class="archivo-seleccionado" *ngIf="archivoSeleccionado">
+        <div class="archivo-info">
+          <span class="archivo-icon">[FILE]</span>
+          <div class="archivo-detalles">
+            <span class="archivo-nombre">{{ archivoNombre }}</span>
+            <span class="archivo-tamano">{{ formatearTamano(archivoSeleccionado.size) }}</span>
+          </div>
+        </div>
+        <button type="button" class="btn-eliminar-archivo" (click)="eliminarArchivo()">
+          ✕
+        </button>
+      </div>
+
+      <p class="error-text" *ngIf="archivoError">{{ archivoError }}</p>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn-cancel" (click)="volver()" [disabled]="submitting">Cancelar</button>
+      <button type="submit" class="btn-submit" [disabled]="!convenioForm.valid || submitting">
+        {{ submitting ? 'Enviando...' : 'Solicitar Convenio' }}
+      </button>
+    </div>
+  </form>
+</div>
