@@ -46,4 +46,8 @@ export class DashboardEmpleador implements OnInit {
       }
     });
   }
+
+  irAEndorsements(): void {
+    this.router.navigate(['/dashboard/empleador/endorsements']);
+  }
 }
