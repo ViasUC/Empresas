@@ -1,0 +1,234 @@
+<div class="endorsements-page">
+
+  <!-- Header -->
+  <header class="page-header">
+    <div>
+      <h1>Endorsements</h1>
+      <p>Módulo F3 · Conectado al backend.</p>
+    </div>
+
+    <button class="btn-secondary" (click)="volverDashboard()">
+      ⟵ Volver al Panel
+    </button>
+  </header>
+
+  <!-- Mensaje de error -->
+  <div *ngIf="errorMsg" class="empty" style="margin-bottom:12px;">
+    {{ errorMsg }}
+  </div>
+
+  <!-- Tabs -->
+  <nav class="tabs">
+    <button class="tab"
+            [class.active]="activeTab==='recibidos'"
+            (click)="cambiarTab('recibidos')">
+      Recibidos
+      <span class="pill">{{ recibidos.length }}</span>
+    </button>
+
+    <button class="tab"
+            [class.active]="activeTab==='enviados'"
+            (click)="cambiarTab('enviados')">
+      Enviados
+      <span class="pill">{{ enviados.length }}</span>
+    </button>
+
+    <button class="tab"
+            [class.active]="activeTab==='crear'"
+            (click)="cambiarTab('crear')">
+      + Crear Endorsement
+    </button>
+  </nav>
+
+  <!-- ================= RECIBIDOS ================= -->
+  <section *ngIf="activeTab==='recibidos'" class="section">
+    <div class="section-header">
+      <h2>Recibidos</h2>
+
+      <div class="filter-row">
+        <label>Estado</label>
+        <select [(ngModel)]="filtroRecibidos" name="filtroRecibidos">
+          <option value="ALL">Ver todos</option>
+          <option value="PENDING">Pendientes</option>
+          <option value="ACCEPTED">Aceptados</option>
+          <option value="REJECTED">Rechazados</option>
+        </select>
+        <label>Rol</label>
+        <select [(ngModel)]="filtroRolRecibidos" name="filtroRolRecibidos">
+          <option *ngFor="let r of roleOptions" [value]="r">{{ r === 'ALL' ? 'Ver todos' : r }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="list">
+      <article *ngFor="let e of recibidosFiltrados" class="endorsement-card">
+        <div class="card-top">
+          <span class="badge"
+                [class.pending]="e.status==='PENDING'"
+                [class.accepted]="e.status==='ACCEPTED'"
+                [class.rejected]="e.status==='REJECTED'">
+            {{ e.status }}
+          </span>
+        </div>
+
+        <div class="card-body">
+          <div class="row"><span class="label">Skill</span> <span>{{ e.skill }}</span></div>
+          <div class="row"><span class="label">Mensaje</span> <span>{{ e.message }}</span></div>
+          <div class="row subtle" *ngIf="e.fromUserId">
+            De: 
+            <span *ngIf="usuariosCache[e.fromUserId]">
+              {{ usuariosCache[e.fromUserId].nombre }} {{ usuariosCache[e.fromUserId].apellido }}
+              <span *ngIf="usuariosCache[e.fromUserId].tipo" class="role-badge" [ngClass]="getRoleBadgeClass(usuariosCache[e.fromUserId].tipo)">
+                {{ getRoleLabel(usuariosCache[e.fromUserId].tipo) }}
+              </span>
+            </span>
+            <span *ngIf="!usuariosCache[e.fromUserId]">#{{ e.fromUserId }}</span>
+          </div>
+        </div>
+
+        <!-- ✅ ahora va al backend -->
+        <div class="card-actions" *ngIf="e.status==='PENDING'">
+          <button class="btn-primary" (click)="decidirEndorsement(e,true)" [disabled]="loading">
+            Aceptar
+          </button>
+          <button class="btn-danger" (click)="decidirEndorsement(e,false)" [disabled]="loading">
+            Rechazar
+          </button>
+        </div>
+      </article>
+
+      <div *ngIf="recibidosFiltrados.length===0" class="empty">
+        No hay endorsements recibidos con ese filtro.
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ENVIADOS ================= -->
+  <section *ngIf="activeTab==='enviados'" class="section">
+    <div class="section-header">
+      <h2>Enviados</h2>
+
+      <div class="filter-row">
+        <label>Estado</label>
+        <select [(ngModel)]="filtroEnviados" name="filtroEnviados">
+          <option value="ALL">Ver todos</option>
+          <option value="PENDING">Pendientes</option>
+          <option value="ACCEPTED">Aceptados</option>
+          <option value="REJECTED">Rechazados</option>
+        </select>
+        <label>Rol</label>
+        <select [(ngModel)]="filtroRolEnviados" name="filtroRolEnviados">
+          <option *ngFor="let r of roleOptions" [value]="r">{{ r === 'ALL' ? 'Ver todos' : r }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="list">
+      <article *ngFor="let e of enviadosFiltrados" class="endorsement-card">
+        <div class="card-top">
+          <span class="badge"
+                [class.pending]="e.status==='PENDING'"
+                [class.accepted]="e.status==='ACCEPTED'"
+                [class.rejected]="e.status==='REJECTED'">
+            {{ e.status }}
+          </span>
+        </div>
+
+        <div class="card-body">
+          <div class="row"><span class="label">Skill</span> <span>{{ e.skill }}</span></div>
+          <div class="row"><span class="label">Mensaje</span> <span>{{ e.message }}</span></div>
+          <div class="row subtle" *ngIf="e.toUserId">
+            Para: 
+            <span *ngIf="usuariosCache[e.toUserId]">
+              {{ usuariosCache[e.toUserId].nombre }} {{ usuariosCache[e.toUserId].apellido }}
+              <span *ngIf="usuariosCache[e.toUserId].tipo" class="role-badge" [ngClass]="getRoleBadgeClass(usuariosCache[e.toUserId].tipo)">
+                {{ getRoleLabel(usuariosCache[e.toUserId].tipo) }}
+              </span>
+            </span>
+            <span *ngIf="!usuariosCache[e.toUserId]">#{{ e.toUserId }}</span>
+          </div>
+        </div>
+      </article>
+
+      <div *ngIf="enviadosFiltrados.length===0" class="empty">
+        No hay endorsements enviados con ese filtro.
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CREAR ================= -->
+  <section *ngIf="activeTab==='crear'" class="section">
+    <div class="section-header">
+      <h2>Crear endorsement</h2>
+    </div>
+
+    <div class="create-card">
+      <!-- ✅ ahora manda al backend -->
+      <form (ngSubmit)="enviarEndorsement()" class="form">
+
+        <!-- BUSCADOR DESTINATARIO -->
+        <label>
+          Buscar receptor (por nombre o email)
+          <input
+            [(ngModel)]="searchText"
+            name="searchText"
+            (ngModelChange)="onSearchChange($event)"
+            placeholder="Ej: Juan Pérez o juan@correo.com"
+            autocomplete="off"
+            required
+          />
+        </label>
+
+        <!-- Resultados dropdown -->
+        <div class="suggestions" *ngIf="posiblesDestinatarios.length > 0">
+          <button
+            type="button"
+            class="suggestion"
+            *ngFor="let u of posiblesDestinatarios"
+            (click)="seleccionarDestinatario(u)">
+            <span class="s-name">{{u.nombre}} {{u.apellido}}</span>
+            <span class="s-email">{{u.email}}</span>
+          </button>
+        </div>
+
+        <!-- Seleccionado -->
+        <div class="selected-dest" *ngIf="selectedDestinatario">
+          Destinatario:
+          <b>{{selectedDestinatario.nombre}} {{selectedDestinatario.apellido}}</b>
+          <small *ngIf="selectedDestinatario.email">({{selectedDestinatario.email}})</small>
+
+          <button
+            type="button"
+            class="btn-secondary btn-mini"
+            (click)="limpiarDestinatario()">
+            Cambiar
+          </button>
+        </div>
+
+        <label>
+          Skill
+          <input [(ngModel)]="form.skill" name="skill"
+                 placeholder="Ej: Liderazgo, Trabajo en equipo..."
+                 required />
+        </label>
+
+        <label>
+          Mensaje
+          <textarea [(ngModel)]="form.message" name="message" rows="4"
+                    placeholder="Escribí un mensaje corto y claro..."
+                    required></textarea>
+        </label>
+
+        <div class="form-actions">
+          <button class="btn-primary" type="submit" [disabled]="loading || !form.toUserId">
+            {{ loading ? 'Enviando...' : 'Enviar' }}
+          </button>
+        </div>
+
+        <p class="hint" *ngIf="buscandoDestinatarios">Buscando destinatarios…</p>
+
+      </form>
+    </div>
+  </section>
+
+</div>

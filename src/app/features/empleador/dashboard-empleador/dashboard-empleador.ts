@@ -150,6 +150,10 @@ export class DashboardEmpleador implements OnInit, OnDestroy {
   irAConveniosVigentes(): void {
     this.router.navigate(['/dashboard/empleador/convenios-vigentes']);
   }
+  
+  irAEndorsements(): void {
+    this.router.navigate(['/dashboard/empleador/endorsements']);
+  }
 
   esAdministrador(): boolean {
     // Puedes mejorar esto según cómo guardes el rol en el dashboard

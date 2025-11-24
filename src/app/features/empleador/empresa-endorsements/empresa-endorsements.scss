@@ -1,0 +1,482 @@
+/* 1) Fondo general SIEMPRE oscuro (aunque el tema global sea claro) */
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #0a1020;   /* similar al resto del portal */
+  color: #e6edf6;
+}
+
+/* ====== Base + nitidez ====== */
+.endorsements-page {
+  padding: 24px;
+  color: #e6edf6;
+  max-width: 1150px;
+  margin: 0 auto;
+  background: transparent;
+
+  /* nitidez tipográfica */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* font moderna sin depender de imports */
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* ====== Header ====== */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: .2px;
+    color: #f8fafc;   /* más contraste */
+  }
+
+  p {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    opacity: 1;       /* quitamos lavado */
+    color: #cbd5e1;   /* más legible */
+  }
+}
+
+/* ====== Tabs tipo “segmented control” ====== */
+.tabs {
+  display: inline-flex;
+  background: #0f172a;              /* más contraste */
+  border: 1px solid #334155;        /* borde más visible */
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  margin: 8px 0 18px 0;
+
+  .tab {
+    background: transparent;
+    border: none;
+    color: #cbd5e1;                 /* más claro */
+    padding: 8px 14px;
+    border-radius: 9px;
+    cursor: pointer;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background .15s ease, color .15s ease;
+
+    &:hover {
+      background: #131c2e;
+      color: #ffffff;
+    }
+
+    &.active {
+      background: linear-gradient(180deg, #2563eb, #1d4ed8);
+      color: white;
+      box-shadow: 0 6px 18px rgba(37,99,235,.35);
+    }
+  }
+
+  .pill {
+    background: rgba(255,255,255,.16);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+}
+
+/* ====== Secciones ====== */
+.section {
+  background: #0f172a;                 /* más separado del fondo */
+  border: 1px solid #334155;           /* borde visible */
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: .3px;
+    color: #f1f5f9; /* más contraste */
+  }
+}
+
+/* ====== Filtro ====== */
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+
+  label {
+    opacity: 1;
+    font-weight: 700;
+    color: #e2e8f0; /* más visible */
+  }
+
+  select {
+    background: #0b1220;           /* más oscuro */
+    color: #f8fafc;
+    border: 1px solid #475569;     /* borde notable */
+    padding: 6px 10px;
+    border-radius: 8px;
+    min-width: 150px;
+    font-weight: 600;
+    outline: none;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+    }
+  }
+}
+
+/* ====== Lista + cards ====== */
+.list {
+  display: grid;
+  gap: 10px;
+}
+
+.endorsement-card {
+  position: relative;
+  background: #111b2e;       /* un poquito más claro que la sección */
+  border: 1px solid #3a4d70; /* borde más visible */
+  border-radius: 12px;
+  padding: 12px 12px 10px 12px;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+
+  /* acento lateral pro */
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    border-radius: 12px 0 0 12px;
+    background: #475569; /* más contraste */
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: #4f6fa3;
+    box-shadow: 0 10px 25px rgba(0,0,0,.35);
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+
+    .meta {
+      display: grid;
+      gap: 2px;
+
+      .id {
+        font-weight: 900;
+        font-size: 14px;
+        letter-spacing: .3px;
+        color: #f8fafc;
+      }
+      .sub {
+        font-size: 12px;
+        opacity: .8;
+        font-weight: 600;
+        color: #cbd5e1;
+      }
+    }
+  }
+
+  .card-body {
+    display: grid;
+    gap: 6px;
+    font-size: 14px;
+
+    .row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 8px;
+      align-items: baseline;
+      line-height: 1.35;
+    }
+
+    .label {
+      opacity: 1;
+      font-weight: 800;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: #94a3b8; /* más visible */
+    }
+
+    span {
+      color: #f1f5f9; /* texto principal más blanco */
+    }
+  }
+
+  .card-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+  }
+}
+
+/* ====== Badges mejorado ====== */
+.badge {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: .5px;
+  background: #334155;
+  border: 1px solid transparent;
+  color: #f8fafc;
+
+  &.pending {
+    background: #b45309;
+    border-color: #f59e0b;
+  }
+  &.accepted {
+    background: #15803d;
+    border-color: #22c55e;
+  }
+  &.rejected {
+    background: #b91c1c;
+    border-color: #ef4444;
+  }
+}
+
+/* Badges de rol (visuales) */
+.role-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-left: 8px;
+}
+
+.role-badge.badge-estudiante {
+  background: rgba(47,134,213,0.12);
+  color: #7fb8e6;
+  border: 1px solid rgba(47,134,213,0.22);
+}
+
+.role-badge.badge-egresado {
+  background: rgba(39,174,96,0.12);
+  color: #9ad9ae;
+  border: 1px solid rgba(39,174,96,0.22);
+}
+
+.role-badge.badge-docente {
+  background: rgba(155,89,182,0.12);
+  color: #d6b3e6;
+  border: 1px solid rgba(155,89,182,0.22);
+}
+
+.role-badge.badge-empleador {
+  background: rgba(230,126,34,0.12);
+  color: #f0b27a;
+  border: 1px solid rgba(230,126,34,0.22);
+}
+
+.role-badge.badge-admin {
+  background: rgba(149,165,166,0.12);
+  color: #c6d0d1;
+  border: 1px solid rgba(149,165,166,0.18);
+}
+
+/* ====== Empty ====== */
+.empty {
+  padding: 12px;
+  text-align: center;
+  opacity: .9;
+  font-size: 14px;
+  background: #111b2e;
+  border: 1px dashed #475569;
+  border-radius: 10px;
+  color: #cbd5e1;
+}
+
+/* ====== Crear endorsement ====== */
+.create-card {
+  background: #111b2e;
+  border: 1px solid #3a4d70;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+
+  label {
+    display: grid;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 800;
+    opacity: .95;
+    letter-spacing: .2px;
+    color: #e2e8f0;
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #2a3b57;
+    background: #0b1220;
+    color: #f8fafc;
+    font-size: 14px;
+    outline: none;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+    }
+  }
+
+  textarea { resize: vertical; }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+}
+
+.hint {
+  margin-top: 10px;
+  opacity: .9;
+  font-size: 13px;
+  color: #cbd5e1;
+
+  code {
+    background: #0b1220;
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+}
+
+/* ====== Botones más consistentes ====== */
+.btn-primary, .btn-danger, .btn-secondary {
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: .2px;
+  cursor: pointer;
+  transition: transform .08s ease, opacity .12s ease;
+  transform: translateZ(0); /* ayuda a nitidez */
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #2563eb, #1d4ed8);
+  border: none;
+  color: white;
+
+  &:hover { opacity: .92; }
+  &:active { transform: translateY(1px); }
+}
+
+.btn-danger {
+  background: linear-gradient(180deg, #dc2626, #b91c1c);
+  border: none;
+  color: white;
+
+  &:hover { opacity: .92; }
+  &:active { transform: translateY(1px); }
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #2a3b57;
+  color: white;
+
+  &:hover { border-color: #3a4d70; }
+  &:active { transform: translateY(1px); }
+}
+
+/* ====== Dropdown buscador destinatarios ====== */
+.suggestions {
+  margin-top: -6px;
+  background: #0b1220;              /* mismo tono que inputs */
+  border: 1px solid #475569;        /* borde visible */
+  border-radius: 10px;
+  overflow: auto;
+  max-height: 220px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.55);
+  z-index: 50;                      /* para que flote arriba */
+}
+
+.suggestion {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  color: #e6edf6;
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  transition: background .12s ease;
+
+  &:hover {
+    background: #131c2e;
+  }
+
+  & + .suggestion {
+    border-top: 1px solid #1f2a44; /* separador sutil */
+  }
+
+  .s-name {
+    font-weight: 800;
+    font-size: 14px;
+    color: #f8fafc;
+  }
+
+  .s-email {
+    font-size: 12px;
+    opacity: .85;
+    color: #cbd5e1;
+  }
+}
+
+/* ====== Destinatario seleccionado ====== */
+.selected-dest {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0b1220;
+  border: 1px solid #3a4d70;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: #f1f5f9;
+}
+
+/* Botón mini para "Cambiar" */
+.btn-mini {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 7px;
+}

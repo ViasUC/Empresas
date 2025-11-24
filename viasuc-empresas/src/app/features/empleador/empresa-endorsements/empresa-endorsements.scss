@@ -1,0 +1,107 @@
+.endorsements-page {
+  padding: 24px;
+  color: #e8eef7;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h1 { margin: 0 0 4px 0; }
+  p { margin: 0; opacity: .8; }
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 20px 0;
+
+  .tab {
+    background: #253142;
+    border: 1px solid #334155;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+
+    &.active {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+  }
+
+  .pill {
+    background: rgba(255,255,255,.15);
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: 6px;
+    font-size: 12px;
+  }
+}
+
+.list, .create {
+  display: grid;
+  gap: 12px;
+}
+
+.card {
+  background: #1f2937;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 12px;
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+}
+
+.status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #374151;
+
+  &.pending { background: #b45309; }
+  &.accepted { background: #15803d; }
+  &.rejected { background: #b91c1c; }
+}
+
+.actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+
+  input, textarea {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #111827;
+    color: white;
+  }
+}
+
+.btn-primary {
+  background: #2563eb; border: none; color: white;
+  padding: 8px 12px; border-radius: 8px; cursor: pointer;
+}
+.btn-secondary {
+  background: transparent; border: 1px solid #334155; color: white;
+  padding: 8px 12px; border-radius: 8px; cursor: pointer;
+}
+.btn-danger {
+  background: #b91c1c; border: none; color: white;
+  padding: 8px 12px; border-radius: 8px; cursor: pointer;
+}
+
+.empty { opacity: .7; }
+.hint { opacity:.8; font-size: 13px; }
