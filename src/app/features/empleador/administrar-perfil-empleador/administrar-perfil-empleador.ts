@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { EmpleadorService } from '../services/empleador.service';
+import { EmpleadorService } from '../../../core/services/empleador.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({

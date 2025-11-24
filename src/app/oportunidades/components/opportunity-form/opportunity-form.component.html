@@ -1,0 +1,125 @@
+<!-- src/app/oportunidades/components/opportunity-form/opportunity-form.component.html -->
+
+<div class="page-container">
+  <header class="page-header">
+    <button class="btn-ghost" (click)="goBack()">
+      ← Volver
+    </button>
+
+    <div class="page-title-group">
+      <h1>{{ editing ? 'Editar oportunidad' : 'Crear oportunidad' }}</h1>
+      <p>
+        Completa los campos para
+        {{ editing ? 'actualizar' : 'publicar' }} una oferta laboral.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="cancelar()">Cancelar</button>
+      <button class="btn-primary" (click)="save()">Guardar</button>
+    </div>
+  </header>
+
+  <section class="card">
+    <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+      <!-- Columna izquierda -->
+      <div class="form-column">
+        <div class="section-title">Datos generales</div>
+
+        <div class="form-field">
+          <label for="titulo">Título *</label>
+          <input
+            id="titulo"
+            type="text"
+            class="input"
+            formControlName="titulo"
+            placeholder="Ej: Desarrollador Backend Junior"
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="descripcion">Descripción *</label>
+          <textarea
+            id="descripcion"
+            class="input textarea"
+            formControlName="descripcion"
+            rows="4"
+            placeholder="Breve descripción de la posición..."
+          ></textarea>
+        </div>
+
+        <div class="form-field">
+          <label for="requisitos">Requisitos</label>
+          <textarea
+            id="requisitos"
+            class="input textarea"
+            formControlName="requisitos"
+            rows="3"
+            placeholder="Conocimientos, habilidades, experiencia previa..."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Columna derecha -->
+      <div class="form-column">
+        <div class="section-title">Detalles de la oferta</div>
+
+        <div class="form-field">
+          <label for="ubicacion">Ubicación *</label>
+          <input
+            id="ubicacion"
+            type="text"
+            class="input"
+            formControlName="ubicacion"
+            placeholder="Ej: Asunción, Paraguay"
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="modalidad">Modalidad *</label>
+          <select
+            id="modalidad"
+            class="input"
+            formControlName="modalidad"
+          >
+            <option value="" disabled>Seleccione...</option>
+            <option *ngFor="let m of modalidades" [value]="m">
+              {{ m }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="tipo">Tipo *</label>
+          <select id="tipo" class="input" formControlName="tipo">
+            <option value="" disabled>Seleccione...</option>
+            <option *ngFor="let t of tipos" [value]="t">
+              {{ t }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="fecha_cierre">Fecha de cierre *</label>
+          <input
+            id="fecha_cierre"
+            type="date"
+            class="input"
+            formControlName="fecha_cierre"
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="etiquetas">Etiquetas (separadas por coma)</label>
+          <input
+            id="etiquetas"
+            type="text"
+            class="input"
+            formControlName="etiquetas"
+            placeholder="Ej: Java, Spring, Full Remote"
+          />
+        </div>
+      </div>
+    </form>
+  </section>
+</div>

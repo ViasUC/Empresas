@@ -4,7 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/services/auth.service';
-import { EmpleadorService } from '../services/empleador.service';
+import { EmpleadorService } from '../../../core/services/empleador.service';
 
 @Component({
   selector: 'app-dashboard-empleador',
