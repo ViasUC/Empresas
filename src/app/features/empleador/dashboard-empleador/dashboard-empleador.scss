@@ -102,13 +102,13 @@
 }
 
 .dashboard-main {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
 
   .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
 
     .card {
@@ -180,6 +180,25 @@
   }
 }
 
+// Tablets grandes y pantallas medianas
+@media (max-width: 1400px) {
+  .dashboard-main {
+    .cards-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+}
+
+// Tablets
+@media (max-width: 1024px) {
+  .dashboard-main {
+    .cards-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+}
+
+// Móviles
 @media (max-width: 968px) {
   .dashboard-header {
     .header-content {
