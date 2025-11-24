@@ -83,6 +83,13 @@ export class OpportunityFormComponent implements OnInit {
       return;
     }
 
+    // Formatear fecha correctamente para el backend
+    let fechaCierreFormateada = null;
+    if (this.form.value.fechaCierre) {
+      // Formato: 2025-12-12T23:59:00
+      fechaCierreFormateada = `${this.form.value.fechaCierre}T23:59:00`;
+    }
+
     const payload: OpportunityInput = {
       titulo: this.form.value.titulo,
       descripcion: this.form.value.descripcion,
@@ -90,21 +97,24 @@ export class OpportunityFormComponent implements OnInit {
       ubicacion: this.form.value.ubicacion,
       modalidad: this.form.value.modalidad,
       tipo: this.form.value.tipo,
-      fechaCierre: this.form.value.fechaCierre
-        ? new Date(this.form.value.fechaCierre).toISOString()
-        : null,
+      fechaCierre: fechaCierreFormateada,
     };
+
+    console.log('Guardando oportunidad con payload:', payload);
 
     const request$ = this.isEdit && this.opportunityId
       ? this.opportunityService.update(this.opportunityId, payload)
       : this.opportunityService.create(payload);
 
     request$.subscribe({
-      next: () => {
+      next: (oportunidad) => {
+        console.log('Oportunidad guardada exitosamente:', oportunidad);
+        alert('Oportunidad guardada correctamente como BORRADOR. Puedes editarla o publicarla desde Gestión de Oportunidades.');
         this.router.navigate(['/oportunidades']);
       },
       error: (err) => {
         console.error('Error guardando oportunidad', err);
+        alert('Error al guardar la oportunidad. Revisa la consola para más detalles.');
       },
     });
   }

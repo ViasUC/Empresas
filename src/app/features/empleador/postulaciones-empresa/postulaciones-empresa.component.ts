@@ -115,4 +115,69 @@ export class PostulacionesEmpresaComponent implements OnInit {
     if (estadoLower === 'cancelada') return 'estado-cancelada';
     return 'estado-default';
   }
+
+  aceptarPostulacion(postulacion: Postulacion): void {
+    if (!confirm(`¿Estás seguro de ACEPTAR la postulación de ${postulacion.postulante?.nombre || 'este candidato'}?`)) {
+      return;
+    }
+
+    const usuarioActual = this.authService.getCurrentUser();
+    if (!usuarioActual || !usuarioActual.id) {
+      alert('Error: No se encontró el usuario autenticado.');
+      return;
+    }
+
+    this.postulacionesService
+      .actualizarEstado(
+        postulacion.idPostulacion,
+        'ACEPTADA',
+        'Candidato aceptado por la empresa',
+        usuarioActual.id
+      )
+      .subscribe({
+        next: () => {
+          alert('✅ Postulación ACEPTADA exitosamente.');
+          this.recargar();
+        },
+        error: (err) => {
+          console.error('Error al aceptar postulación:', err);
+          alert('❌ Error al aceptar la postulación. Verifica la consola.');
+        },
+      });
+  }
+
+  rechazarPostulacion(postulacion: Postulacion): void {
+    const motivo = prompt(
+      `¿Estás seguro de RECHAZAR la postulación de ${postulacion.postulante?.nombre || 'este candidato'}?\n\nPuedes indicar un motivo (opcional):`
+    );
+
+    if (motivo === null) {
+      // Usuario canceló
+      return;
+    }
+
+    const usuarioActual = this.authService.getCurrentUser();
+    if (!usuarioActual || !usuarioActual.id) {
+      alert('Error: No se encontró el usuario autenticado.');
+      return;
+    }
+
+    this.postulacionesService
+      .actualizarEstado(
+        postulacion.idPostulacion,
+        'RECHAZADA',
+        motivo || 'Candidato no cumple con los requisitos',
+        usuarioActual.id
+      )
+      .subscribe({
+        next: () => {
+          alert('⚠️ Postulación RECHAZADA.');
+          this.recargar();
+        },
+        error: (err) => {
+          console.error('Error al rechazar postulación:', err);
+          alert('❌ Error al rechazar la postulación. Verifica la consola.');
+        },
+      });
+  }
 }

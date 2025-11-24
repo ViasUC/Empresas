@@ -3,6 +3,7 @@ import { Apollo, gql } from 'apollo-angular';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable, of } from 'rxjs';
 import { Opportunity, OpportunityInput, OpportunityState } from './opportunity.model';
+import { AuthService } from '../../core/services/auth.service';
 
 interface OportunidadesPorCreadorResponse {
   oportunidadesPorCreador: any[];
@@ -20,9 +21,6 @@ interface CrearOportunidadResponse {
 interface GraphQLResponse<T> {
   data: T;
 }
-
-// TODO: tomar esto desde el usuario logueado
-const CREADOR_ID_FAKE = 1;
 
 @Injectable({
   providedIn: 'root',
@@ -113,7 +111,7 @@ export class OpportunityService {
   `;
 
   private readonly ACTUALIZAR_OPORTUNIDAD = gql`
-    mutation ActualizarOportunidad($id: ID!, $input: CrearOportunidadInput!, $idActor: ID!) {
+    mutation ActualizarOportunidad($id: Int!, $input: CrearOportunidadInput!, $idActor: ID!) {
       actualizarOportunidad(id: $id, input: $input, idActor: $idActor) {
         id: idOportunidad
         idOportunidad
@@ -131,7 +129,7 @@ export class OpportunityService {
   `;
 
   private readonly CAMBIAR_ESTADO = gql`
-    mutation CambiarEstado($id: ID!, $estado: String!, $idActor: ID!) {
+    mutation CambiarEstado($id: Int!, $estado: String!, $idActor: ID!) {
       cambiarEstadoOportunidad(id: $id, estado: $estado, idActor: $idActor) {
         id: idOportunidad
         idOportunidad
@@ -142,7 +140,7 @@ export class OpportunityService {
   `;
 
   private readonly ELIMINAR_OPORTUNIDAD = gql`
-    mutation EliminarOportunidad($id: ID!, $idActor: ID!) {
+    mutation EliminarOportunidad($id: Int!, $idActor: ID!) {
       eliminarOportunidad(id: $id, idActor: $idActor)
     }
   `;
@@ -152,6 +150,7 @@ export class OpportunityService {
   constructor(
     private apollo: Apollo,
     private http: HttpClient,
+    private authService: AuthService
   ) {}
 
   // ==== Helpers ====
@@ -163,8 +162,14 @@ export class OpportunityService {
   }
 
   private get currentUserId(): number {
-    // TODO: Obtener del usuario autenticado
-    return CREADOR_ID_FAKE;
+    const user = this.authService.getCurrentUser();
+    console.log('OpportunityService.currentUserId - Usuario actual:', user);
+    if (!user || !user.id) {
+      console.error('OpportunityService.currentUserId - No hay usuario autenticado o no tiene ID');
+      throw new Error('No hay usuario autenticado. Por favor, inicia sesión nuevamente.');
+    }
+    console.log('OpportunityService.currentUserId - ID del usuario:', user.id);
+    return user.id;
   }
 
   private mapEstadoFromBackend(estado: string | null | undefined): OpportunityState {
@@ -265,12 +270,12 @@ export class OpportunityService {
       ubicacion: data.ubicacion,
       modalidad: data.modalidad,
       tipo: data.tipo,
-      fechaCierre:
-        ('fecha_cierre' in data
-          ? `${data.fecha_cierre}T23:59:00`
-          : data.fechaCierre) || null,
+      fechaCierre: ('fechaCierre' in data ? data.fechaCierre : null) || 
+                    ('fecha_cierre' in data ? `${data.fecha_cierre}T23:59:00` : null),
       estado: 'borrador',
     };
+
+    console.log('OpportunityService.create - Input a enviar:', input);
 
     return this.apollo
       .mutate<CrearOportunidadResponse>({
@@ -282,6 +287,7 @@ export class OpportunityService {
           if (!result.data?.crearOportunidadEmpresa) {
             throw new Error('No se recibió respuesta del servidor al crear la oportunidad');
           }
+          console.log('OpportunityService.create - Respuesta del servidor:', result.data.crearOportunidadEmpresa);
           return this.mapFromGql(result.data.crearOportunidadEmpresa);
         }),
       );
@@ -319,12 +325,15 @@ export class OpportunityService {
   }
 
   changeState(id: number, newState: OpportunityState): Observable<Opportunity> {
+    // Mapear el estado del frontend al formato que espera el backend
+    const estadoBackend = this.mapEstadoToBackend(newState);
+    
     return this.apollo
       .mutate<{ cambiarEstadoOportunidad: any }>({
         mutation: this.CAMBIAR_ESTADO,
         variables: {
           id,
-          estado: newState,
+          estado: estadoBackend,
           idActor: this.currentUserId,
         },
       })
@@ -336,6 +345,21 @@ export class OpportunityService {
           return this.mapFromGql(result.data.cambiarEstadoOportunidad);
         }),
       );
+  }
+
+  private mapEstadoToBackend(estado: OpportunityState): string {
+    switch (estado) {
+      case 'ACTIVA':
+        return 'activo';
+      case 'BORRADOR':
+        return 'borrador';
+      case 'PAUSADA':
+        return 'pausada';
+      case 'CERRADA':
+        return 'cerrado';
+      default:
+        return 'borrador';
+    }
   }
 
   duplicate(_id: number): Observable<Opportunity> {

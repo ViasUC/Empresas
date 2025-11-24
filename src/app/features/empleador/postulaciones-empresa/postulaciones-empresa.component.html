@@ -93,10 +93,18 @@
                   <button class="btn-accion btn-ver" title="Ver detalles">
                     <span class="icon">👁️</span>
                   </button>
-                  <button class="btn-accion btn-aceptar" title="Aceptar postulación">
+                  <button 
+                    class="btn-accion btn-aceptar" 
+                    title="Aceptar postulación"
+                    (click)="aceptarPostulacion(p)"
+                    [disabled]="p.estado !== 'PENDIENTE'">
                     <span class="icon">✓</span>
                   </button>
-                  <button class="btn-accion btn-rechazar" title="Rechazar postulación">
+                  <button 
+                    class="btn-accion btn-rechazar" 
+                    title="Rechazar postulación"
+                    (click)="rechazarPostulacion(p)"
+                    [disabled]="p.estado !== 'PENDIENTE'">
                     <span class="icon">✕</span>
                   </button>
                 </td>

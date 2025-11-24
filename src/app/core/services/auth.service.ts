@@ -33,6 +33,7 @@ export class AuthService {
         nombre
         apellido
         rolPrincipal
+        idEmpresa
       }
     }
   `;
@@ -158,7 +159,8 @@ export class AuthService {
           email: credentials.email,
           nombre: loginData.nombre || '',
           apellido: loginData.apellido || '',
-          tipo: tipoMapeado
+          tipo: tipoMapeado,
+          idEmpresa: loginData.idEmpresa
         };
         this.setCurrentUser(user, ''); // Sin token en backend original
         this.storeAuthData(user, '', '');
@@ -171,7 +173,8 @@ export class AuthService {
           email: credentials.email,
           nombre: loginData.nombre || '',
           apellido: loginData.apellido || '',
-          tipo: tipoMapeado
+          tipo: tipoMapeado,
+          idEmpresa: loginData.idEmpresa
         };
         return user;
       })

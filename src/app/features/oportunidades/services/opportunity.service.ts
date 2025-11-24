@@ -45,6 +45,28 @@ export class OpportunityService {
     }
   `;
 
+  private readonly GET_BY_EMPRESA = gql`
+    query OportunidadesPorEmpresa($idEmpresa: ID!) {
+      oportunidadesPorEmpresa(idEmpresa: $idEmpresa) {
+        id
+        idOportunidad
+        titulo
+        descripcion
+        requisitos
+        ubicacion
+        modalidad
+        tipo
+        fechaPublicacion
+        fechaCierre
+        estado
+        creador {
+          idUsuario
+        }
+        empresa
+      }
+    }
+  `;
+
   private readonly GET_BY_ID = gql`
     query Oportunidad($id: ID!) {
       oportunidad(id: $id) {
@@ -188,8 +210,36 @@ export class OpportunityService {
 
   /**
    * Lista todas las oportunidades del usuario actual
+   * Usa oportunidadesPorEmpresa para usuarios EMPLEADOR con idEmpresa
+   * Usa oportunidadesPorCreador para otros usuarios
    */
   list(): Observable<Opportunity[]> {
+    const currentUser = this.authService.getCurrentUser();
+    console.log('📋 OPPORTUNITY SERVICE LIST - Usuario actual:', currentUser);
+    
+    // Si es usuario EMPLEADOR con idEmpresa, buscar por empresa
+    if (currentUser?.tipo === 'EMPLEADOR' && currentUser.idEmpresa) {
+      console.log('✅ USANDO QUERY oportunidadesPorEmpresa con idEmpresa:', currentUser.idEmpresa);
+      return this.apollo
+        .watchQuery<{ oportunidadesPorEmpresa: any[] }>({
+          query: this.GET_BY_EMPRESA,
+          variables: { idEmpresa: currentUser.idEmpresa.toString() },
+          fetchPolicy: 'network-only',
+        })
+        .valueChanges.pipe(
+          map((result) => {
+            console.log('📦 RESPUESTA oportunidadesPorEmpresa:', result.data);
+            return (result.data?.oportunidadesPorEmpresa || []).map((o) => this.mapFromGql(o));
+          }),
+          catchError((error) => {
+            console.error('❌ ERROR al listar oportunidades por empresa:', error);
+            return throwError(() => error);
+          })
+        );
+    }
+    
+    // Para otros usuarios, buscar por creadorId
+    console.log('⚠️ USANDO oportunidadesPorCreador con creadorId:', this.currentUserId);
     return this.apollo
       .watchQuery<{ oportunidadesPorCreador: any[] }>({
         query: this.GET_BY_CREADOR,
@@ -197,11 +247,12 @@ export class OpportunityService {
         fetchPolicy: 'network-only',
       })
       .valueChanges.pipe(
-        map((result) =>
-          (result.data?.oportunidadesPorCreador || []).map((o) => this.mapFromGql(o))
-        ),
+        map((result) => {
+          console.log('📦 RESPUESTA oportunidadesPorCreador:', result.data);
+          return (result.data?.oportunidadesPorCreador || []).map((o) => this.mapFromGql(o));
+        }),
         catchError((error) => {
-          console.error('Error al listar oportunidades:', error);
+          console.error('❌ ERROR al listar oportunidades por creador:', error);
           return throwError(() => error);
         })
       );
