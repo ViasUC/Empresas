@@ -42,3 +42,16 @@ Thumbs.db
 # Environment files (optional)
 .env
 .env.local
+
+# Angular / Node
+node_modules/
+.angular/
+dist/
+out-tsc/
+coverage/
+
+# IDE
+.vscode/
+.idea/
+*.log
+.DS_Store
