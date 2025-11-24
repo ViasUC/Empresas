@@ -12,6 +12,8 @@ import { OpportunityFormComponent } from './features/oportunidades/opportunity-f
 import { SolicitarConvenioComponent } from './features/empleador/solicitar-convenio/solicitar-convenio';
 import { MisSolicitudesComponent } from './features/empleador/mis-solicitudes/mis-solicitudes';
 import { ConveniosVigentesComponent } from './features/empleador/convenios-vigentes/convenios-vigentes';
+// Módulo Endorsements
+import { EmpresaEndorsementsComponent } from './features/empleador/empresa-endorsements/empresa-endorsements';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -29,5 +31,7 @@ export const routes: Routes = [
   { path: 'dashboard/empleador/solicitar-convenio', component: SolicitarConvenioComponent },
   { path: 'dashboard/empleador/mis-solicitudes', component: MisSolicitudesComponent },
   { path: 'dashboard/empleador/convenios-vigentes', component: ConveniosVigentesComponent },
+  // Rutas Endorsements
+  { path: 'dashboard/empleador/endorsements', component: EmpresaEndorsementsComponent },
   { path: '**', redirectTo: '/login' }
 ];

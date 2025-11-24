@@ -2,8 +2,9 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { Subject, Subscription, forkJoin, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, catchError } from 'rxjs/operators';
+import { EmpresaEndorsementsApiService } from '../empresa-endorsements/services/empresa-endorsements-api.service';
 import { BusquedaService, Portafolio, FiltrosDisponibles, ResultadoBusqueda } from '../services/busqueda.service';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -94,6 +95,7 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private busquedaService: BusquedaService,
     private authService: AuthService,
+    private empresaApi: EmpresaEndorsementsApiService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -459,11 +461,47 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
         }
         
         console.log(`Búsqueda completada: ${this.resultados.length} resultados de ${this.total} total`);
+        // Cargar roles/tipeo de usuario para cada resultado para decidir UI de Aval
+        this.loadRolesForResultados();
       },
       error: (error) => {
         console.error('Error en búsqueda:', error);
         this.cargando = false;
       }
+    });
+  }
+
+  /** Cargar roles de usuario para resultados y mapearlos a cada portafolio */
+  private loadRolesForResultados() {
+    const ids = Array.from(new Set(this.resultados.map(r => r.usuarioId).filter(Boolean)));
+    if (ids.length === 0) return;
+
+    const calls = ids.map(id => this.empresaApi.getUsuarioById(+id).pipe(catchError(() => of(null))));
+    forkJoin(calls).subscribe((users: any[]) => {
+      const map: { [id: string]: any } = {};
+      (users || []).forEach(u => {
+        if (!u) return;
+        map[String(u.id)] = u;
+      });
+
+      // asignar info a cada portafolio
+      this.resultados = this.resultados.map(p => {
+        const u = map[String(p.usuarioId)];
+        if (u) {
+          // guardar rol original
+          (p as any).rol = u.tipo || u.role || u.rol || u.rolPrincipal || null;
+          // normalizar tipo para badge
+          const t = ((u.tipo || u.role || u.rol || u.rolPrincipal) as string || '').toLowerCase();
+          if (t.includes('alum') || t.includes('estud')) p.tipo = 'ESTUDIANTE';
+          else if (t.includes('egres')) p.tipo = 'EGRESADO';
+          else if (t.includes('prof') || t.includes('invest') || t.includes('docent')) p.tipo = 'DOCENTE';
+          else if (t.includes('admin')) p.tipo = 'ADMINISTRADOR';
+          else if (t.includes('emp') || t.includes('empr') || t.includes('emplead') || t.includes('empleador')) p.tipo = 'EMPLEADOR';
+          // también dejar una marca directa
+          (p as any)._usuarioTipo = u.tipo || u.role || u.rol || u.rolPrincipal;
+        }
+        return p;
+      });
     });
   }
 
@@ -864,16 +902,30 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
     const tipos: { [key: string]: string } = {
       'PORTAFOLIO': 'Portafolio',
       'ESTUDIANTE': 'Estudiante',
-      'EGRESADO': 'Egresado'
+      'EGRESADO': 'Egresado',
+      'PROFESOR': 'Docente',
+      'INVESTIGADOR': 'Docente',
+      'DOCENTE': 'Docente',
+      'ADMINISTRADOR': 'Administrador',
+      'ADMIN': 'Administrador',
+      'EMPLEADOR': 'Empleador',
+      'EMPRESA': 'Empleador'
     };
-    return tipos[tipo] || tipo;
+    return tipos[tipo] || (tipo ? tipo : 'Portafolio');
   }
 
   getTipoBadgeClass(tipo: string): string {
     const classes: { [key: string]: string } = {
       'PORTAFOLIO': 'badge-portafolio',
       'ESTUDIANTE': 'badge-estudiante',
-      'EGRESADO': 'badge-egresado'
+      'EGRESADO': 'badge-egresado',
+      'PROFESOR': 'badge-docente',
+      'INVESTIGADOR': 'badge-docente',
+      'DOCENTE': 'badge-docente',
+      'ADMINISTRADOR': 'badge-admin',
+      'ADMIN': 'badge-admin',
+      'EMPLEADOR': 'badge-empleador',
+      'EMPRESA': 'badge-empleador'
     };
     return classes[tipo] || 'badge-default';
   }
@@ -916,4 +968,113 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+// ===============================
+//   AVAL / ENDORSEMENT (UI toggle)
+// ===============================
+openAvalIds = new Set<number>();
+
+/** Saca un id numérico válido del portafolio */
+getPortafolioId(p: any): number {
+  const id =
+    p?.idUsuario ??
+    p?.usuarioId ??
+    p?.idUser ??
+    p?.id ??
+    p?.idPortafolio ??
+    0;
+
+  return Number(id) || 0;
+}
+
+getPortafolioNombreCompleto(p: any): string {
+  return `${p?.nombre ?? ''} ${p?.apellido ?? ''}`.trim();
+}
+
+getPortafolioEmail(p: any): string | null {
+  return p?.email ?? p?.correo ?? p?.mail ?? null;
+}
+
+
+toggleAval(p: any, ev?: Event) {
+  // Seguridad UI: solo permitir toggle si el perfil es elegible
+  if (!this.isAvalAllowed(p)) return;
+  ev?.stopPropagation();
+  const id = this.getPortafolioId(p);
+  if (!id) return;
+
+  if (this.openAvalIds.has(id)) this.openAvalIds.delete(id);
+  else this.openAvalIds.add(id);
+}
+
+isAvalOpen(p: any): boolean {
+  const id = this.getPortafolioId(p);
+  return !!id && this.openAvalIds.has(id);
+}
+
+/** Determina si el portafolio/usuario es elegible para recibir un endorsement (UI) */
+isAvalAllowed(p: any): boolean {
+  if (!p) return false;
+
+  // 1) Intentar a través del badge legible (método existente)
+  try {
+    const badge = this.getTipoBadge((p?.tipo || '').toString() || '').toString();
+    if (['Estudiante', 'Egresado'].includes(badge)) return true;
+  } catch {}
+
+  // 2) Chequear varios campos posibles que el backend pueda devolver
+  const candidates = [p?.tipo, p?.rol, p?.rolPrincipal, p?.tipoPerfil, p?.tipoPerfilPrincipal, p?.role]
+    .filter(Boolean)
+    .map((x: any) => String(x).toLowerCase());
+
+  const allowedTokens = ['estudiante', 'alumno', 'egresado', 'profesor', 'investigador', 'docente'];
+  for (const c of candidates) {
+    if (allowedTokens.includes(c)) return true;
+    // también permitir si contiene alguno de los tokens (por si vienen como 'ESTUDIANTE_PORTFOLIO')
+    for (const t of allowedTokens) {
+      if (c.includes(t)) return true;
+    }
+  }
+
+  // 3) Si el objeto trae un arreglo roles
+  if (Array.isArray(p?.roles)) {
+    for (const r of p.roles) {
+      const rr = String(r).toLowerCase();
+      if (allowedTokens.includes(rr)) return true;
+      for (const t of allowedTokens) if (rr.includes(t)) return true;
+    }
+  }
+
+  return false;
+}
+
+hacerAval(portafolio: any, ev?: Event) {
+  // Seguridad UI: prevenir acción si no está permitido
+  if (!this.isAvalAllowed(portafolio)) return;
+  ev?.stopPropagation();
+
+  const toUserId = this.getPortafolioId(portafolio);
+  const nombre = this.getPortafolioNombreCompleto(portafolio);
+  const email = this.getPortafolioEmail(portafolio);
+
+  if (!toUserId) {
+    console.warn('No pude obtener toUserId del portafolio:', portafolio);
+    return;
+  }
+
+  // backup por si algún guard / ruta no pasa params
+  localStorage.setItem(
+    'prefill_endorsement_to',
+    JSON.stringify({ toUserId, nombre, email })
+  );
+
+  // navegación normal
+  this.router.navigate(
+    ['/dashboard/empleador/endorsements'],
+    { queryParams: { toUserId, nombre, email } }
+  );
+}
+
+
+
 }
