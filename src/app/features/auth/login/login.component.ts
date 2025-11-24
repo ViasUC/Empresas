@@ -14,7 +14,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { AuthService, LoginCredentials } from '../../../core/services/auth.service';
 import { RegisterComponent } from '../register/register.component';
 import { RegistroData } from '../../../core/models/auth.models';
-import { UsuarioEmpresaService, RolEmpresa } from '../../empleador/services/usuario-empresa.service';
+import { UsuarioEmpresaService, RolEmpresa } from '../../../core/services/usuario-empresa.service';
 import { Apollo, gql } from 'apollo-angular';
 import * as THREE from 'three';
 
@@ -584,7 +584,8 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
       
       const credentials: LoginCredentials = {
         email: this.loginForm.value.email,
-        password: this.loginForm.value.password
+        password: this.loginForm.value.password,
+        tipoUsuario: 'EMPLEADOR'
       };
 
       this.authService.login(credentials).subscribe({
@@ -755,7 +756,7 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
         // Obtener el rol del usuario en esta empresa
         this.usuarioEmpresaService.obtenerRolUsuario(idEmpresa, usuario.id.toString())
           .subscribe({
-            next: (rol) => {
+            next: (rol: any) => {
               // Guardar empresa con rol en localStorage
               const empresaConRol = {
                 ...empresa,
@@ -768,7 +769,7 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
               // Ahora sí redirigir
               this.router.navigate(['/dashboard/empleador']);
             },
-            error: (err) => {
+            error: (err: any) => {
               console.error('Error al obtener rol:', err);
               // Guardar empresa sin rol
               localStorage.setItem('empresa', JSON.stringify({ ...empresa, id: idEmpresa }));

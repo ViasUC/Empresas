@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ConvenioService } from '../services/convenio.service';
+import { ConvenioService } from '../../../core/services/convenio.service';
 
 @Component({
   selector: 'app-convenios-vigentes',
@@ -29,11 +29,11 @@ export class ConveniosVigentesComponent implements OnInit {
     this.errorMessage = '';
     
     this.convenioService.listarConveniosVigentes().subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.convenios = response.convenios || [];
         this.loading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al cargar convenios:', error);
         this.errorMessage = 'Error al cargar los convenios';
         this.loading = false;

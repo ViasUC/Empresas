@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ConvenioService, ConvenioInput } from '../services/convenio.service';
+import { ConvenioService, ConvenioInput } from '../../../core/services/convenio.service';
 
 @Component({
   selector: 'app-solicitar-convenio',
@@ -89,7 +89,7 @@ export class SolicitarConvenioComponent implements OnInit {
     };
 
     this.convenioService.solicitarConvenio(input).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.successMessage = `Solicitud de convenio creada exitosamente. ID: ${response.idConvenio}`;
         this.convenioForm.reset();
         this.documentoAdjunto = null;
@@ -99,7 +99,7 @@ export class SolicitarConvenioComponent implements OnInit {
           this.router.navigate(['/empleador/convenios/solicitudes']);
         }, 2000);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al solicitar convenio:', error);
         this.errorMessage = error.error?.message || 'Error al solicitar convenio. Por favor, intente nuevamente.';
         this.isSubmitting = false;

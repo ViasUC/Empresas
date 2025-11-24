@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ConvenioService } from '../services/convenio.service';
+import { ConvenioService } from '../../../core/services/convenio.service';
 
 @Component({
   selector: 'app-solicitar-convenio',
@@ -105,12 +105,12 @@ export class SolicitarConvenioComponent {
     }
     
     this.convenioService.solicitarConvenio(convenioData).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         console.log('Convenio solicitado:', response);
         alert('Convenio solicitado exitosamente. Estado: Pendiente');
         this.router.navigate(['/dashboard/empleador/mis-solicitudes']);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al solicitar convenio:', error);
         this.errorMessage = error.error?.message || 'Error al solicitar el convenio. Por favor intente nuevamente.';
         this.submitting = false;

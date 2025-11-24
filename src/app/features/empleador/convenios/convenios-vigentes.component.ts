@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ConvenioService, ConvenioOutput, ConvenioUpdateInput } from '../services/convenio.service';
+import { ConvenioService, ConvenioOutput, ConvenioUpdateInput } from '../../../core/services/convenio.service';
 
 @Component({
   selector: 'app-convenios-vigentes',
@@ -55,11 +55,11 @@ export class ConveniosVigentesComponent implements OnInit {
     this.errorMessage = '';
 
     this.convenioService.listarConveniosVigentes().subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.convenios = response.convenios;
         this.isLoading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al cargar convenios:', error);
         this.errorMessage = 'Error al cargar los convenios. Por favor, intente nuevamente.';
         this.isLoading = false;
@@ -116,12 +116,12 @@ export class ConveniosVigentesComponent implements OnInit {
     };
 
     this.convenioService.actualizarResponsable(this.selectedConvenio.idConven, input).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.successMessage = 'Responsable actualizado exitosamente';
         this.cerrarModales();
         this.cargarConvenios();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al actualizar responsable:', error);
         this.errorMessage = error.error?.message || 'Error al actualizar el responsable';
         this.isSubmitting = false;
@@ -137,12 +137,12 @@ export class ConveniosVigentesComponent implements OnInit {
     this.successMessage = '';
 
     this.convenioService.solicitarRenovacion(this.selectedConvenio.idConven).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.successMessage = 'Solicitud de renovación enviada exitosamente';
         this.cerrarModales();
         this.cargarConvenios();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al solicitar renovación:', error);
         this.errorMessage = error.error?.message || 'Error al solicitar la renovación';
         this.isSubmitting = false;
@@ -160,12 +160,12 @@ export class ConveniosVigentesComponent implements OnInit {
     const motivo = this.bajaForm.value.motivo;
 
     this.convenioService.darDeBajaConvenio(this.selectedConvenio.idConven, motivo).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.successMessage = 'Convenio dado de baja exitosamente';
         this.cerrarModales();
         this.cargarConvenios();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al dar de baja:', error);
         this.errorMessage = error.error?.message || 'Error al dar de baja el convenio';
         this.isSubmitting = false;

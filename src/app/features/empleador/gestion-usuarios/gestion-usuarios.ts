@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { UsuarioEmpresaService, UsuarioEmpresa, RolEmpresa, SolicitudAcceso } from '../services/usuario-empresa.service';
+import { UsuarioEmpresaService, UsuarioEmpresa, RolEmpresa, SolicitudAcceso } from '../../../core/services/usuario-empresa.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -100,7 +100,7 @@ export class GestionUsuariosComponent implements OnInit {
     // Cargar rol del usuario actual
     this.usuarioEmpresaService.obtenerRolUsuario(this.idEmpresa, this.idUsuarioActual)
       .subscribe({
-        next: (rol) => {
+        next: (rol: any) => {
           this.rolActual = rol;
           // Solo si es ADMINISTRADOR puede ver la lista
           if (rol === RolEmpresa.ADMINISTRADOR) {
@@ -109,7 +109,7 @@ export class GestionUsuariosComponent implements OnInit {
             this.cargando = false;
           }
         },
-        error: (err) => {
+        error: (err: any) => {
           this.cargando = false;
           this.error = 'Error al verificar permisos: ' + (err.message || 'Error desconocido');
         }
@@ -119,13 +119,13 @@ export class GestionUsuariosComponent implements OnInit {
   cargarUsuarios(): void {
     this.usuarioEmpresaService.listarUsuariosEmpresa(this.idEmpresa)
       .subscribe({
-        next: (usuarios) => {
+        next: (usuarios: any) => {
           this.usuarios = usuarios;
           this.cargando = false;
           // También cargar solicitudes para tener el contador
           this.cargarSolicitudes();
         },
-        error: (err) => {
+        error: (err: any) => {
           console.error('Error al cargar usuarios:', err);
           this.error = 'Error al cargar la lista de usuarios';
           this.cargando = false;
@@ -136,10 +136,10 @@ export class GestionUsuariosComponent implements OnInit {
   cargarSolicitudes(): void {
     this.usuarioEmpresaService.listarSolicitudesPendientes(this.idEmpresa)
       .subscribe({
-        next: (solicitudes) => {
+        next: (solicitudes: any) => {
           this.solicitudes = solicitudes;
         },
-        error: (err) => {
+        error: (err: any) => {
           // No mostrar error aquí, es secundario
         }
       });
@@ -165,7 +165,7 @@ export class GestionUsuariosComponent implements OnInit {
         this.cargarUsuarios(); // Recarga usuarios y solicitudes
         this.cargando = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error al aprobar solicitud:', err);
         this.error = err.message || 'Error al aprobar la solicitud';
         this.cargando = false;
@@ -188,7 +188,7 @@ export class GestionUsuariosComponent implements OnInit {
         this.cargarUsuarios(); // Recarga usuarios y solicitudes
         this.cargando = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error al rechazar solicitud:', err);
         this.error = err.message || 'Error al rechazar la solicitud';
         this.cargando = false;
@@ -221,7 +221,7 @@ export class GestionUsuariosComponent implements OnInit {
         this.cerrarModalRol();
         this.cargarUsuarios();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error al cambiar rol:', err);
         this.error = err.message || 'Error al cambiar el rol del usuario';
         this.cargando = false;
@@ -243,7 +243,7 @@ export class GestionUsuariosComponent implements OnInit {
       next: () => {
         this.cargarUsuarios();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error al desactivar usuario:', err);
         this.error = err.message || 'Error al desactivar el usuario';
         this.cargando = false;

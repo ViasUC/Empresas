@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { ConvenioService } from '../services/convenio.service';
+import { ConvenioService } from '../../../core/services/convenio.service';
 
 @Component({
   selector: 'app-mis-solicitudes',
@@ -29,11 +29,11 @@ export class MisSolicitudesComponent implements OnInit {
     this.errorMessage = '';
     
     this.convenioService.listarSolicitudes().subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.solicitudes = response.solicitudes || [];
         this.loading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al cargar solicitudes:', error);
         this.errorMessage = 'Error al cargar las solicitudes';
         this.loading = false;
