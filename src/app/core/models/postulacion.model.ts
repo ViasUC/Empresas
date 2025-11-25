@@ -3,11 +3,30 @@ export interface OportunidadResumen {
   titulo: string;
 }
 
+export interface Evidencia {
+  idEvidencia: number;
+  titulo: string;
+  descripcion: string;
+  tipo: string;
+  recurso: string;
+}
+
+export interface Portafolio {
+  idPortafolio: number;
+  descripcion: string;
+  skills: string;
+  evidencias: Evidencia[];
+}
+
 export interface PostulanteResumen {
   idUsuario: number;
   nombre: string;
   apellido: string;
   email: string;
+  telefono?: string;
+  ubicacion?: string;
+  completitud?: number;
+  portafolio?: Portafolio;
 }
 
 export interface Postulacion {

@@ -1,0 +1,102 @@
+<div class="modal-header">
+  <h2 mat-dialog-title>Perfil del Candidato</h2>
+  <button mat-icon-button (click)="cerrar()" class="close-button">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="modal-content">
+  <!-- Perfil -->
+  <div class="profile-section">
+    <div class="avatar">
+      {{ iniciales }}
+    </div>
+    <div class="profile-info">
+      <h3>{{ nombreCompleto }}</h3>
+      <div class="completitud-container">
+        <span class="completitud-label">Completitud del perfil</span>
+        <mat-progress-bar
+          mode="determinate"
+          [value]="postulante.completitud"
+          class="completitud-bar">
+        </mat-progress-bar>
+        <span class="completitud-value">{{ postulante.completitud }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información de contacto -->
+  <div class="section">
+    <h4><mat-icon>contact_mail</mat-icon> Información de Contacto</h4>
+    <div class="info-grid">
+      <div class="info-item" *ngIf="postulante.email">
+        <mat-icon>email</mat-icon>
+        <a [href]="'mailto:' + postulante.email">{{ postulante.email }}</a>
+      </div>
+      <div class="info-item" *ngIf="postulante.telefono">
+        <mat-icon>phone</mat-icon>
+        <span>{{ postulante.telefono }}</span>
+      </div>
+      <div class="info-item" *ngIf="postulante.ubicacion">
+        <mat-icon>location_on</mat-icon>
+        <span>{{ postulante.ubicacion }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Portafolio -->
+  <div class="section" *ngIf="postulante.portafolio">
+    <h4><mat-icon>work</mat-icon> Portafolio</h4>
+    <div class="bio" *ngIf="postulante.portafolio.descripcion">
+      <p>{{ postulante.portafolio.descripcion }}</p>
+    </div>
+
+    <!-- Evidencias/Proyectos -->
+    <div class="evidencias" *ngIf="evidencias.length > 0">
+      <h5>Proyectos y Certificaciones</h5>
+      <div class="evidencia-card" *ngFor="let evidencia of evidencias">
+        <div class="evidencia-header">
+          <mat-icon>{{ evidencia.tipo === 'proyecto' ? 'code' : 'badge' }}</mat-icon>
+          <h6>{{ evidencia.titulo }}</h6>
+        </div>
+        <p class="evidencia-descripcion">{{ evidencia.descripcion }}</p>
+        <button
+          mat-stroked-button
+          *ngIf="evidencia.recurso"
+          (click)="abrirRecurso(evidencia.recurso)"
+          class="evidencia-link">
+          <mat-icon>open_in_new</mat-icon>
+          Ver proyecto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Habilidades -->
+  <div class="section" *ngIf="habilidades.length > 0">
+    <h4><mat-icon>star</mat-icon> Habilidades</h4>
+    <mat-chip-set class="skills-chips">
+      <mat-chip *ngFor="let skill of habilidades">{{ skill }}</mat-chip>
+    </mat-chip-set>
+  </div>
+
+  <!-- Estado de la postulación -->
+  <div class="section">
+    <h4><mat-icon>info</mat-icon> Estado de la Postulación</h4>
+    <div class="status-badge" [class]="'status-' + postulacion.estado.toLowerCase()">
+      {{ postulacion.estado }}
+    </div>
+    <p class="fecha-postulacion">
+      <mat-icon>event</mat-icon>
+      Fecha de postulación: {{ postulacion.fechaPostulacion | date:'dd/MM/yyyy HH:mm' }}
+    </p>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions class="modal-actions">
+  <button mat-button (click)="cerrar()">Cerrar</button>
+  <button mat-raised-button color="primary" (click)="contactar()" *ngIf="postulante.email">
+    <mat-icon>email</mat-icon>
+    Enviar correo
+  </button>
+</mat-dialog-actions>

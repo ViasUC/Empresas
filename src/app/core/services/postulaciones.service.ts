@@ -36,6 +36,37 @@ const ACTUALIZAR_ESTADO_POSTULACION = gql`
   }
 `;
 
+const POSTULACION_DETALLE = gql`
+  query PostulacionDetalle($idPostulacion: ID!) {
+    postulacionDetalle(idPostulacion: $idPostulacion) {
+      idPostulacion
+      estado
+      fechaPostulacion
+      postulante {
+        idUsuario
+        nombre
+        apellido
+        email
+        telefono
+        ubicacion
+        completitud
+        portafolio {
+          idPortafolio
+          descripcion
+          skills
+          evidencias {
+            idEvidencia
+            titulo
+            descripcion
+            tipo
+            recurso
+          }
+        }
+      }
+    }
+  }
+`;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -82,6 +113,25 @@ export class PostulacionesService {
             throw new Error('No se recibió respuesta al actualizar el estado');
           }
           return result.data.actualizarEstadoPostulacion;
+        })
+      );
+  }
+
+  getPostulacionDetalle(idPostulacion: number): Observable<Postulacion> {
+    return this.apollo
+      .watchQuery<{ postulacionDetalle: Postulacion }>({
+        query: POSTULACION_DETALLE,
+        variables: {
+          idPostulacion: idPostulacion.toString(),
+        },
+        fetchPolicy: 'network-only',
+      })
+      .valueChanges.pipe(
+        map(result => {
+          if (!result.data?.postulacionDetalle) {
+            throw new Error('No se encontró la postulación');
+          }
+          return result.data.postulacionDetalle;
         })
       );
   }

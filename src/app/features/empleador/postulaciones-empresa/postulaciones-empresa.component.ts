@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import {
   Postulacion,
   PostulacionesEmpresaResponse,
 } from '../../../core/models/postulacion.model';
 import { PostulacionesService } from '../../../core/services/postulaciones.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { PostulacionDetalleModal } from '../postulacion-detalle-modal/postulacion-detalle-modal';
 
 const PAGE_SIZE = 10;
 
@@ -28,7 +30,8 @@ export class PostulacionesEmpresaComponent implements OnInit {
   constructor(
     private postulacionesService: PostulacionesService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -114,6 +117,24 @@ export class PostulacionesEmpresaComponent implements OnInit {
     if (estadoLower === 'rechazada') return 'estado-rechazada';
     if (estadoLower === 'cancelada') return 'estado-cancelada';
     return 'estado-default';
+  }
+
+  verDetalle(postulacion: Postulacion): void {
+    this.postulacionesService
+      .getPostulacionDetalle(postulacion.idPostulacion)
+      .subscribe({
+        next: (postulacionCompleta) => {
+          this.dialog.open(PostulacionDetalleModal, {
+            width: '800px',
+            maxWidth: '95vw',
+            data: { postulacion: postulacionCompleta },
+          });
+        },
+        error: (err) => {
+          console.error('Error al cargar detalle de postulación:', err);
+          alert('❌ Error al cargar el detalle del candidato.');
+        },
+      });
   }
 
   aceptarPostulacion(postulacion: Postulacion): void {
