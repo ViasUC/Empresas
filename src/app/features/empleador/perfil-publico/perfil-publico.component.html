@@ -1,0 +1,174 @@
+<div class="perfil-publico-container">
+  <!-- Header con botón volver -->
+  <header class="header">
+    <button class="btn-back" (click)="volver()">
+      <i class="fas fa-arrow-left"></i> Volver al Dashboard
+    </button>
+  </header>
+
+  <div class="content-wrapper">
+    <!-- Contenido principal -->
+    <main class="main-content">
+      
+      <!-- Sección: Información de la Empresa -->
+      <section class="empresa-info-card">
+        <div class="empresa-header">
+          <div class="empresa-logo">
+            <i class="fas fa-building" *ngIf="!empresa?.logoUrl"></i>
+            <img [src]="empresa?.logoUrl" *ngIf="empresa?.logoUrl" alt="Logo">
+          </div>
+          <div class="empresa-datos">
+            <h2>{{ empresa?.nombre }}</h2>
+            <div class="empresa-meta">
+              <span class="meta-item" *ngIf="empresa?.ubicacion">
+                <i class="fas fa-map-marker-alt"></i> {{ empresa?.ubicacion }}
+              </span>
+              <span class="meta-item" *ngIf="empresa?.sector">
+                <i class="fas fa-industry"></i> {{ empresa?.sector }}
+              </span>
+              <span class="meta-item" *ngIf="empresa?.tamano">
+                <i class="fas fa-users"></i> {{ empresa?.tamano }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="empresa-descripcion">
+          <h3>Sobre Nosotros</h3>
+          <p>{{ empresa?.descripcion }}</p>
+        </div>
+
+        <div class="empresa-contacto">
+          <div class="contacto-item">
+            <i class="fas fa-id-card"></i>
+            <span><strong>RUC:</strong> {{ empresa?.ruc }}</span>
+          </div>
+          <div class="contacto-item" *ngIf="empresa?.sitioWeb">
+            <i class="fas fa-globe"></i>
+            <a [href]="empresa?.sitioWeb" target="_blank">{{ empresa?.sitioWeb }}</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sección: Oportunidades Activas -->
+      <section class="oportunidades-section">
+        <h2 class="section-title">
+          Oportunidades Activas
+          <span class="count-badge">{{ oportunidadesActivas.length }}</span>
+        </h2>
+
+        <div class="empty-state" *ngIf="oportunidadesActivas.length === 0">
+          <p>No hay oportunidades activas en este momento</p>
+        </div>
+
+        <div class="oportunidades-grid" *ngIf="oportunidadesActivas.length > 0">
+          <div class="oportunidad-card" *ngFor="let oportunidad of oportunidadesActivas">
+            <div class="card-header">
+              <h3>{{ oportunidad.titulo }}</h3>
+              <span class="badge badge-activo">Activa</span>
+            </div>
+            <p class="card-description">{{ oportunidad.descripcion }}</p>
+            <div class="card-meta">
+              <span class="meta-item">
+                <i class="fas fa-calendar"></i> 
+                Publicado: {{ oportunidad.fechaPublicacion | date:'dd/MM/yyyy' }}
+              </span>
+              <span class="meta-item">
+                <i class="fas fa-users"></i> 
+                {{ oportunidad.postulaciones || 0 }} postulaciones
+              </span>
+            </div>
+            <button class="btn-ver-detalle" (click)="verDetalleOportunidad(oportunidad)">
+              Ver Detalle
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sección: Convenios Activos -->
+      <section class="convenios-section">
+        <h2 class="section-title">
+          Convenios Activos
+          <span class="count-badge">{{ conveniosActivos.length }}</span>
+        </h2>
+
+        <div class="empty-state" *ngIf="conveniosActivos.length === 0">
+          <p>No hay convenios activos en este momento</p>
+        </div>
+
+        <div class="convenios-grid" *ngIf="conveniosActivos.length > 0">
+          <div class="convenio-card" *ngFor="let convenio of conveniosActivos">
+            <div class="card-icon">
+              <i class="fas fa-university"></i>
+            </div>
+            <div class="card-content">
+              <h3>{{ convenio.institucion }}</h3>
+              <p class="convenio-descripcion">{{ convenio.descripcion }}</p>
+              
+              <div class="convenio-detalles">
+                <div class="detalle-item" *ngIf="convenio.objetivos">
+                  <h4>Objetivos</h4>
+                  <p>{{ convenio.objetivos }}</p>
+                </div>
+                
+                <div class="detalle-item" *ngIf="convenio.beneficios">
+                  <h4>Beneficios</h4>
+                  <p>{{ convenio.beneficios }}</p>
+                </div>
+                
+                <div class="detalle-item" *ngIf="convenio.requisitos">
+                  <h4>Requisitos</h4>
+                  <p>{{ convenio.requisitos }}</p>
+                </div>
+                
+                <div class="detalle-item" *ngIf="convenio.observaciones">
+                  <h4>Observaciones</h4>
+                  <p>{{ convenio.observaciones }}</p>
+                </div>
+              </div>
+              
+              <div class="card-footer">
+                <span class="vigencia">
+                  <i class="far fa-calendar"></i>
+                  {{ convenio.fechaIni }} - {{ convenio.fechaFin }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Barra lateral: Endorsements -->
+    <aside class="sidebar">
+      <div class="endorsements-card">
+        <h2 class="sidebar-title">
+          Recomendaciones
+          <span class="count-badge">{{ endorsements.length }}</span>
+        </h2>
+
+        <div class="empty-state" *ngIf="endorsements.length === 0">
+          <p>Aun no hay recomendaciones</p>
+        </div>
+
+        <div class="endorsements-list" *ngIf="endorsements.length > 0">
+          <div class="endorsement-item" *ngFor="let endorsement of endorsements">
+            <div class="endorsement-header">
+              <div class="avatar">
+                <i class="fas fa-user" *ngIf="!endorsement.avatar"></i>
+                <img [src]="endorsement.avatar" *ngIf="endorsement.avatar" alt="Avatar">
+              </div>
+              <div class="user-info">
+                <h4>{{ endorsement.usuario }}</h4>
+                <p class="cargo">{{ endorsement.cargo }}</p>
+                <span class="fecha">{{ endorsement.fecha | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+            <p class="endorsement-comentario">{{ endorsement.comentario }}</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>

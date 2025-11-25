@@ -7,6 +7,8 @@ import { debounceTime, distinctUntilChanged, catchError } from 'rxjs/operators';
 import { EmpresaEndorsementsApiService } from '../empresa-endorsements/services/empresa-endorsements-api.service';
 import { BusquedaService, Portafolio, FiltrosDisponibles, ResultadoBusqueda } from '../../../core/services/busqueda.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { PerfilCandidatoModalComponent } from '../perfil-candidato-modal/perfil-candidato-modal.component';
+import { InvitarCandidatoModalComponent } from '../invitar-candidato-modal/invitar-candidato-modal.component';
 
 // Interfaz para filtros activos (chips)
 interface FiltroActivo {
@@ -26,7 +28,7 @@ interface PortafolioExtendido extends Portafolio {
 @Component({
   selector: 'app-buscar-portafolios',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PerfilCandidatoModalComponent, InvitarCandidatoModalComponent],
   templateUrl: './buscar-portafolios.html',
   styleUrl: './buscar-portafolios.scss'
 })
@@ -59,6 +61,17 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
   total: number = 0;
   paginaActual: number = 1;
   totalPaginas: number = 0;
+
+  // === Modal de Perfil ===
+  mostrarModalPerfil = false;
+  portafolioSeleccionado: PortafolioExtendido | null = null;
+  
+  // === Modal de Invitacion ===
+  mostrarModalInvitacion = false;
+  candidatoInvitar: PortafolioExtendido | null = null;
+  
+  // Exponer Number para usar en el template
+  Number = Number;
 
   // === Opciones de filtros ===
   modalidadesOptions = [
@@ -685,6 +698,23 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
     alert(`Funcionalidad en desarrollo: Ver portafolio de ${portafolio.nombre} ${portafolio.apellido}`);
   }
 
+  verPerfilCompleto(portafolio: PortafolioExtendido): void {
+    console.log('Ver perfil completo:', portafolio);
+    
+    if (!portafolio.usuarioId) {
+      alert('No se puede ver el perfil: información del usuario no disponible');
+      return;
+    }
+    
+    this.portafolioSeleccionado = portafolio;
+    this.mostrarModalPerfil = true;
+  }
+
+  cerrarModalPerfil(): void {
+    this.mostrarModalPerfil = false;
+    this.portafolioSeleccionado = null;
+  }
+
   guardarPortafolio(portafolio: PortafolioExtendido): void {
     if (portafolio.estadoGuardado === 'saving') return;
 
@@ -698,14 +728,39 @@ export class BuscarPortafoliosComponent implements OnInit, OnDestroy {
   }
 
   invitarPostular(portafolio: Portafolio): void {
-    // TODO: Abrir modal de invitación
     console.log('Invitar a postular:', portafolio);
-    alert(`Funcionalidad en desarrollo: Invitar a ${portafolio.nombre} ${portafolio.apellido} a postular`);
+    
+    if (!portafolio.usuarioId) {
+      alert('No se puede invitar: información del usuario no disponible');
+      return;
+    }
+    
+    this.candidatoInvitar = portafolio as PortafolioExtendido;
+    this.mostrarModalInvitacion = true;
+  }
+
+  cerrarModalInvitacion(): void {
+    this.mostrarModalInvitacion = false;
+    this.candidatoInvitar = null;
+  }
+
+  onInvitacionEnviada(success: boolean): void {
+    if (success) {
+      console.log('Invitacion enviada exitosamente');
+      // Opcionalmente, actualizar el estado del portafolio
+    }
   }
 
   descargarPerfil(portafolio: Portafolio, event: Event): void {
     event.stopPropagation();
-    this.generarPDF(portafolio);
+    
+    const confirmacion = confirm(
+      `¿Está seguro que desea descargar el portafolio de ${portafolio.nombre} ${portafolio.apellido}?`
+    );
+    
+    if (confirmacion) {
+      this.generarPDF(portafolio);
+    }
   }
 
   private async generarPDF(portafolio: Portafolio): Promise<void> {

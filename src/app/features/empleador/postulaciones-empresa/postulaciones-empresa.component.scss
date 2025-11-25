@@ -148,6 +148,11 @@
 // Header de resultados
 .resultados-header {
   margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
 
   .resultados-count {
     h2 {
@@ -161,6 +166,79 @@
       margin: 0;
       color: rgba(255, 255, 255, 0.6);
       font-size: 1rem;
+    }
+  }
+
+  .filtros-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .filtro-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+        white-space: nowrap;
+      }
+
+      .filtro-select {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        color: #fff;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 200px;
+
+        &:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        &:focus {
+          outline: none;
+          border-color: #64b5f6;
+          background: rgba(255, 255, 255, 0.15);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        option {
+          background: #1a2332;
+          color: #fff;
+        }
+      }
+    }
+
+    .btn-limpiar-filtros {
+      padding: 0.5rem 1rem;
+      background: rgba(255, 82, 82, 0.2);
+      border: 1px solid rgba(255, 82, 82, 0.3);
+      color: #ff5252;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 82, 82, 0.3);
+        border-color: rgba(255, 82, 82, 0.5);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
     }
   }
 }

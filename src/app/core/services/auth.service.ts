@@ -33,6 +33,7 @@ export class AuthService {
         nombre
         apellido
         rolPrincipal
+        idEmpresa
       }
     }
   `;
@@ -158,8 +159,10 @@ export class AuthService {
           email: credentials.email,
           nombre: loginData.nombre || '',
           apellido: loginData.apellido || '',
-          tipo: tipoMapeado
+          tipo: tipoMapeado,
+          idEmpresa: loginData.idEmpresa || undefined
         };
+        console.log('[AuthService] Usuario guardado con idEmpresa:', user.idEmpresa);
         this.setCurrentUser(user, ''); // Sin token en backend original
         this.storeAuthData(user, '', '');
       }),
@@ -171,7 +174,8 @@ export class AuthService {
           email: credentials.email,
           nombre: loginData.nombre || '',
           apellido: loginData.apellido || '',
-          tipo: tipoMapeado
+          tipo: tipoMapeado,
+          idEmpresa: loginData.idEmpresa || undefined
         };
         return user;
       })
@@ -373,6 +377,16 @@ export class AuthService {
     localStorage.setItem('token', token);
     if (refreshToken) {
       localStorage.setItem('refresh_token', refreshToken);
+    }
+    
+    // Guardar también la empresa por separado para compatibilidad con componentes antiguos
+    if (user.idEmpresa) {
+      const empresaData = {
+        id: user.idEmpresa,
+        idEmpresa: user.idEmpresa
+      };
+      localStorage.setItem('empresa', JSON.stringify(empresaData));
+      console.log('[AuthService] Empresa guardada en localStorage:', empresaData);
     }
   }
 

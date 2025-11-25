@@ -19,12 +19,60 @@
       </button>
     </div>
 
+    <!-- Filtros -->
+    <div *ngIf="!loading && !errorMessage && solicitudes.length > 0" class="filtros-container">
+      <div class="filtro-item">
+        <label for="filtroEstado">
+          <i class="fas fa-filter"></i> Filtrar por Estado:
+        </label>
+        <select id="filtroEstado" [(ngModel)]="filtroEstado" (change)="aplicarFiltros()">
+          <option value="">Todos los estados</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Aprobado">Aprobado</option>
+          <option value="Activo">Activo</option>
+          <option value="Finalizado">Finalizado</option>
+        </select>
+      </div>
+
+      <div class="filtro-item">
+        <label for="filtroFechaInicio">
+          <i class="fas fa-calendar-alt"></i> Fecha Inicio:
+        </label>
+        <input 
+          type="date" 
+          id="filtroFechaInicio" 
+          [(ngModel)]="filtroFechaInicio"
+          (change)="aplicarFiltros()"
+        />
+      </div>
+
+      <div class="filtro-item">
+        <label for="filtroFechaFin">
+          <i class="fas fa-calendar-check"></i> Fecha Fin:
+        </label>
+        <input 
+          type="date" 
+          id="filtroFechaFin" 
+          [(ngModel)]="filtroFechaFin"
+          (change)="aplicarFiltros()"
+        />
+      </div>
+
+      <button class="btn-limpiar" (click)="limpiarFiltros()" *ngIf="filtroEstado || filtroFechaInicio || filtroFechaFin">
+        <i class="fas fa-times-circle"></i> Limpiar Filtros
+      </button>
+
+      <div class="resultados-info">
+        <span>Mostrando {{ solicitudesFiltradas.length }} de {{ solicitudes.length }} convenios</span>
+      </div>
+    </div>
+
     <div *ngIf="!loading && !errorMessage && solicitudes.length > 0" class="solicitudes-list">
-      <div *ngFor="let solicitud of solicitudes" class="solicitud-card">
+      <div *ngFor="let solicitud of solicitudesFiltradas" class="solicitud-card">
         <div class="card-header">
           <div class="header-left">
             <h3>{{ solicitud.institucion }}</h3>
-            <span class="fecha-info">📅 Solicitado el {{ solicitud.fechaCreacion | date:'dd/MM/yyyy' }}</span>
+            <span class="fecha-info"><i class="fas fa-calendar-alt"></i> Solicitado el {{ solicitud.fechaCreacion | date:'dd/MM/yyyy' }}</span>
           </div>
           <span class="estado-badge" [class.pendiente]="solicitud.estado === 'Pendiente'">{{ solicitud.estado }}</span>
         </div>
@@ -34,7 +82,7 @@
           
           <div class="details-grid">
             <div class="detail-item">
-              <span class="icon">📆</span>
+              <span class="icon"><i class="far fa-calendar"></i></span>
               <div class="detail-content">
                 <span class="label">Periodo de Vigencia</span>
                 <span class="value">{{ solicitud.fechaIni }} → {{ solicitud.fechaFin }}</span>
@@ -42,7 +90,7 @@
             </div>
             
             <div class="detail-item">
-              <span class="icon">👤</span>
+              <span class="icon"><i class="fas fa-user"></i></span>
               <div class="detail-content">
                 <span class="label">Responsable</span>
                 <span class="value">{{ solicitud.responsables }}</span>
@@ -50,7 +98,7 @@
             </div>
             
             <div class="detail-item">
-              <span class="icon">⏱️</span>
+              <span class="icon"><i class="far fa-clock"></i></span>
               <div class="detail-content">
                 <span class="label">Duración</span>
                 <span class="value">{{ solicitud.duracion || 'No especificada' }}</span>
@@ -58,7 +106,7 @@
             </div>
             
             <div class="detail-item">
-              <span class="icon">🕐</span>
+              <span class="icon"><i class="fas fa-clock"></i></span>
               <div class="detail-content">
                 <span class="label">Horas Totales</span>
                 <span class="value">{{ solicitud.cantHoras || 'No especificadas' }}</span>
@@ -68,21 +116,171 @@
           
           <div class="extra-info" *ngIf="solicitud.objetivos || solicitud.beneficios">
             <div class="info-section" *ngIf="solicitud.objetivos">
-              <strong>🎯 Objetivos:</strong>
+              <strong><i class="fas fa-bullseye"></i> Objetivos:</strong>
               <p>{{ solicitud.objetivos }}</p>
             </div>
             <div class="info-section" *ngIf="solicitud.beneficios">
-              <strong>✨ Beneficios:</strong>
+              <strong><i class="fas fa-star"></i> Beneficios:</strong>
               <p>{{ solicitud.beneficios }}</p>
             </div>
           </div>
         </div>
         
         <div class="card-footer">
-          <span class="empresa-tag">🏢 {{ solicitud.nombreEmpresa }}</span>
-          <span class="id-tag">ID: #{{ solicitud.idConven }}</span>
+          <div class="footer-left">
+            <span class="empresa-tag"><i class="fas fa-building"></i> {{ solicitud.nombreEmpresa }}</span>
+            <span class="id-tag">ID: #{{ solicitud.idConven }}</span>
+          </div>
+          <div class="footer-actions">
+            <!-- Botón para aprobar convenios pendientes -->
+            <button 
+              *ngIf="solicitud.estado === 'Pendiente'"
+              class="btn-aprobar"
+              (click)="aprobarConvenio(solicitud)"
+              title="Aprobar convenio">
+              <i class="fas fa-check"></i> Aprobar
+            </button>
+            
+            <!-- Botón para activar/desactivar convenios aprobados -->
+            <button 
+              *ngIf="solicitud.estado === 'Aprobado' || solicitud.estado === 'Activo'"
+              class="btn-toggle"
+              [class.active]="solicitud.estado === 'Activo'"
+              [class.inactive]="solicitud.estado === 'Aprobado'"
+              (click)="toggleActivo(solicitud)"
+              [title]="solicitud.estado === 'Activo' ? 'Desactivar convenio' : 'Activar convenio'">
+              <i [class]="solicitud.estado === 'Activo' ? 'fas fa-check-circle' : 'far fa-circle'"></i>
+              {{ solicitud.estado === 'Activo' ? 'Desactivar' : 'Activar' }}
+            </button>
+            
+            <button 
+              class="btn-edit"
+              (click)="editarConvenio(solicitud)"
+              title="Editar convenio">
+              <i class="fas fa-edit"></i> Editar
+            </button>
+          </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Edición -->
+<div class="modal-overlay" *ngIf="convenioEditando" (click)="cerrarModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Editar Convenio</h2>
+      <button class="btn-close" (click)="cerrarModal()"><i class="fas fa-times"></i></button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="formEdicion" (ngSubmit)="guardarCambios()">
+        <div class="form-group">
+          <label for="institucion">Institución *</label>
+          <input 
+            type="text" 
+            id="institucion" 
+            formControlName="institucion"
+            placeholder="Nombre de la institución"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción *</label>
+          <textarea 
+            id="descripcion" 
+            formControlName="descripcion"
+            rows="3"
+            placeholder="Describe el convenio"
+          ></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fechaIni">Fecha Inicio *</label>
+            <input 
+              type="date" 
+              id="fechaIni" 
+              formControlName="fechaIni"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="fechaFin">Fecha Fin *</label>
+            <input 
+              type="date" 
+              id="fechaFin" 
+              formControlName="fechaFin"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="responsables">Responsables *</label>
+          <input 
+            type="text" 
+            id="responsables" 
+            formControlName="responsables"
+            placeholder="Nombres de los responsables"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="duracion">Duración</label>
+            <input 
+              type="text" 
+              id="duracion" 
+              formControlName="duracion"
+              placeholder="Ej: 6 meses"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="cantHoras">Horas Totales</label>
+            <input 
+              type="number" 
+              id="cantHoras" 
+              formControlName="cantHoras"
+              placeholder="Ej: 120"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="objetivos">Objetivos</label>
+          <textarea 
+            id="objetivos" 
+            formControlName="objetivos"
+            rows="2"
+            placeholder="Objetivos del convenio"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="beneficios">Beneficios</label>
+          <textarea 
+            id="beneficios" 
+            formControlName="beneficios"
+            rows="2"
+            placeholder="Beneficios del convenio"
+          ></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" (click)="cerrarModal()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button 
+            type="submit" 
+            class="btn-save" 
+            [disabled]="!formEdicion.valid || guardando">
+            <i [class]="guardando ? 'fas fa-spinner fa-spin' : 'fas fa-save'"></i>
+            {{ guardando ? 'Guardando...' : 'Guardar Cambios' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

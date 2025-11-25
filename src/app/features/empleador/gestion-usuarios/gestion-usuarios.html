@@ -124,14 +124,14 @@
                     (click)="abrirModalCambiarRol(usuario)"
                     [disabled]="usuario.idUsuario === idUsuarioActual"
                     title="Cambiar rol">
-                    ⚙
+                    
                   </button>
                   <button 
                     class="btn-accion btn-desactivar" 
                     (click)="confirmarDesactivar(usuario)"
                     [disabled]="usuario.idUsuario === idUsuarioActual || !usuario.activo"
                     title="Desactivar usuario">
-                    ✕
+                    
                   </button>
                 </div>
               </td>
@@ -187,7 +187,7 @@
     
     <!-- Empty state -->
     <div *ngIf="solicitudes.length === 0" class="empty-state">
-      <div class="empty-icon">✓</div>
+      <div class="empty-icon"></div>
       <h3>¡Todo al día!</h3>
       <p>No hay solicitudes pendientes de aprobación</p>
     </div>
@@ -203,7 +203,7 @@
             <h3>{{ solicitud.usuario.nombre }} {{ solicitud.usuario.apellido }}</h3>
             <p class="email-solicitud">{{ solicitud.usuario.email }}</p>
             <p class="phone-solicitud" *ngIf="solicitud.usuario.telefono">
-              ☎ {{ solicitud.usuario.telefono }}
+              {{ solicitud.usuario.telefono }}
             </p>
           </div>
         </div>
@@ -227,13 +227,13 @@
             class="btn-rechazar" 
             (click)="rechazarSolicitud(solicitud)"
             [disabled]="cargando">
-            ✕ Rechazar
+             Rechazar
           </button>
           <button 
             class="btn-aprobar" 
             (click)="aprobarSolicitud(solicitud)"
             [disabled]="cargando">
-            ✓ Aprobar
+             Aprobar
           </button>
         </div>
       </div>

@@ -102,7 +102,10 @@ export class EmpresaEndorsementsApiService {
       }
     `;
 
-    const toUserId = this.getCurrentUserId();
+    // Obtener idEmpresa del localStorage
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const toUserId = usuario.idEmpresa || this.getCurrentUserId();
+    
     return this.postGql<{ endorsementsReceived: EndorsementDto[] }>(query, {
       toUserId,
       status: status ?? null
@@ -182,9 +185,8 @@ export class EmpresaEndorsementsApiService {
   // =========================
 
   crearEndorsement(input: { toUserId: number; skill: string; message: string }) {
-    // A) schema con input SIN fromUserId
-    const mA = `
-      mutation($input: CreateEndorsementInput!) {
+    const mutation = `
+      mutation CreateEndorsement($input: CreateEndorsementInput!) {
         createEndorsement(input: $input) {
           idEndorsement
           status
@@ -192,62 +194,23 @@ export class EmpresaEndorsementsApiService {
       }
     `;
 
-    // B) schema con args directos
-    const mB = `
-      mutation($toUserId: Int!, $skill: String!, $message: String!) {
-        createEndorsement(toUserId: $toUserId, skill: $skill, message: $message) {
-          idEndorsement
-          status
-        }
-      }
-    `;
-
-    // C) schema con input CON fromUserId
-    const mC = `
-      mutation($input: CreateEndorsementInput!) {
-        createEndorsement(input: $input) {
-          idEndorsement
-          status
-        }
-      }
-    `;
-
+    // Usar el ID del usuario logueado, NO el ID de la empresa
+    // El backend valida el rol del usuario, no de la empresa
     const fromUserId = this.getCurrentUserId();
 
-    return this.postGql<{ createEndorsement: EndorsementDto }>(mA, {
+    return this.postGql<{ createEndorsement: EndorsementDto }>(mutation, {
       input: {
+        fromUserId,
         toUserId: input.toUserId,
         skill: input.skill,
         message: input.message
       }
-    }).pipe(
-      map(d => d.createEndorsement),
-      catchError(() =>
-        this.postGql<{ createEndorsement: EndorsementDto }>(mB, {
-          toUserId: input.toUserId,
-          skill: input.skill,
-          message: input.message
-        }).pipe(
-          map(d => d.createEndorsement),
-          catchError(() =>
-            this.postGql<{ createEndorsement: EndorsementDto }>(mC, {
-              input: {
-                fromUserId,
-                toUserId: input.toUserId,
-                skill: input.skill,
-                message: input.message
-              }
-            }).pipe(map(d => d.createEndorsement))
-          )
-        )
-      )
-    );
+    }).pipe(map(d => d.createEndorsement));
   }
 
   responderEndorsement(input: { id: number; accept: boolean }) {
-    // A) schema con input SIN actorId
-    const mA = `
-      mutation($input: EndorsementDecisionInput!) {
+    const mutation = `
+      mutation DecideEndorsement($input: DecideEndorsementInput!) {
         decideEndorsement(input: $input) {
           idEndorsement
           status
@@ -255,45 +218,16 @@ export class EmpresaEndorsementsApiService {
       }
     `;
 
-    // B) schema con args directos
-    const mB = `
-      mutation($id: Int!, $accept: Boolean!) {
-        decideEndorsement(id: $id, accept: $accept) {
-          idEndorsement
-          status
-        }
+    // Obtener idEmpresa del localStorage
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const actorId = usuario.idEmpresa || this.getCurrentUserId();
+
+    return this.postGql<{ decideEndorsement: any }>(mutation, {
+      input: {
+        id: String(input.id),
+        actorId,
+        accept: input.accept
       }
-    `;
-
-    // C) schema con input CON actorId
-    const mC = `
-      mutation($input: EndorsementDecisionInput!) {
-        decideEndorsement(input: $input) {
-          idEndorsement
-          status
-        }
-      }
-    `;
-
-    const actorId = this.getCurrentUserId();
-
-    return this.postGql<{ decideEndorsement: any }>(mA, {
-      input: { id: input.id, accept: input.accept }
-    }).pipe(
-      map(d => d.decideEndorsement),
-      catchError(() =>
-        this.postGql<{ decideEndorsement: any }>(mB, {
-          id: input.id,
-          accept: input.accept
-        }).pipe(
-          map(d => d.decideEndorsement),
-          catchError(() =>
-            this.postGql<{ decideEndorsement: any }>(mC, {
-              input: { id: input.id, actorId, accept: input.accept }
-            }).pipe(map(d => d.decideEndorsement))
-          )
-        )
-      )
-    );
+    }).pipe(map(d => d.decideEndorsement));
   }
 }

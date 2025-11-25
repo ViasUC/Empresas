@@ -92,6 +92,7 @@ export class OpportunityFormComponent implements OnInit {
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      alert('Por favor, completa todos los campos requeridos correctamente.');
       return;
     }
 
@@ -120,6 +121,11 @@ export class OpportunityFormComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error guardando oportunidad:', err);
+        if (err.status === 401 || err.message?.includes('UNAUTHENTICATED')) {
+          alert('Tu sesión ha expirado. Por favor, cierra sesión e inicia sesión nuevamente.');
+        } else {
+          alert('Error al guardar la oportunidad: ' + (err.message || 'Error desconocido'));
+        }
       },
     });
   }

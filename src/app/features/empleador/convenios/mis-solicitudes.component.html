@@ -21,7 +21,7 @@
 
   <!-- Sin solicitudes -->
   <div *ngIf="!isLoading && solicitudes.length === 0 && !errorMessage" class="empty-state">
-    <div class="empty-icon">📋</div>
+    <div class="empty-icon"></div>
     <h2>No hay solicitudes</h2>
     <p>Aún no has realizado ninguna solicitud de convenio</p>
     <button class="btn btn-primary" (click)="nuevaSolicitud()">
@@ -79,7 +79,7 @@
 
         <!-- Alerta para pendientes de documentación -->
         <div *ngIf="solicitud.estado === 'Pendiente' && !solicitud.documentoAdjunto" class="alert-inline alert-warning">
-          <strong>⚠️ Documentación pendiente</strong>
+          <strong>Documentación pendiente</strong>
           <p>Se requiere adjuntar documentación para procesar la solicitud</p>
         </div>
       </div>
@@ -168,7 +168,7 @@
 
         <div class="detalle-section" *ngIf="selectedSolicitud.documentoAdjunto">
           <h3>Documentación</h3>
-          <p class="documento-adjunto">📎 {{ selectedSolicitud.documentoAdjunto }}</p>
+          <p class="documento-adjunto">{{ selectedSolicitud.documentoAdjunto }}</p>
         </div>
 
         <div class="timeline-section">

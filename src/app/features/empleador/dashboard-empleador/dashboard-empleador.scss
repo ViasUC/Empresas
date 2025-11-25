@@ -56,6 +56,24 @@
           height: 16px;
         }
       }
+
+      .empresa-id {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.15);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 500;
+
+        .icon-small {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+        }
+      }
     }
 
     .user-info {
@@ -80,6 +98,24 @@
         font-size: 0.8rem;
         color: rgba(255, 255, 255, 0.8);
         font-weight: 300;
+      }
+
+      .user-id {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.15);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 500;
+
+        .icon-small {
+          font-size: 14px;
+          width: 14px;
+          height: 14px;
+        }
       }
 
       .btn-logout {

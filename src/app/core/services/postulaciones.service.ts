@@ -5,7 +5,9 @@ import {
   FiltroPostulacionInput,
   PostulacionesEmpresaResponse,
 } from '../models/postulacion.model';
+import { HistorialPostulacion, PostulacionEstado } from '../models/historial-postulacion.model';
 import { POSTULACIONES_EMPRESA } from '../graphql/postulaciones-empresa.query';
+import { HISTORIAL_POSTULACION, ACTUALIZAR_ESTADO_POSTULACION } from '../graphql/postulacion-mutations.graphql';
 
 export interface PostulacionesEmpresaVars {
   idOfertante: string;
@@ -35,6 +37,39 @@ export class PostulacionesService {
         fetchPolicy: 'network-only',
       })
       .valueChanges.pipe(
+        map(result => result.data)
+      );
+  }
+
+  getHistorialPostulacion(idPostulacion: number): Observable<HistorialPostulacion[]> {
+    return this.apollo
+      .query<{ historialPostulacion: HistorialPostulacion[] }>({
+        query: HISTORIAL_POSTULACION,
+        variables: { idPostulacion: idPostulacion.toString() },
+        fetchPolicy: 'network-only',
+      })
+      .pipe(
+        map(result => result.data.historialPostulacion)
+      );
+  }
+
+  actualizarEstadoPostulacion(
+    idPostulacion: number,
+    estado: PostulacionEstado,
+    motivo: string | null,
+    idActor: number
+  ): Observable<any> {
+    return this.apollo
+      .mutate({
+        mutation: ACTUALIZAR_ESTADO_POSTULACION,
+        variables: {
+          idPostulacion: idPostulacion.toString(),
+          estado,
+          motivo,
+          idActor: idActor.toString(),
+        },
+      })
+      .pipe(
         map(result => result.data)
       );
   }

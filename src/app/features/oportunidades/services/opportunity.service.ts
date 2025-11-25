@@ -45,6 +45,28 @@ export class OpportunityService {
     }
   `;
 
+  private readonly GET_BY_EMPRESA = gql`
+    query OportunidadesPorEmpresa($idEmpresa: ID!) {
+      oportunidadesPorEmpresa(idEmpresa: $idEmpresa) {
+        id
+        idOportunidad
+        titulo
+        descripcion
+        requisitos
+        ubicacion
+        modalidad
+        tipo
+        fechaPublicacion
+        fechaCierre
+        estado
+        creador {
+          idUsuario
+        }
+        empresa
+      }
+    }
+  `;
+
   private readonly GET_BY_ID = gql`
     query Oportunidad($id: ID!) {
       oportunidad(id: $id) {
@@ -131,16 +153,43 @@ export class OpportunityService {
    */
   private get currentUserId(): number {
     const user = this.authService.getCurrentUser();
-    console.log('Obteniendo currentUserId, usuario completo:', JSON.stringify(user));
+    console.log('[OpportunityService] Usuario actual:', user);
+    
     if (!user) {
-      console.error('Usuario no autenticado - user es null/undefined');
-      throw new Error('Usuario no autenticado. Por favor, inicia sesión nuevamente.');
+      console.error('[OpportunityService] No hay usuario autenticado');
+      throw new Error('Tu sesión ha expirado. Por favor, cierra sesión e inicia sesión nuevamente.');
     }
-    if (!user.id) {
-      console.error('Usuario no tiene ID:', user);
-      throw new Error('El usuario no tiene ID válido');
+    
+    // Intentar obtener el id del usuario
+    if (user.id) {
+      console.log('[OpportunityService] userId obtenido desde user.id:', user.id);
+      return user.id;
     }
-    return user.id;
+    
+    // Fallback: intentar obtener desde localStorage directamente
+    try {
+      const userJson = localStorage.getItem('usuario');
+      if (userJson) {
+        const storedUser = JSON.parse(userJson);
+        console.log('[OpportunityService] Usuario en localStorage:', storedUser);
+        
+        if (storedUser.id) {
+          console.log('[OpportunityService] userId obtenido desde localStorage.id:', storedUser.id);
+          return storedUser.id;
+        }
+        // Si no tiene id, puede tener idUsuario del backend
+        if (storedUser.idUsuario) {
+          const userId = parseInt(storedUser.idUsuario);
+          console.log('[OpportunityService] userId obtenido desde localStorage.idUsuario:', userId);
+          return userId;
+        }
+      }
+    } catch (e) {
+      console.error('[OpportunityService] Error al obtener usuario de localStorage:', e);
+    }
+    
+    console.error('[OpportunityService] No se pudo obtener userId de ninguna fuente');
+    throw new Error('No se pudo obtener el ID del usuario. Por favor, cierra sesión e inicia sesión nuevamente.');
   }
 
   /**
@@ -188,23 +237,58 @@ export class OpportunityService {
 
   /**
    * Lista todas las oportunidades del usuario actual
+   * Si es empleador, busca por idEmpresa, sino por creadorId
    */
   list(): Observable<Opportunity[]> {
-    return this.apollo
-      .watchQuery<{ oportunidadesPorCreador: any[] }>({
-        query: this.GET_BY_CREADOR,
-        variables: { creadorId: this.currentUserId },
-        fetchPolicy: 'network-only',
-      })
-      .valueChanges.pipe(
-        map((result) =>
-          (result.data?.oportunidadesPorCreador || []).map((o) => this.mapFromGql(o))
-        ),
-        catchError((error) => {
-          console.error('Error al listar oportunidades:', error);
-          return throwError(() => error);
+    try {
+      const user = this.authService.getCurrentUser();
+      console.log('[OpportunityService] Usuario actual:', user);
+      
+      // Si el usuario tiene idEmpresa, buscar por empresa
+      if (user?.idEmpresa) {
+        console.log('[OpportunityService] Listando oportunidades por empresa:', user.idEmpresa);
+        return this.apollo
+          .watchQuery<{ oportunidadesPorEmpresa: any[] }>({
+            query: this.GET_BY_EMPRESA,
+            variables: { idEmpresa: user.idEmpresa },
+            fetchPolicy: 'network-only',
+          })
+          .valueChanges.pipe(
+            map((result) => {
+              console.log('[OpportunityService] Respuesta del servidor (por empresa):', result.data);
+              return (result.data?.oportunidadesPorEmpresa || []).map((o) => this.mapFromGql(o));
+            }),
+            catchError((error) => {
+              console.error('[OpportunityService] Error al listar oportunidades por empresa:', error);
+              return throwError(() => error);
+            })
+          );
+      }
+      
+      // Fallback: buscar por creador (usuario)
+      const userId = this.currentUserId;
+      console.log('[OpportunityService] Listando oportunidades por creador:', userId);
+      
+      return this.apollo
+        .watchQuery<{ oportunidadesPorCreador: any[] }>({
+          query: this.GET_BY_CREADOR,
+          variables: { creadorId: userId },
+          fetchPolicy: 'network-only',
         })
-      );
+        .valueChanges.pipe(
+          map((result) => {
+            console.log('[OpportunityService] Respuesta del servidor (por creador):', result.data);
+            return (result.data?.oportunidadesPorCreador || []).map((o) => this.mapFromGql(o));
+          }),
+          catchError((error) => {
+            console.error('[OpportunityService] Error al listar oportunidades por creador:', error);
+            return throwError(() => error);
+          })
+        );
+    } catch (error) {
+      console.error('[OpportunityService] Error al obtener usuario:', error);
+      return throwError(() => error);
+    }
   }
 
   /**

@@ -1,5 +1,10 @@
 <div class="convenios-vigentes-container">
   <div class="header">
+    <div class="header-top">
+      <button class="btn-back" routerLink="/dashboard/empleador" title="Volver al dashboard">
+        <i class="fas fa-arrow-left"></i> Volver
+      </button>
+    </div>
     <h1>Convenios Vigentes</h1>
     <p class="subtitle">Administre los convenios activos de su empresa</p>
   </div>
@@ -12,7 +17,12 @@
 
   <div *ngIf="errorMessage" class="alert alert-error">
     <i class="icon-alert"></i>
-    {{ errorMessage }}
+    <div class="error-content">
+      <p>{{ errorMessage }}</p>
+      <button *ngIf="errorMessage.includes('cierra sesión')" class="btn-logout-error" (click)="cerrarSesion()">
+        Cerrar Sesión
+      </button>
+    </div>
   </div>
 
   <!-- Loading -->
@@ -23,7 +33,7 @@
 
   <!-- Sin convenios -->
   <div *ngIf="!isLoading && convenios.length === 0 && !errorMessage" class="empty-state">
-    <div class="empty-icon">📄</div>
+    <div class="empty-icon"><i class="fas fa-file-contract"></i></div>
     <h2>No hay convenios vigentes</h2>
     <p>Actualmente no tiene convenios activos</p>
   </div>
@@ -45,7 +55,7 @@
           </div>
           <div class="card-actions">
             <button class="btn-icon" (click)="verDetalle(convenio)" title="Ver detalle">
-              👁️
+              <i class="fas fa-eye"></i>
             </button>
           </div>
         </div>
@@ -55,28 +65,22 @@
           
           <div class="info-grid">
             <div class="info-item">
-              <span class="label">📅 Vigencia:</span>
+              <span class="label"><i class="far fa-calendar"></i> Vigencia:</span>
               <span class="value">{{ formatDate(convenio.fechaIni) }} - {{ formatDate(convenio.fechaFin) }}</span>
             </div>
             <div class="info-item" *ngIf="convenio.responsables">
-              <span class="label">👤 Responsables:</span>
+              <span class="label"><i class="fas fa-user"></i> Responsables:</span>
               <span class="value">{{ convenio.responsables }}</span>
             </div>
             <div class="info-item" *ngIf="convenio.duracion">
-              <span class="label">⏱️ Duración:</span>
+              <span class="label"><i class="far fa-clock"></i> Duración:</span>
               <span class="value">{{ convenio.duracion }}</span>
             </div>
           </div>
         </div>
 
         <div class="card-footer">
-          <button class="btn btn-sm btn-outline" (click)="abrirModalActualizar(convenio)">
-            Actualizar Responsable
-          </button>
-          <button class="btn btn-sm btn-outline" (click)="abrirModalRenovar(convenio)">
-            Solicitar Renovación
-          </button>
-          <button class="btn btn-sm btn-danger" (click)="abrirModalBaja(convenio)">
+          <button type="button" class="btn-action btn-danger-red" (click)="abrirModalBaja(convenio)">
             Dar de Baja
           </button>
         </div>
@@ -132,7 +136,7 @@
   </div>
 
   <!-- Modal: Solicitar Renovación -->
-  <div *ngIf="showRenovarModal" class="modal-overlay" (click)="cerrarModales()">
+  <div *ngIf="showRenovarModal" class="modal-overlay" (click)="cerrarModales()" style="z-index: 2000 !important;">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>Solicitar Renovación</h2>
@@ -161,7 +165,7 @@
   </div>
 
   <!-- Modal: Dar de Baja -->
-  <div *ngIf="showBajaModal" class="modal-overlay" (click)="cerrarModales()">
+  <div *ngIf="showBajaModal" class="modal-overlay" (click)="cerrarModales()" style="z-index: 2000 !important;">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>Dar de Baja Convenio</h2>
@@ -169,7 +173,8 @@
       </div>
       <div class="modal-body">
         <div class="alert alert-warning">
-          <strong>⚠️ Advertencia:</strong> Esta acción cambiará el estado del convenio a "Rescindido".
+          <i class="fas fa-exclamation-triangle"></i>
+          <strong>Advertencia:</strong> Esta acción cambiará el estado del convenio a "Finalizado".
         </div>
 
         <form [formGroup]="bajaForm" (ngSubmit)="darDeBaja()">

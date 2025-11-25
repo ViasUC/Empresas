@@ -8,6 +8,7 @@ export interface PostulanteResumen {
   nombre: string;
   apellido: string;
   email: string;
+  telefono?: string;
 }
 
 export interface Postulacion {

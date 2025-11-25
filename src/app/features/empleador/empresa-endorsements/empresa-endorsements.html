@@ -4,7 +4,6 @@
   <header class="page-header">
     <div>
       <h1>Endorsements</h1>
-      <p>Módulo F3 · Conectado al backend.</p>
     </div>
 
     <button class="btn-secondary" (click)="volverDashboard()">
@@ -31,12 +30,6 @@
             (click)="cambiarTab('enviados')">
       Enviados
       <span class="pill">{{ enviados.length }}</span>
-    </button>
-
-    <button class="tab"
-            [class.active]="activeTab==='crear'"
-            (click)="cambiarTab('crear')">
-      + Crear Endorsement
     </button>
   </nav>
 
@@ -86,7 +79,6 @@
           </div>
         </div>
 
-        <!-- ✅ ahora va al backend -->
         <div class="card-actions" *ngIf="e.status==='PENDING'">
           <button class="btn-primary" (click)="decidirEndorsement(e,true)" [disabled]="loading">
             Aceptar
@@ -163,7 +155,6 @@
     </div>
 
     <div class="create-card">
-      <!-- ✅ ahora manda al backend -->
       <form (ngSubmit)="enviarEndorsement()" class="form">
 
         <!-- BUSCADOR DESTINATARIO -->

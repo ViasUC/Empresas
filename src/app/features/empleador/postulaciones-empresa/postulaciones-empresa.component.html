@@ -8,7 +8,6 @@
       <h1>Postulaciones a mis Ofertas</h1>
       <div class="header-actions">
         <button class="btn-reload" (click)="recargar()" [disabled]="loading" title="Recargar postulaciones">
-          <span class="icon">🔄</span>
           <span class="text">Recargar</span>
         </button>
         <button class="btn-logout" (click)="logout()">
@@ -24,13 +23,12 @@
       
       <!-- LOADING -->
       <div class="loading-overlay" *ngIf="loading">
-        <div class="loading-spinner">⏳</div>
+        <div class="loading-spinner"></div>
         <p>Cargando postulaciones...</p>
       </div>
 
       <!-- ERROR -->
       <div class="error-message" *ngIf="errorMessage && !loading">
-        <div class="icon">⚠️</div>
         <h3>Error al cargar</h3>
         <p>{{ errorMessage }}</p>
       </div>
@@ -38,17 +36,56 @@
       <!-- RESULTADOS -->
       <div class="results-area" *ngIf="!loading && !errorMessage">
         
-        <!-- Header con contador -->
+        <!-- Header con contador y filtros -->
         <div class="resultados-header">
           <div class="resultados-count">
             <h2>Postulaciones Recibidas</h2>
             <p>{{ total }} postulación{{ total !== 1 ? 'es' : '' }} en total</p>
           </div>
+          
+          <!-- FILTROS -->
+          <div class="filtros-container">
+            <div class="filtro-group">
+              <label for="filtroEstado">Filtrar por Estado:</label>
+              <select 
+                id="filtroEstado" 
+                [(ngModel)]="estadoSeleccionado" 
+                (change)="onFiltroEstadoChange()"
+                class="filtro-select">
+                <option [ngValue]="null">Todos los estados</option>
+                <option *ngFor="let estado of estadosPostulacion" [ngValue]="estado.valor">
+                  {{ estado.etiqueta }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="filtro-group">
+              <label for="filtroOportunidad">Filtrar por Oferta:</label>
+              <select 
+                id="filtroOportunidad" 
+                [(ngModel)]="oportunidadSeleccionada" 
+                (change)="onFiltroOportunidadChange()"
+                [disabled]="loadingOportunidades"
+                class="filtro-select">
+                <option [ngValue]="null">Todas las ofertas</option>
+                <option *ngFor="let oportunidad of oportunidades" [ngValue]="oportunidad.idOportunidad">
+                  {{ oportunidad.titulo }}
+                </option>
+              </select>
+            </div>
+            
+            <button 
+              class="btn-limpiar-filtros" 
+              (click)="limpiarFiltros()"
+              *ngIf="oportunidadSeleccionada || estadoSeleccionado"
+              title="Limpiar filtros">
+              Limpiar filtros
+            </button>
+          </div>
         </div>
 
         <!-- SIN POSTULACIONES -->
         <div class="sin-resultados" *ngIf="postulaciones.length === 0">
-          <div class="icon">📋</div>
           <h3>No hay postulaciones todavía</h3>
           <p>No se encontraron postulantes para ninguna de tus ofertas</p>
           <p class="hint">Cuando los candidatos se postulen, aparecerán aquí. Puedes usar el botón "Recargar" para actualizar.</p>
@@ -90,14 +127,26 @@
                   <span class="estado-badge" [ngClass]="getEstadoClass(p.estado)">{{ p.estado }}</span>
                 </td>
                 <td class="acciones-col">
-                  <button class="btn-accion btn-ver" title="Ver detalles">
-                    <span class="icon">👁️</span>
+                  <button 
+                    class="btn-accion btn-ver" 
+                    title="Ver perfil completo y historial"
+                    (click)="verPerfil(p)"
+                    [disabled]="!p.postulante">
+                    Ver
                   </button>
-                  <button class="btn-accion btn-aceptar" title="Aceptar postulación">
-                    <span class="icon">✓</span>
+                  <button 
+                    class="btn-accion btn-aceptar" 
+                    title="Aceptar postulación"
+                    (click)="aceptarPostulacion(p)"
+                    [disabled]="p.estado === 'ACEPTADA'">
+                    Aceptar
                   </button>
-                  <button class="btn-accion btn-rechazar" title="Rechazar postulación">
-                    <span class="icon">✕</span>
+                  <button 
+                    class="btn-accion btn-rechazar" 
+                    title="Rechazar postulación"
+                    (click)="rechazarPostulacion(p)"
+                    [disabled]="p.estado === 'RECHAZADA'">
+                    Rechazar
                   </button>
                 </td>
               </tr>
@@ -130,3 +179,29 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL PERFIL CANDIDATO -->
+<app-perfil-candidato-modal
+  *ngIf="mostrarModalPerfil && postulacionSeleccionada && postulacionSeleccionada.postulante"
+  [idUsuario]="postulacionSeleccionada.postulante.idUsuario"
+  [idPostulacion]="postulacionSeleccionada.idPostulacion"
+  (cerrarModal)="cerrarModalPerfil()">
+</app-perfil-candidato-modal>
+
+<!-- MODAL RECHAZAR POSTULACIÓN -->
+<app-rechazar-postulacion-modal
+  *ngIf="mostrarModalRechazo"
+  (confirmarRechazo)="confirmarRechazo($event)"
+  (cancelarRechazo)="cerrarModalRechazo()">
+</app-rechazar-postulacion-modal>
+
+<!-- MODAL PROGRAMAR ENTREVISTA -->
+<app-programar-entrevista-modal
+  *ngIf="mostrarModalProgramarEntrevista && postulacionSeleccionada"
+  [nombreCandidato]="(postulacionSeleccionada.postulante?.nombre || '') + ' ' + (postulacionSeleccionada.postulante?.apellido || '')"
+  [telefonoCandidato]="postulacionSeleccionada.postulante?.telefono || ''"
+  [emailCandidato]="postulacionSeleccionada.postulante?.email || ''"
+  [tituloOportunidad]="postulacionSeleccionada.oportunidad?.titulo || ''"
+  (confirmarEntrevista)="confirmarProgramarEntrevista($event)"
+  (cancelarEntrevista)="cerrarModalProgramarEntrevista()">
+</app-programar-entrevista-modal>

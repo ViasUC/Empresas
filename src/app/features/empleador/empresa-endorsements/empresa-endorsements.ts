@@ -164,7 +164,7 @@ export class EmpresaEndorsementsComponent implements OnInit, OnDestroy {
   cargarDatos() {
     this.loading = true;
     this.errorMsg = '';
-
+    
     this.api.getRecibidos().subscribe({
       next: (data: any[]) => {
         this.recibidos = (data || []).map((e: any) => ({
@@ -175,13 +175,19 @@ export class EmpresaEndorsementsComponent implements OnInit, OnDestroy {
           message: e.message,
           status: e.status
         }));
-        // cargar nombres de remitentes y luego excluir remitentes no deseados (Empleador/Admin)
+        
         const fromIds = Array.from(new Set(this.recibidos.map(r => r.fromUserId).filter((v): v is number => v != null)));
+        
+        if (fromIds.length === 0) {
+          this.loading = false;
+          return;
+        }
+        
         this.cargarUsuariosEnCache(fromIds).subscribe(() => {
-          // eliminar endorsements cuyo remitente sea Empleador o Administrador
+          // Filtrar endorsements de Empleador/Administrador
           this.recibidos = this.recibidos.filter(r => {
             const u = r.fromUserId ? this.usuariosCache[r.fromUserId] : undefined;
-            if (!u || !u.tipo) return true; // si no sabemos aún, dejar (pero cache ya cargada debería tenerlo)
+            if (!u || !u.tipo) return true;
             const label = this.getRoleLabel(u.tipo);
             return label !== 'Empleador' && label !== 'Administrador';
           });
@@ -189,7 +195,7 @@ export class EmpresaEndorsementsComponent implements OnInit, OnDestroy {
         });
       },
       error: (err) => {
-        console.error(err);
+        console.error('Error al cargar endorsements recibidos:', err);
         this.errorMsg = err?.[0]?.message || 'No pude cargar endorsements recibidos.';
         this.loading = false;
       }
@@ -225,7 +231,9 @@ export class EmpresaEndorsementsComponent implements OnInit, OnDestroy {
 
   get recibidosFiltrados(): EndorsementUI[] {
     let list = (this.filtroRecibidos === 'ALL') ? this.recibidos : this.recibidos.filter(e => e.status === this.filtroRecibidos);
+    
     if (this.filtroRolRecibidos === 'ALL') return list;
+    
     return list.filter(e => {
       const u = e.fromUserId ? this.usuariosCache[e.fromUserId] : undefined;
       if (!u || !u.tipo) return false;
@@ -337,18 +345,14 @@ export class EmpresaEndorsementsComponent implements OnInit, OnDestroy {
         this.cargarDatos();
       },
       error: (err) => {
-        console.error('crearEndorsement error ->', err);
-        this.loading = false;
-        // Normalizar distintos formatos de error que puede devolver postGql
-        if (Array.isArray(err) && err.length > 0 && err[0].message) {
-          this.errorMsg = err[0].message;
-        } else if (err?.message) {
-          this.errorMsg = err.message;
-        } else if (err?.error?.errors && Array.isArray(err.error.errors) && err.error.errors[0]?.message) {
-          this.errorMsg = err.error.errors[0].message;
+        console.error('ERROR CREAR ENDORSEMENT:', err);
+        if (Array.isArray(err) && err.length > 0) {
+          console.error('Error array:', err[0]);
+          this.errorMsg = err[0].message || JSON.stringify(err[0]);
         } else {
-          this.errorMsg = 'No se pudo enviar el endorsement.';
+          this.errorMsg = err?.message || 'No se pudo enviar el endorsement.';
         }
+        this.loading = false;
       }
     });
   }
@@ -366,9 +370,9 @@ export class EmpresaEndorsementsComponent implements OnInit, OnDestroy {
         this.cargarDatos();
       },
       error: (err) => {
-        console.error(err);
+        console.error('Error al decidir endorsement:', err);
         this.loading = false;
-        this.errorMsg = err?.[0]?.message || 'No se pudo registrar la decisión.';
+        this.errorMsg = err?.[0]?.message || err?.message || 'No se pudo registrar la decisión.';
       }
     });
   }

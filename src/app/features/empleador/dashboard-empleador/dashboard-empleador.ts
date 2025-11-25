@@ -18,6 +18,8 @@ export class DashboardEmpleador implements OnInit, OnDestroy {
   email: string = '';
   nombreEmpresa: string = '';
   telefonoEmpresa: string = '';
+  idUsuario: number | null = null;
+  idEmpresa: number | null = null;
   private userSubscription?: Subscription;
   private empresaSubscription?: Subscription;
 
@@ -40,7 +42,8 @@ export class DashboardEmpleador implements OnInit, OnDestroy {
       if (usuario) {
         this.nombreCompleto = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim();
         this.email = usuario.email || '';
-        console.log('Dashboard actualizado:', { nombreCompleto: this.nombreCompleto, email: this.email });
+        this.idUsuario = usuario.id || null;
+        console.log('Dashboard actualizado:', { nombreCompleto: this.nombreCompleto, email: this.email, idUsuario: this.idUsuario });
       } else {
         // Si no hay usuario, intentar cargar desde localStorage
         this.cargarDatosUsuario();
@@ -53,9 +56,11 @@ export class DashboardEmpleador implements OnInit, OnDestroy {
         console.log('Empresa actualizada detectada en dashboard:', empresa);
         this.nombreEmpresa = empresa.nombreEmpresa || empresa.razonSocial || 'Empresa';
         this.telefonoEmpresa = empresa.contacto || '';
+        this.idEmpresa = Number(empresa.idEmpresa || empresa.id) || null;
         console.log('Dashboard empresa actualizado:', { 
           nombreEmpresa: this.nombreEmpresa, 
-          telefonoEmpresa: this.telefonoEmpresa 
+          telefonoEmpresa: this.telefonoEmpresa,
+          idEmpresa: this.idEmpresa
         });
       }
     });
@@ -78,7 +83,8 @@ export class DashboardEmpleador implements OnInit, OnDestroy {
     if (usuario) {
       this.nombreCompleto = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim();
       this.email = usuario.email || '';
-      console.log('Datos usuario cargados:', { nombreCompleto: this.nombreCompleto, email: this.email });
+      this.idUsuario = usuario.id || null;
+      console.log('Datos usuario cargados:', { nombreCompleto: this.nombreCompleto, email: this.email, idUsuario: this.idUsuario });
     } else {
       // Si no hay usuario en el servicio, intentar desde localStorage directamente
       const usuarioStorage = localStorage.getItem('usuario');
@@ -87,16 +93,19 @@ export class DashboardEmpleador implements OnInit, OnDestroy {
           const usuarioParsed = JSON.parse(usuarioStorage);
           this.nombreCompleto = `${usuarioParsed.nombre || ''} ${usuarioParsed.apellido || ''}`.trim();
           this.email = usuarioParsed.email || '';
-          console.log('Datos cargados desde localStorage:', { nombreCompleto: this.nombreCompleto, email: this.email });
+          this.idUsuario = usuarioParsed.id || null;
+          console.log('Datos cargados desde localStorage:', { nombreCompleto: this.nombreCompleto, email: this.email, idUsuario: this.idUsuario });
         } catch (error) {
           console.error('Error al parsear usuario de localStorage:', error);
           this.nombreCompleto = 'Usuario';
           this.email = '';
+          this.idUsuario = null;
         }
       } else {
         console.warn('No se encontró usuario en servicio ni localStorage');
         this.nombreCompleto = 'Usuario';
         this.email = '';
+        this.idUsuario = null;
       }
     }
   }
@@ -110,25 +119,33 @@ export class DashboardEmpleador implements OnInit, OnDestroy {
         this.nombreEmpresa = empresa.nombreEmpresa || empresa.razonSocial || 'Empresa';
         // El campo en el backend es "contacto", no "telefono"
         this.telefonoEmpresa = empresa.contacto || empresa.telefono || empresa.telefonoContacto || '';
+        this.idEmpresa = Number(empresa.idEmpresa || empresa.id) || null;
         console.log('Datos empresa cargados:', { 
           nombreEmpresa: this.nombreEmpresa, 
           telefonoEmpresa: this.telefonoEmpresa,
+          idEmpresa: this.idEmpresa,
           empresaCompleta: empresa 
         });
       } catch (error) {
         console.error('Error al parsear empresa de localStorage:', error);
         this.nombreEmpresa = 'Empresa';
         this.telefonoEmpresa = '';
+        this.idEmpresa = null;
       }
     } else {
       console.warn('No se encontró empresa en localStorage');
       this.nombreEmpresa = 'Empresa';
       this.telefonoEmpresa = '';
+      this.idEmpresa = null;
     }
   }
 
   irAPerfil(): void {
     this.router.navigate(['/dashboard/empleador/perfil']);
+  }
+
+  irAPerfilPublico(): void {
+    this.router.navigate(['/dashboard/empleador/perfil-publico']);
   }
 
   irABusqueda(): void {

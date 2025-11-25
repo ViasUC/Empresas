@@ -26,7 +26,7 @@ export const appConfig: ApplicationConfig = {
       
       // Link de autenticación para Apollo
       const auth = setContext(() => {
-        const token = localStorage.getItem('viasuc_token');
+        const token = localStorage.getItem('token');  // ✅ Corregido: usar 'token' en vez de 'viasuc_token'
         if (token) {
           return {
             headers: {

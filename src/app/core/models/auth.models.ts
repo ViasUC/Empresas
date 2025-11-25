@@ -33,6 +33,7 @@ export interface User {
   tipo: string; // EMPLEADOR, ESTUDIANTE, EGRESADO, DOCENTE, etc.
   token?: string;
   telefono?: string;
+  idEmpresa?: number; // ID de la empresa para usuarios tipo EMPLEADOR
 }
 
 export interface LoginResponse {
@@ -41,6 +42,7 @@ export interface LoginResponse {
     nombre: string;
     apellido: string;
     rolPrincipal: string;
+    idEmpresa?: number;
   };
 }
 

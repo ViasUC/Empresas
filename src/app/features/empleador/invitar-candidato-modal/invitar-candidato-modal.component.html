@@ -1,0 +1,173 @@
+<div class="modal-overlay" (click)="cerrar()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    
+    <!-- Header -->
+    <div class="modal-header">
+      <h2>Invitar a {{nombreCandidato}}</h2>
+      <button class="btn-cerrar" (click)="cerrar()">×</button>
+    </div>
+
+    <!-- Mensaje de error si no puede enviar -->
+    <div class="alert alert-warning" *ngIf="errorCarga && !cargando">
+      {{errorCarga}}
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" *ngIf="cargando">
+      <div class="spinner"></div>
+      <p>Cargando...</p>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="modal-body" *ngIf="!cargando && !errorCarga">
+      
+      <!-- Seccion 1: Seleccion (oportunidades/convenios) -->
+      <div class="seccion-seleccion" *ngIf="!mostrarPreview">
+        
+        <!-- Tabs -->
+        <div class="tabs">
+          <button 
+            class="tab" 
+            [class.active]="tabActiva === 'oportunidades'"
+            (click)="cambiarTab('oportunidades')">
+            Oportunidades ({{oportunidades.length}})
+          </button>
+          <button 
+            class="tab" 
+            [class.active]="tabActiva === 'convenios'"
+            (click)="cambiarTab('convenios')"
+            disabled>
+            Convenios ({{convenios.length}})
+          </button>
+        </div>
+
+        <!-- Lista de oportunidades -->
+        <div class="lista-items" *ngIf="tabActiva === 'oportunidades'">
+          <div 
+            *ngFor="let oportunidad of oportunidades" 
+            class="item-card"
+            [class.selected]="itemSeleccionado?.idOportunidad === oportunidad.idOportunidad"
+            (click)="seleccionarItem(oportunidad)">
+            
+            <div class="item-header">
+              <h3>{{oportunidad.titulo}}</h3>
+              <span class="badge badge-tipo">{{oportunidad.tipo}}</span>
+            </div>
+            
+            <div class="item-meta">
+              <span class="meta-item">
+                <span class="label">Modalidad:</span> {{oportunidad.modalidad}}
+              </span>
+              <span class="meta-item">
+                <span class="label">Ubicacion:</span> {{oportunidad.ubicacion}}
+              </span>
+            </div>
+            
+            <p class="item-descripcion">{{oportunidad.descripcion}}</p>
+            
+            <div class="item-footer" *ngIf="oportunidad.fechaCierre">
+              <span class="label">Cierre:</span> {{oportunidad.fechaCierre}}
+            </div>
+          </div>
+
+          <div class="empty-state" *ngIf="oportunidades.length === 0">
+            <p>No hay oportunidades activas disponibles</p>
+          </div>
+        </div>
+
+        <!-- Lista de convenios (placeholder) -->
+        <div class="lista-items" *ngIf="tabActiva === 'convenios'">
+          <div class="empty-state">
+            <p>Funcionalidad de convenios proximamente</p>
+          </div>
+        </div>
+
+        <!-- Selector de canal -->
+        <div class="seccion-canal" *ngIf="itemSeleccionado">
+          <h3>Selecciona el canal de envio:</h3>
+          
+          <div class="opciones-canal">
+            <label class="opcion-radio" [class.disabled]="!emailCandidato">
+              <input 
+                type="radio" 
+                name="canal" 
+                value="EMAIL"
+                [(ngModel)]="canalSeleccionado"
+                (change)="cambiarCanal('EMAIL')"
+                [disabled]="!emailCandidato">
+              <span class="radio-label">
+                <span class="label-text">Email</span>
+                <span class="label-value" *ngIf="emailCandidato">{{emailCandidato}}</span>
+                <span class="label-error" *ngIf="!emailCandidato">No disponible</span>
+              </span>
+            </label>
+
+            <label class="opcion-radio" [class.disabled]="!telefonoCandidato">
+              <input 
+                type="radio" 
+                name="canal" 
+                value="WHATSAPP"
+                [(ngModel)]="canalSeleccionado"
+                (change)="cambiarCanal('WHATSAPP')"
+                [disabled]="!telefonoCandidato">
+              <span class="radio-label">
+                <span class="label-text">WhatsApp</span>
+                <span class="label-value" *ngIf="telefonoCandidato">{{telefonoCandidato}}</span>
+                <span class="label-error" *ngIf="!telefonoCandidato">No disponible</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Boton continuar -->
+        <div class="modal-actions" *ngIf="itemSeleccionado">
+          <button class="btn btn-secondary" (click)="cerrar()">Cancelar</button>
+          <button class="btn btn-primary" (click)="mostrarPreviewMensaje()">
+            Continuar
+          </button>
+        </div>
+      </div>
+
+      <!-- Seccion 2: Preview y edicion del mensaje -->
+      <div class="seccion-preview" *ngIf="mostrarPreview">
+        
+        <div class="preview-header">
+          <button class="btn-volver" (click)="volverASeleccion()">← Volver</button>
+          <h3>Vista previa del mensaje</h3>
+        </div>
+
+        <div class="info-envio">
+          <div class="info-row">
+            <span class="label">Para:</span>
+            <span class="value">{{nombreCandidato}}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Canal:</span>
+            <span class="value">{{canalSeleccionado}}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Destino:</span>
+            <span class="value">{{canalSeleccionado === 'EMAIL' ? emailCandidato : telefonoCandidato}}</span>
+          </div>
+        </div>
+
+        <div class="editor-mensaje">
+          <label>Puedes editar el mensaje antes de enviar:</label>
+          <textarea 
+            [(ngModel)]="mensajeEditable"
+            rows="12"
+            class="textarea-mensaje"
+            placeholder="Escribe tu mensaje..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="volverASeleccion()">Atras</button>
+          <button class="btn btn-success" (click)="enviarInvitacion()" [disabled]="!mensajeEditable.trim()">
+            Enviar Invitacion
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

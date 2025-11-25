@@ -9,11 +9,19 @@
             <mat-icon class="icon-small">phone</mat-icon>
             {{ telefonoEmpresa }}
           </div>
+          <div class="empresa-id" *ngIf="idEmpresa">
+            <mat-icon class="icon-small">business</mat-icon>
+            ID Empresa: {{ idEmpresa }}
+          </div>
         </div>
         <div class="user-info">
           <div class="user-details">
             <span class="user-name">{{ nombreCompleto }}</span>
             <span class="user-email">{{ email }}</span>
+            <span class="user-id" *ngIf="idUsuario">
+              <mat-icon class="icon-small">person</mat-icon>
+              ID Usuario: {{ idUsuario }}
+            </span>
           </div>
           <button class="btn-logout" (click)="logout()">Cerrar Sesion</button>
         </div>
@@ -29,9 +37,29 @@
         <button class="btn-primary" (click)="irAPerfil()">Ir a Perfil</button>
       </div>
 
+      <div class="card">
+        <h3>Ver Mi Perfil Publico</h3>
+        <p>Visualiza como los demas ven tu perfil</p>
+        <button class="btn-primary" (click)="irAPerfilPublico()">Ver Perfil Publico</button>
+      </div>
+
+      <div class="card">
+        <h3>Buscar Candidatos</h3>
+        <p>Busca portafolios de estudiantes y egresados</p>
+        <button class="btn-primary" (click)="irABusqueda()">Buscar Ahora</button>
+      </div>
+      
+      
+      <!-- Solo para ADMINISTRADOR -->
+      <div class="card" *ngIf="esAdministrador()">
+        <h3>Gestión de Usuarios</h3>
+        <p>Gestiona el equipo de tu empresa y aprueba solicitudes de acceso</p>
+        <button class="btn-primary" (click)="irAGestionUsuarios()">Gestionar Equipo</button>
+      </div>
+
       <!-- Publicar Oferta -->
       <div class="card">
-        <h3>Publicar Oportunidad Laboral</h3>
+        <h3>Nueva Oportunidad Laboral</h3>
         <p>Crea nuevas ofertas laborales para tu empresa</p>
         <button
           class="btn btn-primary"
@@ -43,7 +71,7 @@
 
       <!-- Mis Ofertas -->
       <div class="card">
-        <h3>Mis Ofertas</h3>
+        <h3>Mis Oportunidades Laborales</h3>
         <p>Gestiona las ofertas activas de tu empresa</p>
         <button
           class="btn btn-primary"
@@ -53,11 +81,7 @@
         </button>
       </div>
 
-      <div class="card">
-        <h3>Buscar Candidatos</h3>
-        <p>Busca portafolios de estudiantes y egresados</p>
-        <button class="btn-primary" (click)="irABusqueda()">Buscar Ahora</button>
-      </div>
+
 
       <div class="card">
         <h3>Postulaciones</h3>
@@ -67,21 +91,16 @@
         </button>
       </div>
 
-      <!-- Solo para ADMINISTRADOR -->
-      <div class="card" *ngIf="esAdministrador()">
-        <h3>Gestión de Usuarios</h3>
-        <p>Gestiona el equipo de tu empresa y aprueba solicitudes de acceso</p>
-        <button class="btn-primary" (click)="irAGestionUsuarios()">Gestionar Equipo</button>
-      </div>
+
 
       <div class="card">
-        <h3>Solicitar Convenio</h3>
+        <h3>Crear Nuevo Convenio</h3>
         <p>Solicita un nuevo convenio con instituciones educativas</p>
         <button class="btn-primary" (click)="irASolicitarConvenio()">Solicitar Ahora</button>
       </div>
 
       <div class="card">
-        <h3>Mis Solicitudes</h3>
+        <h3>Mis Convenios</h3>
         <p>Revisa el estado de tus solicitudes de convenio</p>
         <button class="btn-primary" (click)="irAMisSolicitudes()">Ver Solicitudes</button>
       </div>

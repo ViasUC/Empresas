@@ -14,7 +14,6 @@
     <!-- Barra de búsqueda -->
     <div class="search-bar-container">
       <div class="search-bar">
-        <span class="search-icon">🔍</span>
         <input
           type="text"
           placeholder="Buscar por nombre, apellido o habilidad..."
@@ -29,7 +28,7 @@
           *ngIf="searchText"
           class="btn-clear-search"
           (click)="clearSearch()">
-          ✕
+          X
         </button>
       </div>
     </div>
@@ -44,7 +43,7 @@
         <div class="filters-header">
           <h2>Filtros</h2>
           <button class="btn-toggle-filters" (click)="toggleFiltersPanel()">
-            {{ filtersPanelCollapsed ? '☰' : '✕' }}
+            {{ filtersPanelCollapsed ? '≡' : 'X' }}
           </button>
         </div>
 
@@ -103,7 +102,7 @@
         <div class="active-filters" *ngIf="filtrosActivos.length > 0">
           <span *ngFor="let filtro of filtrosActivos" class="filter-chip">
             {{ filtro.label }}
-            <button class="remove-filter" (click)="removerFiltro(filtro)">✕</button>
+            <button class="remove-filter" (click)="removerFiltro(filtro)">X</button>
           </span>
         </div>
 
@@ -131,7 +130,6 @@
 
         <!-- SIN RESULTADOS -->
         <div class="sin-resultados" *ngIf="!cargando && busquedaRealizada && resultados.length === 0">
-          <div class="icon">🔍</div>
           <h3>No se encontraron resultados</h3>
           <p>Intenta ajustar los filtros o buscar algo diferente</p>
         </div>
@@ -159,7 +157,7 @@
                     type="button"
                     class="aval-toggle"
                     (click)="toggleAval(portafolio, $event)">
-                    <span class="eye" [class.open]="isAvalOpen(portafolio)">👁️</span>
+                    <span class="eye" [class.open]="isAvalOpen(portafolio)">▼</span>
                     <span>Aval</span>
                   </button>
                 </div>
@@ -177,11 +175,11 @@
 
               <div class="header-meta">
                 <div class="meta-item" *ngIf="portafolio.carrera">
-                  <span class="icon">🎓</span>
+                  <span class="label">Carrera:</span>
                   <span>{{ portafolio.carrera }}</span>
                 </div>
                 <div class="meta-item" *ngIf="portafolio.ubicacion">
-                  <span class="icon">📍</span>
+                  <span class="label">Ubicación:</span>
                   <span>{{ portafolio.ubicacion }}</span>
                 </div>
               </div>
@@ -210,12 +208,12 @@
               <!-- Contacto -->
               <div class="contact-info" *ngIf="portafolio.mostrarContacto">
                 <p *ngIf="portafolio.email">
-                  <span class="icon">📧</span>
+                  <span class="label">Email:</span>
                   <a [href]="'mailto:' + portafolio.email">{{ portafolio.email }}</a>
                 </p>
 
                 <p *ngIf="portafolio.telefono" class="telefono-row">
-                  <span class="icon">📱</span>
+                  <span class="label">Teléfono:</span>
                   <span>{{ portafolio.telefono }}</span>
                   <a
                     [href]="getWhatsAppLink(portafolio.telefono)"
@@ -239,31 +237,26 @@
 
             <!-- ====== ACTIONS CARD ====== -->
             <div class="card-actions">
-              <button class="btn-ver" (click)="verPortafolio(portafolio)">
-                <span class="icon">👁️</span>
-                <span>Ver</span>
+              <button class="btn-ver" (click)="verPerfilCompleto(portafolio)">
+                <span>Ver Perfil</span>
               </button>
 
               <button
                 class="btn-guardar"
                 [class.saved]="portafolio.guardado"
                 (click)="guardarPortafolio(portafolio)">
-                <span class="icon">{{ portafolio.guardado ? '❤️' : '🤍' }}</span>
                 <span>{{ portafolio.guardado ? 'Guardado' : 'Guardar' }}</span>
               </button>
 
               <button class="btn-invitar" (click)="invitarPostular(portafolio)">
-                <span class="icon">✉️</span>
                 <span>Invitar</span>
               </button>
 
               <button class="btn-descargar" (click)="descargarPerfil(portafolio, $event)">
-                <span class="icon">📥</span>
                 <span>Descargar</span>
               </button>
 
               <button class="btn-mensaje" (click)="enviarMensaje(portafolio)">
-                <span class="icon">💬</span>
                 <span>Mensaje</span>
               </button>
             </div>
@@ -290,3 +283,22 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL PERFIL CANDIDATO -->
+<app-perfil-candidato-modal
+  *ngIf="mostrarModalPerfil && portafolioSeleccionado"
+  [idUsuario]="Number(portafolioSeleccionado.usuarioId)"
+  [idPostulacion]="0"
+  (cerrarModal)="cerrarModalPerfil()">
+</app-perfil-candidato-modal>
+
+<!-- MODAL INVITAR CANDIDATO -->
+<app-invitar-candidato-modal
+  *ngIf="mostrarModalInvitacion && candidatoInvitar"
+  [idUsuario]="Number(candidatoInvitar.usuarioId)"
+  [nombreCandidato]="candidatoInvitar.nombre + ' ' + candidatoInvitar.apellido"
+  [emailCandidato]="candidatoInvitar.email || ''"
+  [telefonoCandidato]="candidatoInvitar.telefono || ''"
+  (cerrarModal)="cerrarModalInvitacion()"
+  (invitacionEnviada)="onInvitacionEnviada($event)">
+</app-invitar-candidato-modal>
